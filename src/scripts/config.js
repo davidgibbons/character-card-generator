@@ -3,6 +3,7 @@ const LOCAL_STORAGE_KEY = "charGeneratorConfig";
 const SESSION_STORAGE_KEYS = {
   textApiKey: "charGeneratorConfig:textApiKey",
   imageApiKey: "charGeneratorConfig:imageApiKey",
+  stPassword: "charGeneratorConfig:stPassword",
 };
 
 class Config {
@@ -28,6 +29,10 @@ class Config {
           model: "",
           size: "",
           timeout: 180000,
+        },
+        sillytavern: {
+          url: "",
+          password: "",
         },
       },
       app: {
@@ -109,6 +114,12 @@ class Config {
     if (imageModel !== undefined) this.config.api.image.model = imageModel;
     if (imageSize !== undefined) this.config.api.image.size = imageSize;
 
+    // Load SillyTavern settings
+    const stUrl = document.getElementById("st-url")?.value?.trim();
+    const stPassword = document.getElementById("st-password")?.value?.trim();
+    if (stUrl !== undefined) this.config.api.sillytavern.url = stUrl;
+    if (stPassword !== undefined) this.config.api.sillytavern.password = stPassword;
+
     // Load toggle states
     const persistApiKeys = document.getElementById("persist-api-keys")?.checked;
     if (persistApiKeys !== undefined) {
@@ -171,6 +182,13 @@ class Config {
       if (imageApiKey) imageApiKey.value = this.config.api.image.apiKey || "";
       if (imageModel) imageModel.value = this.config.api.image.model || "";
       if (imageSize) imageSize.value = this.config.api.image.size || "";
+
+      // Save SillyTavern settings to form
+      const stUrl = document.getElementById("st-url");
+      const stPassword = document.getElementById("st-password");
+      if (stUrl) stUrl.value = this.config.api.sillytavern.url || "";
+      if (stPassword)
+        stPassword.value = this.config.api.sillytavern.password || "";
 
       // Save toggle states
       const persistApiKeys = document.getElementById("persist-api-keys");
@@ -238,6 +256,9 @@ class Config {
     if (configCopy.api?.image) {
       configCopy.api.image.apiKey = "";
     }
+    if (configCopy.api?.sillytavern) {
+      configCopy.api.sillytavern.password = "";
+    }
     return configCopy;
   }
 
@@ -252,6 +273,10 @@ class Config {
         SESSION_STORAGE_KEYS.imageApiKey,
         this.config.api.image.apiKey,
       );
+      this.persistLocalStorageValue(
+        SESSION_STORAGE_KEYS.stPassword,
+        this.config.api.sillytavern.password,
+      );
     } else {
       // Store in sessionStorage when persistence is disabled
       this.persistSessionValue(
@@ -261,6 +286,10 @@ class Config {
       this.persistSessionValue(
         SESSION_STORAGE_KEYS.imageApiKey,
         this.config.api.image.apiKey,
+      );
+      this.persistSessionValue(
+        SESSION_STORAGE_KEYS.stPassword,
+        this.config.api.sillytavern.password,
       );
     }
   }
@@ -310,6 +339,10 @@ class Config {
       if (imageKey !== null) {
         this.config.api.image.apiKey = imageKey;
       }
+      const stPwd = this.getLocalStorageValue(SESSION_STORAGE_KEYS.stPassword);
+      if (stPwd !== null) {
+        this.config.api.sillytavern.password = stPwd;
+      }
     } else {
       // Restore from sessionStorage when persistence is disabled
       const textKey = this.getSessionValue(SESSION_STORAGE_KEYS.textApiKey);
@@ -319,6 +352,10 @@ class Config {
       const imageKey = this.getSessionValue(SESSION_STORAGE_KEYS.imageApiKey);
       if (imageKey !== null) {
         this.config.api.image.apiKey = imageKey;
+      }
+      const stPwd = this.getSessionValue(SESSION_STORAGE_KEYS.stPassword);
+      if (stPwd !== null) {
+        this.config.api.sillytavern.password = stPwd;
       }
     }
   }
@@ -362,6 +399,10 @@ class Config {
       );
       savedConfig.api.image.apiKey = "";
     }
+
+    if (savedConfig?.api?.sillytavern?.password) {
+      savedConfig.api.sillytavern.password = "";
+    }
   }
 
   clearStoredConfig() {
@@ -399,7 +440,7 @@ class Config {
 
     const redacted = {};
     Object.keys(data).forEach((key) => {
-      if (key.toLowerCase().includes("apikey")) {
+      if (key.toLowerCase().includes("apikey") || key === "password") {
         redacted[key] = data[key] ? "[REDACTED]" : "";
       } else {
         redacted[key] = this.redactSensitiveData(data[key]);
@@ -432,6 +473,11 @@ class Config {
         );
         sessionStorage.removeItem(SESSION_STORAGE_KEYS.imageApiKey);
       }
+      const stPwd = this.getSessionValue(SESSION_STORAGE_KEYS.stPassword);
+      if (stPwd) {
+        this.persistLocalStorageValue(SESSION_STORAGE_KEYS.stPassword, stPwd);
+        sessionStorage.removeItem(SESSION_STORAGE_KEYS.stPassword);
+      }
     } else {
       // Move from localStorage to sessionStorage
       const textKey = this.getLocalStorageValue(
@@ -448,6 +494,11 @@ class Config {
       if (imageKey) {
         this.persistSessionValue(SESSION_STORAGE_KEYS.imageApiKey, imageKey);
         localStorage.removeItem(SESSION_STORAGE_KEYS.imageApiKey);
+      }
+      const stPwd = this.getLocalStorageValue(SESSION_STORAGE_KEYS.stPassword);
+      if (stPwd) {
+        this.persistSessionValue(SESSION_STORAGE_KEYS.stPassword, stPwd);
+        localStorage.removeItem(SESSION_STORAGE_KEYS.stPassword);
       }
     }
   }

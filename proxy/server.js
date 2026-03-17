@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const fetch = require("node-fetch");
+const FormData = require("form-data");
 require("dotenv").config({ path: "../.env" });
 
 const app = express();
@@ -322,6 +323,192 @@ app.get("/api/proxy-image", async (req, res) => {
         message: "Internal server error in image proxy",
         details: error.message,
       },
+    });
+  }
+});
+
+// --- SillyTavern Integration Endpoints ---
+
+// Helper: get a CSRF token from a SillyTavern instance
+async function getSTCsrfToken(stUrl, stPassword) {
+  const headers = {};
+  if (stPassword) {
+    headers["Authorization"] =
+      "Basic " + Buffer.from(`user:${stPassword}`).toString("base64");
+  }
+  const response = await fetch(`${stUrl}/csrf-token`, { headers });
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get CSRF token from SillyTavern (${response.status})`,
+    );
+  }
+  // ST returns the token as a plain string or JSON depending on version
+  const text = await response.text();
+  try {
+    const json = JSON.parse(text);
+    return { token: json.token || text, cookies: response.headers.raw()["set-cookie"] || [] };
+  } catch {
+    return { token: text, cookies: response.headers.raw()["set-cookie"] || [] };
+  }
+}
+
+// Build common ST request headers
+function stHeaders(csrfToken, cookies, stPassword) {
+  const headers = {
+    "X-CSRF-Token": csrfToken,
+    "Content-Type": "application/json",
+  };
+  if (cookies.length > 0) {
+    headers["Cookie"] = cookies.map((c) => c.split(";")[0]).join("; ");
+  }
+  if (stPassword) {
+    headers["Authorization"] =
+      "Basic " + Buffer.from(`user:${stPassword}`).toString("base64");
+  }
+  return headers;
+}
+
+// List all characters from SillyTavern
+app.post("/api/st/characters", async (req, res) => {
+  try {
+    const stUrl = req.headers["x-st-url"];
+    const stPassword = req.headers["x-st-password"] || "";
+
+    if (!stUrl) {
+      return res.status(400).json({
+        error: { message: "SillyTavern URL required" },
+      });
+    }
+
+    const { token, cookies } = await getSTCsrfToken(stUrl, stPassword);
+    const response = await fetch(`${stUrl}/api/characters/all`, {
+      method: "POST",
+      headers: stHeaders(token, cookies, stPassword),
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({
+        error: { message: `SillyTavern API error: ${response.statusText}`, details: errorText },
+      });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("ST list characters error:", error);
+    res.status(500).json({
+      error: { message: "Failed to list SillyTavern characters", details: error.message },
+    });
+  }
+});
+
+// Push a character card (PNG) to SillyTavern
+app.post("/api/st/push", async (req, res) => {
+  try {
+    const stUrl = req.headers["x-st-url"];
+    const stPassword = req.headers["x-st-password"] || "";
+
+    if (!stUrl) {
+      return res.status(400).json({
+        error: { message: "SillyTavern URL required" },
+      });
+    }
+
+    const { imageBase64, fileName } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({
+        error: { message: "imageBase64 is required" },
+      });
+    }
+
+    const { token, cookies } = await getSTCsrfToken(stUrl, stPassword);
+
+    // Build multipart form data for ST import
+    const form = new FormData();
+    const imageBuffer = Buffer.from(imageBase64, "base64");
+    form.append("avatar", imageBuffer, {
+      filename: fileName || "character.png",
+      contentType: "image/png",
+    });
+    form.append("file_type", "png");
+
+    const headers = {
+      "X-CSRF-Token": token,
+      ...form.getHeaders(),
+    };
+    if (cookies.length > 0) {
+      headers["Cookie"] = cookies.map((c) => c.split(";")[0]).join("; ");
+    }
+    if (stPassword) {
+      headers["Authorization"] =
+        "Basic " + Buffer.from(`user:${stPassword}`).toString("base64");
+    }
+
+    const response = await fetch(`${stUrl}/api/characters/import`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({
+        error: { message: `SillyTavern import error: ${response.statusText}`, details: errorText },
+      });
+    }
+
+    const data = await response.json();
+    console.log("Character pushed to SillyTavern:", data);
+    res.json(data);
+  } catch (error) {
+    console.error("ST push error:", error);
+    res.status(500).json({
+      error: { message: "Failed to push character to SillyTavern", details: error.message },
+    });
+  }
+});
+
+// Pull a character from SillyTavern (export as JSON)
+app.post("/api/st/pull", async (req, res) => {
+  try {
+    const stUrl = req.headers["x-st-url"];
+    const stPassword = req.headers["x-st-password"] || "";
+
+    if (!stUrl) {
+      return res.status(400).json({
+        error: { message: "SillyTavern URL required" },
+      });
+    }
+
+    const { avatar_url } = req.body;
+    if (!avatar_url) {
+      return res.status(400).json({
+        error: { message: "avatar_url is required" },
+      });
+    }
+
+    const { token, cookies } = await getSTCsrfToken(stUrl, stPassword);
+    const response = await fetch(`${stUrl}/api/characters/export`, {
+      method: "POST",
+      headers: stHeaders(token, cookies, stPassword),
+      body: JSON.stringify({ avatar_url, format: "json" }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({
+        error: { message: `SillyTavern export error: ${response.statusText}`, details: errorText },
+      });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("ST pull error:", error);
+    res.status(500).json({
+      error: { message: "Failed to pull character from SillyTavern", details: error.message },
     });
   }
 });

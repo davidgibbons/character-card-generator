@@ -740,8 +740,18 @@
                         >
                             Download Character JSON
                         </button>
+                        <button
+                            id="push-st-btn"
+                            class="btn-outline"
+                            style="display: none"
+                        >
+                            Push to SillyTavern
+                        </button>
                         <button id="import-card-btn" class="btn-outline">
                             Import Card for Editing
+                        </button>
+                        <button id="pull-st-btn" class="btn-outline">
+                            Pull from SillyTavern
                         </button>
                         <input
                             type="file"
@@ -941,6 +951,58 @@
                         />
                     </div>
 
+                    <!-- SillyTavern Integration -->
+                    <div
+                        style="
+                            border-top: 1px solid var(--border);
+                            margin-top: 1.5rem;
+                            padding-top: 1.5rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                font-size: 1rem;
+                                font-weight: 600;
+                                margin-bottom: 1rem;
+                                color: var(--text-primary);
+                            "
+                        >
+                            SillyTavern Integration
+                        </h3>
+                        <div class="form-group">
+                            <label for="st-url" class="label"
+                                >SillyTavern URL (optional)</label
+                            >
+                            <input
+                                type="text"
+                                id="st-url"
+                                class="input"
+                                placeholder="e.g., http://sillytavern.local:8000"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="st-password" class="label"
+                                >SillyTavern Password (optional)</label
+                            >
+                            <input
+                                type="password"
+                                id="st-password"
+                                class="input"
+                                placeholder="Basic auth password (if enabled)"
+                            />
+                        </div>
+                        <p
+                            style="
+                                font-size: 0.75rem;
+                                color: #9ca3af;
+                                margin-top: 0.5rem;
+                            "
+                        >
+                            Configure your SillyTavern instance to push and
+                            pull character cards directly.
+                        </p>
+                    </div>
+
                     <!-- API Key Persistence Toggle -->
                     <div class="form-group">
                         <label class="label">API Key Persistence</label>
@@ -1022,6 +1084,34 @@
                         <button id="clear-config-btn" class="btn-outline">
                             Clear Saved Configuration
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SillyTavern Character Browser Modal -->
+        <div id="st-browser-modal" class="modal-overlay">
+            <div class="api-settings-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">SillyTavern Characters</h2>
+                    <button id="st-modal-close-btn" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div
+                        id="st-characters-list"
+                        style="
+                            max-height: 60vh;
+                            overflow-y: auto;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.5rem;
+                        "
+                    >
+                        <p style="color: var(--text-secondary)">
+                            Loading characters...
+                        </p>
                     </div>
                 </div>
             </div>
