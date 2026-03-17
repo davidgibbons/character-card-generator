@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const fetch = require("node-fetch");
 require("dotenv").config({ path: "../.env" });
@@ -6,20 +7,12 @@ require("dotenv").config({ path: "../.env" });
 const app = express();
 const PORT = process.env.PORT || 2426;
 
-// Allow CORS from any origin in production (adjust for security as needed)
-const allowedOrigins = [
-  "http://localhost:2427",
-  "http://127.0.0.1:2427",
-  process.env.FRONTEND_URL || "http://localhost:2427",
-];
+// Enable CORS
+app.use(cors());
 
-// Enable CORS for the frontend
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  }),
-);
+// Serve static frontend files
+const staticRoot = process.env.STATIC_ROOT || path.join(__dirname, "..");
+app.use(express.static(staticRoot));
 
 // Increase payload limits for vision requests that include base64 images.
 app.use(express.json({ limit: "12mb" }));
