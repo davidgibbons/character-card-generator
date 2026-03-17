@@ -1198,21 +1198,60 @@ class CharacterGeneratorApp {
         return;
       }
 
-      // Render character list
-      listEl.innerHTML = "";
-      characters.forEach((char) => {
-        const name = char.name || char.avatar?.replace(".png", "") || "Unknown";
-        const avatar = char.avatar || "";
-        const item = document.createElement("button");
-        item.className = "btn-outline";
-        item.style.cssText =
-          "text-align: left; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem;";
-        item.innerHTML = `<span style="font-weight: 500;">${this.escapeHtml(name)}</span>`;
-        item.addEventListener("click", () =>
-          this.handlePullCharacter(avatar, name, modal),
-        );
-        listEl.appendChild(item);
-      });
+      // Render character list with search
+      const renderList = (filter = "") => {
+        listEl.innerHTML = "";
+        const lower = filter.toLowerCase();
+        const filtered = characters.filter((char) => {
+          const name = char.name || char.avatar?.replace(".png", "") || "";
+          const tags = char.tags || [];
+          return (
+            name.toLowerCase().includes(lower) ||
+            tags.some((t) => t.toLowerCase().includes(lower))
+          );
+        });
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = '<p style="color: var(--text-secondary)">No characters match.</p>';
+          return;
+        }
+
+        filtered.forEach((char) => {
+          const name = char.name || char.avatar?.replace(".png", "") || "Unknown";
+          const avatar = char.avatar || "";
+          const tags = char.tags || [];
+
+          const item = document.createElement("button");
+          item.className = "btn-outline st-char-item";
+
+          const visibleTags = tags.slice(0, 3);
+          const extraTags = tags.slice(3);
+
+          const tagsHtml = `
+            <span class="st-char-tags">
+              ${visibleTags.map((t) => `<span class="tag">${this.escapeHtml(t)}</span>`).join("")}
+              ${extraTags.length > 0 ? `
+                <span class="st-tag-more">+${extraTags.length}
+                  <span class="st-tag-tooltip">
+                    ${extraTags.map((t) => `<span>${this.escapeHtml(t)}</span>`).join("")}
+                  </span>
+                </span>` : ""}
+            </span>
+          `;
+
+          item.innerHTML = `<span style="font-weight: 500; flex: 1;">${this.escapeHtml(name)}</span>${tagsHtml}`;
+          item.addEventListener("click", () =>
+            this.handlePullCharacter(avatar, name, modal),
+          );
+          listEl.appendChild(item);
+        });
+      };
+
+      renderList();
+
+      const searchInput = document.getElementById("st-search");
+      searchInput.value = "";
+      searchInput.oninput = (e) => renderList(e.target.value);
     } catch (error) {
       console.error("ST list error:", error);
       listEl.innerHTML = `<p style="color: var(--error)">Error: ${this.escapeHtml(error.message)}</p>`;

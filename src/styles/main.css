@@ -772,6 +772,61 @@ textarea.content-box {
     color: var(--text-secondary);
 }
 
+.st-char-item {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.st-char-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.st-tag-more {
+    position: relative;
+    font-size: 0.77rem;
+    padding: 0.2rem 0.52rem;
+    border-radius: 999px;
+    background: #dde8f0;
+    color: var(--text-secondary);
+    cursor: default;
+}
+
+.st-tag-more:hover .st-tag-tooltip {
+    display: block;
+}
+
+.st-tag-tooltip {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.77rem;
+    color: var(--text-secondary);
+}
+
+.st-tag-more:hover .st-tag-tooltip {
+    display: flex;
+}
+
 .form-section {
     padding: 0.8rem;
     border: 1px solid var(--border);
