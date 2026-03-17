@@ -113,10 +113,14 @@ class CharacterGeneratorApp {
       pushStBtn.addEventListener("click", () => this.handlePushToST());
     }
 
-    // SillyTavern pull button
+    // SillyTavern pull buttons (result section + top of page)
     const pullStBtn = document.getElementById("pull-st-btn");
     if (pullStBtn) {
       pullStBtn.addEventListener("click", () => this.handlePullFromST());
+    }
+    const pullStTopBtn = document.getElementById("pull-st-top-btn");
+    if (pullStTopBtn) {
+      pullStTopBtn.addEventListener("click", () => this.handlePullFromST());
     }
 
     // SillyTavern browser modal
@@ -1241,7 +1245,7 @@ class CharacterGeneratorApp {
       this.displayCharacter();
       this.showResultSection();
 
-      // Show image controls (no image from JSON pull but user can upload)
+      // Show image controls
       document.getElementById("image-controls").style.display = "block";
 
       // Close modal
@@ -1252,6 +1256,32 @@ class CharacterGeneratorApp {
         `Pulled "${name}" from SillyTavern!`,
         "success",
       );
+
+      // Fetch the avatar image from SillyTavern via proxy
+      if (avatarUrl) {
+        try {
+          const stUrl = this.config.get("api.sillytavern.url");
+          const avatarImageUrl = `${stUrl}/characters/${avatarUrl}`;
+          const imgResponse = await fetch(
+            `/api/proxy-image?url=${encodeURIComponent(avatarImageUrl)}`,
+          );
+          if (imgResponse.ok) {
+            const blob = await imgResponse.blob();
+            if (this.currentImageUrl && this.currentImageUrl.startsWith("blob:")) {
+              URL.revokeObjectURL(this.currentImageUrl);
+            }
+            this.currentImageUrl = URL.createObjectURL(blob);
+            const imageContainer = document.getElementById("image-content");
+            imageContainer.innerHTML = `
+              <div class="image-container">
+                <img src="${this.currentImageUrl}" alt="${this.escapeHtml(name)}" class="generated-image">
+              </div>
+            `;
+          }
+        } catch (imgError) {
+          console.warn("Could not fetch avatar image from SillyTavern:", imgError);
+        }
+      }
     } catch (error) {
       console.error("ST pull error:", error);
       this.showNotification(
