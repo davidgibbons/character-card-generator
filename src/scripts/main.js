@@ -256,7 +256,7 @@ class CharacterGeneratorApp {
 
     // Save API settings on input change
     const apiInputs = document.querySelectorAll(
-      "#text-api-base, #text-api-key, #text-model, #vision-model, #image-api-base, #image-api-key, #image-model",
+      "#text-api-base, #text-api-key, #text-model, #vision-model, #image-api-base, #image-api-key, #image-model, #st-url, #st-password",
     );
     apiInputs.forEach((input) => {
       input.addEventListener("change", () => this.saveAPISettings());
@@ -1198,6 +1198,15 @@ class CharacterGeneratorApp {
         return;
       }
 
+      // Shared body-level tooltip (avoids overflow/transform clipping)
+      let sharedTooltip = document.getElementById("st-tag-shared-tooltip");
+      if (!sharedTooltip) {
+        sharedTooltip = document.createElement("div");
+        sharedTooltip.id = "st-tag-shared-tooltip";
+        sharedTooltip.className = "st-tag-tooltip";
+        document.body.appendChild(sharedTooltip);
+      }
+
       // Render character list with search
       const renderList = (filter = "") => {
         listEl.innerHTML = "";
@@ -1221,29 +1230,69 @@ class CharacterGeneratorApp {
           const avatar = char.avatar || "";
           const tags = char.tags || [];
 
-          const item = document.createElement("button");
-          item.className = "btn-outline st-char-item";
+          const truncTag = (t) => t.length > 10 ? this.escapeHtml(t.slice(0, 10)) + "…" : this.escapeHtml(t);
 
-          const visibleTags = tags.slice(0, 3);
-          const extraTags = tags.slice(3);
+          // Sort tags by length (shortest first) to fit more
+          const sorted = [...tags].sort((a, b) => a.length - b.length);
 
-          const tagsHtml = `
-            <span class="st-char-tags">
-              ${visibleTags.map((t) => `<span class="tag">${this.escapeHtml(t)}</span>`).join("")}
-              ${extraTags.length > 0 ? `
-                <span class="st-tag-more">+${extraTags.length}
-                  <span class="st-tag-tooltip">
-                    ${extraTags.map((t) => `<span>${this.escapeHtml(t)}</span>`).join("")}
-                  </span>
-                </span>` : ""}
-            </span>
-          `;
+          // Use a wrapper div so tags/tooltip aren't inside the button
+          const row = document.createElement("div");
+          row.className = "st-char-item btn-outline";
 
-          item.innerHTML = `<span style="font-weight: 500; flex: 1;">${this.escapeHtml(name)}</span>${tagsHtml}`;
-          item.addEventListener("click", () =>
+          const nameBtn = document.createElement("span");
+          nameBtn.className = "st-char-name";
+          nameBtn.textContent = name;
+
+          const tagsEl = document.createElement("span");
+          tagsEl.className = "st-char-tags";
+
+          // Add all tags as hidden spans, then measure which fit
+          sorted.forEach((t) => {
+            const tagSpan = document.createElement("span");
+            tagSpan.className = "tag";
+            tagSpan.textContent = t.length > 10 ? t.slice(0, 10) + "…" : t;
+            tagsEl.appendChild(tagSpan);
+          });
+
+          row.appendChild(nameBtn);
+          row.appendChild(tagsEl);
+          row.addEventListener("click", () =>
             this.handlePullCharacter(avatar, name, modal),
           );
-          listEl.appendChild(item);
+          listEl.appendChild(row);
+
+          // Measure which tags fit, remove overflow, add +N
+          if (sorted.length > 0) {
+            const tagSpans = tagsEl.querySelectorAll(".tag");
+            const maxWidth = tagsEl.clientWidth;
+            let fittingCount = 0;
+
+            for (let i = 0; i < tagSpans.length; i++) {
+              if (tagSpans[i].offsetLeft + tagSpans[i].offsetWidth > maxWidth) break;
+              fittingCount++;
+            }
+
+            if (fittingCount < sorted.length) {
+              // Remove tags that don't fit
+              for (let i = tagSpans.length - 1; i >= fittingCount; i--) {
+                tagSpans[i].remove();
+              }
+              const hiddenTags = sorted.slice(fittingCount);
+              const moreEl = document.createElement("span");
+              moreEl.className = "st-tag-more";
+              moreEl.textContent = `+${hiddenTags.length}`;
+              moreEl.addEventListener("mouseenter", (e) => {
+                sharedTooltip.innerHTML = hiddenTags.map((t) => `<span class="tag">${this.escapeHtml(t)}</span>`).join("");
+                sharedTooltip.style.top = `${e.clientY}px`;
+                sharedTooltip.style.left = `${Math.max(10, e.clientX - 220)}px`;
+                sharedTooltip.classList.add("visible");
+              });
+              moreEl.addEventListener("mouseleave", () => {
+                sharedTooltip.classList.remove("visible");
+              });
+              tagsEl.appendChild(moreEl);
+            }
+          }
         });
       };
 
