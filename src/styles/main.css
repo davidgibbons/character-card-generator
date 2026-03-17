@@ -653,7 +653,7 @@ textarea.content-box {
 .api-settings-modal {
     width: min(760px, 100%);
     max-height: min(88vh, 980px);
-    overflow: auto;
+    overflow: hidden;
     border-radius: var(--radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.45);
     background: linear-gradient(180deg, #ffffff, #f8fbff);
@@ -768,7 +768,8 @@ textarea.content-box {
     font-size: 0.77rem;
     padding: 0.2rem 0.52rem;
     border-radius: 999px;
-    background: #eaf5ff;
+    background: transparent;
+    border: 1px solid var(--border);
     color: var(--text-secondary);
 }
 
@@ -777,10 +778,19 @@ textarea.content-box {
     padding: 0.6rem 1rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.75rem;
     width: 100%;
     box-sizing: border-box;
+    cursor: pointer;
+}
+
+.st-char-name {
+    flex: 1;
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .st-char-tags {
@@ -788,6 +798,9 @@ textarea.content-box {
     align-items: center;
     gap: 0.35rem;
     flex-shrink: 0;
+    max-width: 220px;
+    overflow: hidden;
+    flex-wrap: nowrap;
 }
 
 .st-tag-more {
@@ -800,30 +813,23 @@ textarea.content-box {
     cursor: default;
 }
 
-.st-tag-more:hover .st-tag-tooltip {
-    display: block;
-}
-
 .st-tag-tooltip {
     display: none;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 4px);
-    background: var(--surface);
+    position: fixed;
+    background: #ffffff;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 0.5rem 0.75rem;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    z-index: 100;
-    display: none;
-    flex-direction: column;
-    gap: 0.25rem;
+    padding: 0.5rem 0.6rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 1200;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    max-width: 220px;
     font-size: 0.77rem;
-    color: var(--text-secondary);
 }
 
-.st-tag-more:hover .st-tag-tooltip {
+.st-tag-tooltip.visible {
     display: flex;
 }
 
