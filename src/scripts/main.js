@@ -107,6 +107,34 @@ class CharacterGeneratorApp {
       }
     }
 
+    // SillyTavern push button
+    const pushStBtn = document.getElementById("push-st-btn");
+    if (pushStBtn) {
+      pushStBtn.addEventListener("click", () => this.handlePushToST());
+    }
+
+    // SillyTavern pull button
+    const pullStBtn = document.getElementById("pull-st-btn");
+    if (pullStBtn) {
+      pullStBtn.addEventListener("click", () => this.handlePullFromST());
+    }
+
+    // SillyTavern browser modal
+    const stModalOverlay = document.getElementById("st-browser-modal");
+    const stModalCloseBtn = document.getElementById("st-modal-close-btn");
+    if (stModalOverlay && stModalCloseBtn) {
+      stModalCloseBtn.addEventListener("click", () => {
+        stModalOverlay.classList.remove("show");
+        document.body.style.overflow = "";
+      });
+      stModalOverlay.addEventListener("click", (e) => {
+        if (e.target === stModalOverlay) {
+          stModalOverlay.classList.remove("show");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+
     // Revision button
     const reviseCharacterBtn = document.getElementById("revise-character-btn");
     if (reviseCharacterBtn) {
@@ -1026,6 +1054,219 @@ class CharacterGeneratorApp {
     }
   }
 
+  // --- SillyTavern Integration ---
+
+  getSTHeaders() {
+    const stUrl = this.config.get("api.sillytavern.url");
+    const stPassword = this.config.get("api.sillytavern.password") || "";
+    const headers = {
+      "Content-Type": "application/json",
+      "X-ST-URL": stUrl,
+    };
+    if (stPassword) {
+      headers["X-ST-Password"] = stPassword;
+    }
+    return headers;
+  }
+
+  async handlePushToST() {
+    const stUrl = this.config.get("api.sillytavern.url");
+    if (!stUrl) {
+      this.showNotification(
+        "Configure SillyTavern URL in settings first",
+        "warning",
+      );
+      return;
+    }
+
+    if (!this.currentCharacter || !this.currentImageUrl) {
+      this.showNotification("No character to push", "warning");
+      return;
+    }
+
+    try {
+      this.showNotification("Pushing to SillyTavern...", "info");
+
+      // Read current edits from the form
+      const descriptionTextarea = document.getElementById(
+        "character-description",
+      );
+      const personalityTextarea = document.getElementById(
+        "character-personality",
+      );
+      const scenarioTextarea = document.getElementById("character-scenario");
+      const firstMessageTextarea = document.getElementById(
+        "character-first-message",
+      );
+
+      this.currentCharacter.description = descriptionTextarea.value.trim();
+      this.currentCharacter.personality = personalityTextarea.value.trim();
+      this.currentCharacter.scenario = scenarioTextarea.value.trim();
+      this.currentCharacter.firstMessage = firstMessageTextarea.value.trim();
+
+      // Build the PNG character card (same as download)
+      let imageBlob = await this.imageGenerator.convertToBlob(
+        this.currentImageUrl,
+      );
+      imageBlob = await this.imageGenerator.optimizeImageForCard(imageBlob);
+
+      const specV2Data = this.characterGenerator.toSpecV2Format(
+        this.currentCharacter,
+      );
+      const cardBlob = await this.pngEncoder.createCharacterCard(
+        imageBlob,
+        specV2Data,
+      );
+
+      // Convert blob to base64
+      const arrayBuffer = await cardBlob.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          "",
+        ),
+      );
+
+      const response = await fetch("/api/st/push", {
+        method: "POST",
+        headers: this.getSTHeaders(),
+        body: JSON.stringify({
+          imageBase64: base64,
+          fileName: `${this.currentCharacter.name || "character"}.png`,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Push failed");
+      }
+
+      const result = await response.json();
+      this.showNotification(
+        `Pushed "${result.name || this.currentCharacter.name}" to SillyTavern!`,
+        "success",
+      );
+    } catch (error) {
+      console.error("ST push error:", error);
+      this.showNotification(
+        `Push to SillyTavern failed: ${error.message}`,
+        "error",
+      );
+    }
+  }
+
+  async handlePullFromST() {
+    const stUrl = this.config.get("api.sillytavern.url");
+    if (!stUrl) {
+      this.showNotification(
+        "Configure SillyTavern URL in settings first",
+        "warning",
+      );
+      return;
+    }
+
+    const modal = document.getElementById("st-browser-modal");
+    const listEl = document.getElementById("st-characters-list");
+
+    // Show modal with loading state
+    listEl.innerHTML =
+      '<p style="color: var(--text-secondary)">Loading characters...</p>';
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    try {
+      const response = await fetch("/api/st/characters", {
+        method: "POST",
+        headers: this.getSTHeaders(),
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Failed to list characters");
+      }
+
+      const characters = await response.json();
+
+      if (!characters || characters.length === 0) {
+        listEl.innerHTML =
+          '<p style="color: var(--text-secondary)">No characters found.</p>';
+        return;
+      }
+
+      // Render character list
+      listEl.innerHTML = "";
+      characters.forEach((char) => {
+        const name = char.name || char.avatar?.replace(".png", "") || "Unknown";
+        const avatar = char.avatar || "";
+        const item = document.createElement("button");
+        item.className = "btn-outline";
+        item.style.cssText =
+          "text-align: left; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem;";
+        item.innerHTML = `<span style="font-weight: 500;">${this.escapeHtml(name)}</span>`;
+        item.addEventListener("click", () =>
+          this.handlePullCharacter(avatar, name, modal),
+        );
+        listEl.appendChild(item);
+      });
+    } catch (error) {
+      console.error("ST list error:", error);
+      listEl.innerHTML = `<p style="color: var(--error)">Error: ${this.escapeHtml(error.message)}</p>`;
+    }
+  }
+
+  async handlePullCharacter(avatarUrl, name, modal) {
+    try {
+      this.showNotification(`Pulling "${name}" from SillyTavern...`, "info");
+
+      const response = await fetch("/api/st/pull", {
+        method: "POST",
+        headers: this.getSTHeaders(),
+        body: JSON.stringify({ avatar_url: avatarUrl }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Pull failed");
+      }
+
+      const data = await response.json();
+
+      // Normalize the character from ST's export format
+      const characterData = this.normalizeCharacterFromSpec(data);
+      this.currentCharacter = characterData;
+      this.originalCharacter = JSON.parse(JSON.stringify(characterData));
+
+      // Display the character (reads from this.currentCharacter)
+      this.displayCharacter();
+      this.showResultSection();
+
+      // Show image controls (no image from JSON pull but user can upload)
+      document.getElementById("image-controls").style.display = "block";
+
+      // Close modal
+      modal.classList.remove("show");
+      document.body.style.overflow = "";
+
+      this.showNotification(
+        `Pulled "${name}" from SillyTavern!`,
+        "success",
+      );
+    } catch (error) {
+      console.error("ST pull error:", error);
+      this.showNotification(
+        `Pull failed: ${error.message}`,
+        "error",
+      );
+    }
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   handleCharacterEdit(field) {
     if (!this.originalCharacter || !this.currentCharacter) {
       return;
@@ -1281,6 +1522,12 @@ class CharacterGeneratorApp {
       downloadJsonBtn.style.display = "inline-flex";
     }
 
+    // Show push to ST button if ST is configured
+    const pushStBtn = document.getElementById("push-st-btn");
+    if (pushStBtn && this.config.get("api.sillytavern.url")) {
+      pushStBtn.style.display = "inline-flex";
+    }
+
     // Smooth scroll to results
     resultSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
@@ -1293,6 +1540,8 @@ class CharacterGeneratorApp {
     resultSection.style.display = "none";
     downloadBtn.style.display = "none";
     if (downloadJsonBtn) downloadJsonBtn.style.display = "none";
+    const pushStBtn = document.getElementById("push-st-btn");
+    if (pushStBtn) pushStBtn.style.display = "none";
   }
 
   async handleReferenceImageUpload(event) {
