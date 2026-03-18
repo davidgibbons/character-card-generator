@@ -625,6 +625,53 @@ textarea.content-box {
     box-shadow: 0 0 0 4px rgba(201, 61, 74, 0.2);
 }
 
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-icon:hover {
+    background: var(--bg-hover, #f0f4f8);
+    color: var(--text-primary);
+    border-color: var(--border-hover, #b0bec5);
+}
+
+.debug-response-modal {
+    width: min(760px, 100%);
+    max-height: min(80vh, 900px);
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+}
+
+.debug-response-content {
+    margin: 0;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    background: var(--bg-secondary, #f8fbff);
+    border-radius: var(--radius);
+    min-height: 8rem;
+}
+
 .modal-overlay {
     position: fixed;
     inset: 0;
