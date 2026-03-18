@@ -821,6 +821,9 @@
                         <span class="status-indicator status-offline"></span>
                         <span class="status-text">API Status: Checking...</span>
                     </div>
+                    <button id="debug-response-btn" class="btn-icon" title="Show last AI response">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
                 </div>
                 <div class="footer-center">
                     <button
@@ -1123,6 +1126,19 @@
                             Loading characters...
                         </p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Response Modal -->
+        <div id="debug-response-modal" class="modal-overlay">
+            <div class="debug-response-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">Last AI Response (Raw)</h2>
+                    <button id="debug-response-close-btn" class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <pre id="debug-response-content" class="debug-response-content">No response captured yet.</pre>
                 </div>
             </div>
         </div>
