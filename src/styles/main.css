@@ -700,7 +700,7 @@ textarea.content-box {
 .api-settings-modal {
     width: min(760px, 100%);
     max-height: min(88vh, 980px);
-    overflow: hidden;
+    overflow: auto;
     border-radius: var(--radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.45);
     background: linear-gradient(180deg, #ffffff, #f8fbff);
