@@ -1289,23 +1289,37 @@ class CharacterGeneratorApp {
           // Measure which tags fit, remove overflow, add +N
           if (sorted.length > 0) {
             const tagSpans = tagsEl.querySelectorAll(".tag");
-            const maxWidth = tagsEl.clientWidth;
+            const containerRight = tagsEl.getBoundingClientRect().right;
             let fittingCount = 0;
 
             for (let i = 0; i < tagSpans.length; i++) {
-              if (tagSpans[i].offsetLeft + tagSpans[i].offsetWidth > maxWidth) break;
+              if (tagSpans[i].getBoundingClientRect().right > containerRight) break;
               fittingCount++;
             }
 
             if (fittingCount < sorted.length) {
+              // Add +N badge first (hidden) to measure its width, then back off
+              // enough visible tags so the badge itself fits too
+              const moreEl = document.createElement("span");
+              moreEl.className = "st-tag-more";
+              moreEl.style.visibility = "hidden";
+              moreEl.textContent = `+${sorted.length - fittingCount}`;
+              tagsEl.appendChild(moreEl);
+              const moreWidth = moreEl.getBoundingClientRect().width;
+              tagsEl.removeChild(moreEl);
+              moreEl.style.visibility = "";
+
+              // Back off visible tags until there's room for the badge
+              while (fittingCount > 0 && tagSpans[fittingCount - 1].getBoundingClientRect().right + moreWidth > containerRight) {
+                fittingCount--;
+              }
+              moreEl.textContent = `+${sorted.length - fittingCount}`;
+
               // Remove tags that don't fit
               for (let i = tagSpans.length - 1; i >= fittingCount; i--) {
                 tagSpans[i].remove();
               }
               const hiddenTags = sorted.slice(fittingCount);
-              const moreEl = document.createElement("span");
-              moreEl.className = "st-tag-more";
-              moreEl.textContent = `+${hiddenTags.length}`;
               moreEl.addEventListener("mouseenter", (e) => {
                 sharedTooltip.innerHTML = hiddenTags.map((t) => `<span class="tag">${this.escapeHtml(t)}</span>`).join("");
                 sharedTooltip.style.top = `${e.clientY}px`;
