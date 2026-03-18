@@ -33,6 +33,9 @@ After generation, offer a "Rate this card" action that sends the card back to th
 Sync cards directly with a running SillyTavern instance — pull existing characters for editing, push generated cards back.
 **Status:** Pull is done (in `main`). Push not yet implemented.
 
+### Push Generated Intro Messages to ST
+The app already generates example/intro messages but currently relies on copy/paste into ST manually. Add a push action to write them directly to the character's profile in a running ST instance. Requires ST URL configured (same as pull).
+
 ### Reference Characters in Prompts
 Once cards aren't duplicated (see versioning below), allow `@name` references in the concept prompt:
 - _"Create an arch nemesis for @bob"_
