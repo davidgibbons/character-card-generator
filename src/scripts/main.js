@@ -275,6 +275,30 @@ class CharacterGeneratorApp {
       });
     }
 
+    // Debug Response Modal functionality
+    const debugResponseBtn = document.getElementById("debug-response-btn");
+    const debugResponseModal = document.getElementById("debug-response-modal");
+    const debugResponseCloseBtn = document.getElementById("debug-response-close-btn");
+    const debugResponseContent = document.getElementById("debug-response-content");
+
+    debugResponseBtn.addEventListener("click", () => {
+      const raw = this.characterGenerator && this.characterGenerator.rawCharacterData;
+      debugResponseContent.textContent = raw || "No response captured yet.";
+      debugResponseModal.classList.add("show");
+      document.body.style.overflow = "hidden";
+    });
+
+    const closeDebugModal = () => {
+      debugResponseModal.classList.remove("show");
+      document.body.style.overflow = "";
+    };
+
+    debugResponseCloseBtn.addEventListener("click", closeDebugModal);
+
+    debugResponseModal.addEventListener("click", (e) => {
+      if (e.target === debugResponseModal) closeDebugModal();
+    });
+
     // API Settings Modal functionality
     const apiSettingsBtn = document.getElementById("api-settings-btn");
     const modalOverlay = document.getElementById("api-settings-modal");
@@ -295,10 +319,11 @@ class CharacterGeneratorApp {
     // Close modal with close button
     modalCloseBtn.addEventListener("click", closeModal);
 
-    // Close modal with escape key
+    // Close modals with escape key
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modalOverlay.classList.contains("show")) {
-        closeModal();
+      if (e.key === "Escape") {
+        if (debugResponseModal.classList.contains("show")) closeDebugModal();
+        if (modalOverlay.classList.contains("show")) closeModal();
       }
     });
 
