@@ -373,6 +373,10 @@ class CharacterGeneratorApp {
       if (e.key === "Escape") {
         if (debugResponseModal.classList.contains("show")) closeDebugModal();
         if (modalOverlay.classList.contains("show")) closeModal();
+        const hm = document.getElementById("history-modal");
+        if (hm?.classList.contains("show")) this.closeHistoryModal();
+        const dm = document.getElementById("diff-modal");
+        if (dm?.classList.contains("show")) this.closeDiffModal();
       }
     });
 
@@ -424,6 +428,30 @@ class CharacterGeneratorApp {
     }
     if (dismissBtn) {
       dismissBtn.addEventListener("click", () => this.dismissMigrationBanner());
+    }
+
+    // History modal close
+    const historyModal = document.getElementById("history-modal");
+    const historyCloseBtn = document.getElementById("history-modal-close-btn");
+    if (historyCloseBtn) {
+      historyCloseBtn.addEventListener("click", () => this.closeHistoryModal());
+    }
+    if (historyModal) {
+      historyModal.addEventListener("click", (e) => {
+        if (e.target === historyModal) this.closeHistoryModal();
+      });
+    }
+
+    // Diff modal close
+    const diffModal = document.getElementById("diff-modal");
+    const diffCloseBtn = document.getElementById("diff-modal-close-btn");
+    if (diffCloseBtn) {
+      diffCloseBtn.addEventListener("click", () => this.closeDiffModal());
+    }
+    if (diffModal) {
+      diffModal.addEventListener("click", (e) => {
+        if (e.target === diffModal) this.closeDiffModal();
+      });
     }
   }
 
@@ -663,7 +691,14 @@ class CharacterGeneratorApp {
 
       // Display character and highlight changed fields
       this.displayCharacter();
-      if (prevFieldValues) this.highlightChangedFields(prevFieldValues);
+      if (prevFieldValues) {
+        this.highlightChangedFields(prevFieldValues);
+        this._lastPrevFieldValues = prevFieldValues;
+        this._showChangesLink(prevFieldValues);
+      } else {
+        this._lastPrevFieldValues = null;
+        this._removeChangesLink();
+      }
 
       // Check if image generation is configured and enabled
       const imageApiBase = this.config.get("api.image.baseUrl");
@@ -1698,6 +1733,7 @@ class CharacterGeneratorApp {
       stopBtn.style.display = "inline-block";
       if (progressBar) progressBar.style.display = "block";
       this.clearFieldHighlights();
+      this._removeChangesLink();
     } else {
       generateBtn.disabled = false;
       btnText.style.display = "inline";
@@ -2271,9 +2307,10 @@ class CharacterGeneratorApp {
               (card) => `
                 <div class="library-item">
                   <div class="library-item-title">${card.characterName || "Unnamed Character"}</div>
-                  <div class="library-item-date">${this.formatLibraryTime(card.updatedAt)}</div>
+                  <div class="library-item-date">${this.formatLibraryTime(card.updatedAt)}${card.commitCount ? ` · ${card.commitCount} version${card.commitCount === 1 ? "" : "s"}` : ""}</div>
                   <div class="library-item-actions">
                     <button class="btn-small" data-action="load-card" data-id="${card.id}">Load</button>
+                    ${card.commitCount > 0 ? `<button class="btn-small" data-action="view-history" data-id="${card.id}" data-name="${card.characterName || "Card"}">History</button>` : ""}
                     <button class="btn-small" data-action="delete-card" data-id="${card.id}">Delete</button>
                   </div>
                 </div>
@@ -2395,6 +2432,9 @@ class CharacterGeneratorApp {
           `;
         }
         this.showNotification("Card loaded", "success");
+      } else if (action === "view-history") {
+        const name = actionElement.dataset.name || id;
+        this.openHistoryModal(String(id), name);
       } else if (action === "delete-card") {
         await this.storage.deleteCard(id);
         await this.refreshLibraryViews();
@@ -2452,6 +2492,197 @@ class CharacterGeneratorApp {
         }
       }, 300);
     }, 5000);
+  }
+
+  // ── Version History Modal ──────────────────────────────────────────────────
+
+  async openHistoryModal(slug, name) {
+    const modal = document.getElementById("history-modal");
+    const titleEl = document.getElementById("history-modal-title");
+    const listEl = document.getElementById("history-list");
+    const previewEl = document.getElementById("history-preview");
+
+    if (!modal) return;
+
+    titleEl.textContent = `Version History — ${name}`;
+    listEl.innerHTML = '<p class="library-empty">Loading history…</p>';
+    if (previewEl) previewEl.style.display = "none";
+
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    // Store slug for restore
+    modal.dataset.slug = slug;
+
+    try {
+      const res = await fetch(`/api/cards/${slug}/history`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const history = await res.json();
+
+      if (!history.length) {
+        listEl.innerHTML = '<p class="library-empty">No history yet.</p>';
+        return;
+      }
+
+      listEl.innerHTML = history
+        .map(
+          (entry, i) => `
+          <div class="history-entry" data-hash="${entry.hash}" data-slug="${slug}">
+            <span class="history-entry-time">${this.formatLibraryTime(entry.timestamp)}${i === 0 ? " (current)" : ""}</span>
+            ${entry.steeringInput ? `<span class="history-entry-steering">${this.escapeHtml(entry.steeringInput)}</span>` : ""}
+          </div>
+        `,
+        )
+        .join("");
+
+      // Click a version entry to preview it
+      listEl.addEventListener("click", (e) => {
+        const entry = e.target.closest(".history-entry");
+        if (!entry) return;
+        listEl
+          .querySelectorAll(".history-entry")
+          .forEach((el) => el.classList.remove("active"));
+        entry.classList.add("active");
+        this.loadHistoryVersion(entry.dataset.slug, entry.dataset.hash);
+      });
+    } catch (err) {
+      listEl.innerHTML = `<p class="library-empty">Failed to load history: ${err.message}</p>`;
+    }
+  }
+
+  async loadHistoryVersion(slug, hash) {
+    const previewEl = document.getElementById("history-preview");
+    const labelEl = document.getElementById("history-preview-label");
+    const fieldsEl = document.getElementById("history-preview-fields");
+    const restoreBtn = document.getElementById("history-restore-btn");
+
+    if (!previewEl) return;
+    previewEl.style.display = "block";
+    labelEl.textContent = "Loading…";
+    fieldsEl.innerHTML = "";
+
+    try {
+      const res = await fetch(`/api/cards/${slug}/version/${hash}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { card } = await res.json();
+
+      labelEl.textContent = `Snapshot — ${card.name || slug}`;
+
+      const fields = ["description", "personality", "scenario", "firstMessage"];
+      fieldsEl.innerHTML = fields
+        .filter((f) => card[f])
+        .map(
+          (f) => `
+          <div class="history-field">
+            <span class="history-field-name">${f === "firstMessage" ? "First Message" : f}</span>
+            <div class="history-field-value">${this.escapeHtml(card[f] || "")}</div>
+          </div>
+        `,
+        )
+        .join("");
+
+      // Wire restore button
+      restoreBtn.onclick = () => {
+        this.currentCharacter = card;
+        this.originalCharacter = JSON.parse(JSON.stringify(card));
+        this.displayCharacter();
+        this.showResultSection();
+        document.getElementById("history-modal").classList.remove("show");
+        document.body.style.overflow = "";
+        this.showNotification("Version restored", "success");
+      };
+    } catch (err) {
+      labelEl.textContent = `Error: ${err.message}`;
+    }
+  }
+
+  closeHistoryModal() {
+    const modal = document.getElementById("history-modal");
+    if (modal) modal.classList.remove("show");
+    document.body.style.overflow = "";
+  }
+
+  // ── Regeneration Diff Modal ────────────────────────────────────────────────
+
+  showDiffModal(prevValues) {
+    if (!prevValues || !this.currentCharacter) return;
+
+    const fields = [
+      { key: "description", label: "Description" },
+      { key: "personality", label: "Personality" },
+      { key: "scenario", label: "Scenario" },
+      { key: "firstMessage", label: "First Message" },
+    ];
+
+    const changed = fields.filter((f) => {
+      const prev = (prevValues[f.key] || "").trim();
+      const next = (this.currentCharacter[f.key] || "").trim();
+      return prev && next && prev !== next;
+    });
+
+    if (!changed.length) {
+      this.showNotification("No field content changed.", "info");
+      return;
+    }
+
+    const contentEl = document.getElementById("diff-modal-content");
+    if (contentEl) {
+      contentEl.innerHTML = changed
+        .map(
+          (f) => `
+          <div class="diff-field">
+            <div class="diff-field-header">${f.label}</div>
+            <div class="diff-before">
+              <span class="diff-label">Before</span>
+              <div class="diff-value">${this.escapeHtml(prevValues[f.key] || "")}</div>
+            </div>
+            <div class="diff-after">
+              <span class="diff-label">After</span>
+              <div class="diff-value">${this.escapeHtml(this.currentCharacter[f.key] || "")}</div>
+            </div>
+          </div>
+        `,
+        )
+        .join("");
+    }
+
+    const modal = document.getElementById("diff-modal");
+    if (modal) {
+      modal.classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  closeDiffModal() {
+    const modal = document.getElementById("diff-modal");
+    if (modal) modal.classList.remove("show");
+    document.body.style.overflow = "";
+  }
+
+  _showChangesLink(prevValues) {
+    this._removeChangesLink();
+    // Only show if there are actual changes
+    const fields = ["description", "personality", "scenario", "firstMessage"];
+    const hasChanges = fields.some((f) => {
+      const prev = (prevValues[f] || "").trim();
+      const next = (this.currentCharacter?.[f] || "").trim();
+      return prev && next && prev !== next;
+    });
+    if (!hasChanges) return;
+
+    const resultSection = document.querySelector(".result-section");
+    if (!resultSection) return;
+
+    const btn = document.createElement("button");
+    btn.id = "show-changes-link";
+    btn.className = "show-changes-link";
+    btn.textContent = "⟷ Show what changed";
+    btn.addEventListener("click", () => this.showDiffModal(prevValues));
+    resultSection.insertBefore(btn, resultSection.firstChild);
+  }
+
+  _removeChangesLink() {
+    document.getElementById("show-changes-link")?.remove();
   }
 
   // Utility methods

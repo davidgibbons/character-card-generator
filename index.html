@@ -1159,6 +1159,42 @@
             </div>
         </div>
 
+        <!-- Version History Modal -->
+        <div id="history-modal" class="modal-overlay">
+            <div class="history-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="history-modal-title">Version History</h2>
+                    <button id="history-modal-close-btn" class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="history-list" class="history-list">
+                        <p class="library-empty">Loading history…</p>
+                    </div>
+                    <!-- Version preview area (hidden until a version is clicked) -->
+                    <div id="history-preview" class="history-preview" style="display: none">
+                        <div class="history-preview-header">
+                            <span id="history-preview-label" class="history-preview-label"></span>
+                            <button id="history-restore-btn" class="btn-primary">Restore this version</button>
+                        </div>
+                        <div id="history-preview-fields" class="history-preview-fields"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diff Modal (regeneration changes) -->
+        <div id="diff-modal" class="modal-overlay">
+            <div class="diff-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">What Changed</h2>
+                    <button id="diff-modal-close-btn" class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="diff-modal-content" class="diff-content"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Debug Response Modal -->
         <div id="debug-response-modal" class="modal-overlay">
             <div class="debug-response-modal">

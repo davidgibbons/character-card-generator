@@ -224,6 +224,19 @@ router.delete("/:slug", async (req, res) => {
   }
 });
 
+// ── GET /api/cards/:slug/version/:hash ────────────────────────────────────
+
+router.get("/:slug/version/:hash", async (req, res) => {
+  const { slug, hash } = req.params;
+  const relPath = path.join("cards", slug, "card.json");
+  try {
+    const raw = await getGit().show([`${hash}:${relPath}`]);
+    res.json({ slug, hash, card: JSON.parse(raw) });
+  } catch (error) {
+    res.status(404).json({ error: "Version not found", details: error.message });
+  }
+});
+
 // ── GET /api/cards/:slug/history ───────────────────────────────────────────
 
 router.get("/:slug/history", async (req, res) => {
