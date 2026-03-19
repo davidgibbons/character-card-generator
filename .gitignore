@@ -187,3 +187,6 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# Card storage (git-backed, managed by proxy/cards.js)
+proxy/cards/

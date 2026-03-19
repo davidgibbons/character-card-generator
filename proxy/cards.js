@@ -1,4 +1,14 @@
 // Cards REST API — git-backed server storage
+//
+// Layout (all under CARDS_DIR = proxy/cards/):
+//   proxy/cards/.git/           ← git repo lives here (inside the volume)
+//   proxy/cards/.gitignore      ← ignores avatar.png per-card
+//   proxy/cards/{slug}/card.json
+//   proxy/cards/{slug}/avatar.png  (not committed by default)
+//
+// Because the git repo is rooted at CARDS_DIR, history persists when
+// CARDS_DIR is a Docker named volume.
+
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
@@ -6,13 +16,12 @@ const { simpleGit } = require("simple-git");
 
 const router = express.Router();
 
-// Cards are stored at proxy/cards/{slug}/card.json
+// All data (cards + git repo) lives here
 const CARDS_DIR = path.join(__dirname, "cards");
 
-// simple-git operates on the proxy/ directory
 let _git = null;
 function getGit() {
-  if (!_git) _git = simpleGit(__dirname);
+  if (!_git) _git = simpleGit(CARDS_DIR);
   return _git;
 }
 
@@ -22,11 +31,13 @@ async function ensureCardDir(slug) {
   return dir;
 }
 
-// Initialize git repo inside proxy/ on server startup
+// Initialize the git repo inside CARDS_DIR on server startup.
+// Idempotent — safe to call multiple times.
 async function initGit() {
-  const g = getGit();
+  await fs.promises.mkdir(CARDS_DIR, { recursive: true });
 
-  const dotGit = path.join(__dirname, ".git");
+  const g = getGit();
+  const dotGit = path.join(CARDS_DIR, ".git");
   let isRepo = false;
   try {
     await fs.promises.access(dotGit);
@@ -43,17 +54,16 @@ async function initGit() {
       "user.name",
       process.env.GIT_AUTHOR_NAME || "Character Generator",
     );
-    console.log("📦 Initialized git repo for card storage");
+    console.log("📦 Initialized git repo for card storage at", CARDS_DIR);
   }
 
-  // Ensure cards dir and .gitignore for avatars
-  await fs.promises.mkdir(CARDS_DIR, { recursive: true });
+  // Ensure .gitignore ignores avatar files (keeps the repo lean)
   const gitignorePath = path.join(CARDS_DIR, ".gitignore");
   try {
     await fs.promises.access(gitignorePath);
   } catch {
     await fs.promises.writeFile(gitignorePath, "avatar.png\n");
-    await g.add(path.join("cards", ".gitignore"));
+    await g.add(".gitignore");
     const status = await g.status();
     if (status.staged.length > 0) {
       await g.commit("chore: init cards store");
@@ -83,7 +93,7 @@ router.get("/", async (req, res) => {
           let commitCount = 0;
           try {
             const log = await getGit().log({
-              file: path.join("cards", slug, "card.json"),
+              file: path.join(slug, "card.json"),
               "--": null,
             });
             commitCount = log.total;
@@ -101,10 +111,11 @@ router.get("/", async (req, res) => {
       }),
     );
 
-    const result = cards
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    res.json(result);
+    res.json(
+      cards
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
+    );
   } catch (error) {
     console.error("GET /api/cards error:", error);
     res.status(500).json({ error: error.message });
@@ -142,8 +153,7 @@ router.get("/:slug", async (req, res) => {
 
 router.get("/:slug/avatar", (req, res) => {
   const { slug } = req.params;
-  const avatarPath = path.join(CARDS_DIR, slug, "avatar.png");
-  res.sendFile(avatarPath, (err) => {
+  res.sendFile(path.join(CARDS_DIR, slug, "avatar.png"), (err) => {
     if (err) res.status(404).json({ error: "Avatar not found" });
   });
 });
@@ -159,14 +169,12 @@ router.post("/:slug", express.json({ limit: "50mb" }), async (req, res) => {
   try {
     const dir = await ensureCardDir(slug);
 
-    // Write card.json
     await fs.promises.writeFile(
       path.join(dir, "card.json"),
       JSON.stringify(card, null, 2),
       "utf-8",
     );
 
-    // Write avatar.png if provided
     if (avatarDataUrl) {
       const b64 = avatarDataUrl.replace(/^data:image\/\w+;base64,/, "");
       await fs.promises.writeFile(
@@ -175,9 +183,9 @@ router.post("/:slug", express.json({ limit: "50mb" }), async (req, res) => {
       );
     }
 
-    // Stage and commit card.json (avatar is gitignored by default)
     const g = getGit();
-    await g.add(path.join("cards", slug, "card.json"));
+    // Path relative to CARDS_DIR (the git root)
+    await g.add(path.join(slug, "card.json"));
 
     const name = card.name || slug;
     const msg = steeringInput
@@ -212,11 +220,10 @@ router.delete("/:slug", async (req, res) => {
 
   try {
     const g = getGit();
-    await g.rm(["-r", path.join("cards", slug)]);
+    await g.rm(["-r", slug]);
     await g.commit(`Delete ${slug}`);
     res.json({ slug, deleted: true });
-  } catch (error) {
-    // Fallback: remove directory even if git rm fails
+  } catch {
     try {
       await fs.promises.rm(dir, { recursive: true, force: true });
     } catch {}
@@ -228,12 +235,14 @@ router.delete("/:slug", async (req, res) => {
 
 router.get("/:slug/version/:hash", async (req, res) => {
   const { slug, hash } = req.params;
-  const relPath = path.join("cards", slug, "card.json");
+  const relPath = path.join(slug, "card.json");
   try {
     const raw = await getGit().show([`${hash}:${relPath}`]);
     res.json({ slug, hash, card: JSON.parse(raw) });
   } catch (error) {
-    res.status(404).json({ error: "Version not found", details: error.message });
+    res
+      .status(404)
+      .json({ error: "Version not found", details: error.message });
   }
 });
 
@@ -243,16 +252,17 @@ router.get("/:slug/history", async (req, res) => {
   const { slug } = req.params;
   try {
     const log = await getGit().log({
-      file: path.join("cards", slug, "card.json"),
+      file: path.join(slug, "card.json"),
       "--": null,
     });
-    const history = log.all.map((c) => ({
-      hash: c.hash,
-      timestamp: c.date,
-      message: c.message,
-      steeringInput: extractSteeringInput(c.message),
-    }));
-    res.json(history);
+    res.json(
+      log.all.map((c) => ({
+        hash: c.hash,
+        timestamp: c.date,
+        message: c.message,
+        steeringInput: extractSteeringInput(c.message),
+      })),
+    );
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -262,7 +272,7 @@ router.get("/:slug/history", async (req, res) => {
 
 router.get("/:slug/diff/:commitA/:commitB", async (req, res) => {
   const { slug, commitA, commitB } = req.params;
-  const relPath = path.join("cards", slug, "card.json");
+  const relPath = path.join(slug, "card.json");
   try {
     const g = getGit();
     const [rawA, rawB] = await Promise.all([
@@ -273,16 +283,15 @@ router.get("/:slug/diff/:commitA/:commitB", async (req, res) => {
     const cardA = JSON.parse(rawA);
     const cardB = JSON.parse(rawB);
 
-    const fields = [
+    const diff = {};
+    for (const f of [
       "name",
       "description",
       "personality",
       "scenario",
       "firstMessage",
       "mes_example",
-    ];
-    const diff = {};
-    for (const f of fields) {
+    ]) {
       if (cardA[f] !== cardB[f]) {
         diff[f] = { before: cardA[f], after: cardB[f] };
       }
@@ -296,8 +305,7 @@ router.get("/:slug/diff/:commitA/:commitB", async (req, res) => {
 
 function extractSteeringInput(message) {
   const colonIdx = message.indexOf(": ");
-  if (colonIdx !== -1) return message.slice(colonIdx + 2);
-  return null;
+  return colonIdx !== -1 ? message.slice(colonIdx + 2) : null;
 }
 
 module.exports = { router, initGit };

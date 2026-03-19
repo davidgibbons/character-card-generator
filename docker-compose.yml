@@ -13,16 +13,16 @@ services:
     networks:
       - app-network
     depends_on:
-      - proxy
+      proxy:
+        condition: service_healthy
     healthcheck:
-      test:
-        ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT:-80}/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
-  # Backend container (Node.js proxy server)
+  # Backend container (Node.js proxy + cards API)
   proxy:
     build:
       context: .
@@ -30,23 +30,24 @@ services:
     container_name: character-generator-proxy
     restart: unless-stopped
     ports:
-      - "${PROXY_PORT:-2426}:${PROXY_PORT:-2426}"
+      - "${PROXY_PORT:-2426}:2426"
     environment:
       - NODE_ENV=production
-      - PORT=${PROXY_PORT:-2426}
+      - PORT=2426
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-2427}}
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-Character Generator}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-cards@character-generator.local}
     volumes:
+      # cards/ is the git repo root — history persists across restarts
       - cards-data:/app/cards
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PROXY_PORT:-2426}/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:2426/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 networks:
   app-network:
@@ -55,3 +56,4 @@ networks:
 
 volumes:
   cards-data:
+    name: character-generator-cards
