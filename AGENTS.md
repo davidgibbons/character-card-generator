@@ -4,40 +4,23 @@ Guidance for AI agents working in this repository.
 
 ## Repo Context
 
-This is a fork of [Tremontaine/character-card-generator](https://github.com/Tremontaine/character-card-generator).
-`origin/main` is the local working branch — it contains all fork-specific changes and diverges from upstream.
-Upstream contributions are prepared on separate branches cut from `upstream/main`.
+This is a derivative of the original character-card-generator by Tremontaine, who has moved his repo to:
+https://codeberg.org/Tremontaine/character-card-generator
+
+We are no longer tracking upstream or preparing PRs. `origin/main` is the authoritative working branch.
 
 ## Branch Strategy
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Fork working branch — all local changes live here |
-| `feature/*` cut from `upstream/main` | Clean PR candidates for upstream |
-| `upstream/main` | Tremontaine's repo — do not commit here |
+| `main` | Authoritative working branch — all changes live here |
+| `feature/*` | Feature branches; merge to `main` when done |
 
-**We are not keeping `main` synced with `upstream/main`** — upstream PRs are built as isolated branches off `upstream/main` and merged back into `main` when done.
-
-## Starting Upstream PR Work
-
+Use worktrees for feature work to keep `main` clean:
 ```bash
-# Add upstream remote if missing
-git remote add upstream git@github.com:Tremontaine/character-card-generator.git
-git fetch upstream
-
-# Create a worktree so main is undisturbed
-git worktree add .claude/worktrees/<feature-name> -b feature/<feature-name> upstream/main
-
-# Work in the worktree, then merge back to main
+git worktree add .claude/worktrees/<feature-name> -b feature/<feature-name> main
+# work, commit, then from repo root:
 git merge feature/<feature-name>
-
-# Push for PR when upstream confirms they want contributions
-git push origin feature/<feature-name>
-gh pr create --repo Tremontaine/character-card-generator --head davidgibbons:feature/<feature-name>
-```
-
-Worktrees live in `.claude/worktrees/` (gitignored). Clean them up when done:
-```bash
 git worktree remove .claude/worktrees/<feature-name>
 ```
 
@@ -61,10 +44,12 @@ Hard refresh via cmux: use `cmux browser <surface> navigate http://localhost:242
 | `proxy/` | Express proxy server |
 | `index.html` | Single-page app shell + all modals |
 
-## PR Tracking
+## Shipped Features (merged to main)
 
-| Branch | Description | Status |
-|--------|-------------|--------|
-| `feature/debug-response` | Bug icon button in footer to inspect raw AI response | Ready — awaiting upstream interest |
-| `feature/dark-mode` | Moon/sun toggle in footer-left, full dark theme via `[data-theme="dark"]` | Ready — awaiting upstream interest |
-| `main` (modal overflow fix, `0ddff7f`) | `overflow: hidden` → `auto` on API settings modal | In main only; cherry-pick candidate for upstream |
+| Feature | Description |
+|---------|-------------|
+| SillyTavern integration | Pull characters from ST, push cards back |
+| Debug response viewer | Bug icon button in footer shows raw AI output |
+| Dark mode | Moon/sun toggle in footer, persists via localStorage |
+| API settings modal scroll | Fixed `overflow: hidden` that cut off fields |
+| ST character browser tags | Fixed tag measurement and +N badge clipping |
