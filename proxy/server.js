@@ -612,6 +612,72 @@ app.post("/api/st/push", async (req, res) => {
   }
 });
 
+// Push example messages appended to a character card PNG
+// Accepts same payload as /api/st/push but includes mes_example field embedded in imageBase64
+app.post("/api/st/push-examples", async (req, res) => {
+  try {
+    const stUrl = req.headers["x-st-url"];
+    const stPassword = req.headers["x-st-password"] || "";
+
+    if (!stUrl) {
+      return res.status(400).json({
+        error: { message: "SillyTavern URL required" },
+      });
+    }
+
+    const { imageBase64, fileName } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({
+        error: { message: "imageBase64 is required (PNG with mes_example embedded)" },
+      });
+    }
+
+    const { token, cookies } = await getSTCsrfToken(stUrl, stPassword);
+
+    const form = new FormData();
+    const imageBuffer = Buffer.from(imageBase64, "base64");
+    form.append("avatar", imageBuffer, {
+      filename: fileName || "character.png",
+      contentType: "image/png",
+    });
+    form.append("file_type", "png");
+
+    const headers = {
+      "X-CSRF-Token": token,
+      ...form.getHeaders(),
+    };
+    if (cookies.length > 0) {
+      headers["Cookie"] = cookies.map((c) => c.split(";")[0]).join("; ");
+    }
+    if (stPassword) {
+      headers["Authorization"] =
+        "Basic " + Buffer.from(`user:${stPassword}`).toString("base64");
+    }
+
+    const response = await fetch(`${stUrl}/api/characters/import`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({
+        error: { message: `SillyTavern import error: ${response.statusText}`, details: errorText },
+      });
+    }
+
+    const data = await response.json();
+    console.log("Example messages pushed to SillyTavern character:", data);
+    res.json(data);
+  } catch (error) {
+    console.error("ST push-examples error:", error);
+    res.status(500).json({
+      error: { message: "Failed to push examples to SillyTavern", details: error.message },
+    });
+  }
+});
+
 // Pull a character from SillyTavern (export as JSON)
 app.post("/api/st/pull", async (req, res) => {
   try {

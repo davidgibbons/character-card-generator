@@ -420,6 +420,13 @@ class CharacterGeneratorApp {
       );
     }
 
+    const pushExamplesBtn = document.getElementById("push-examples-btn");
+    if (pushExamplesBtn) {
+      pushExamplesBtn.addEventListener("click", () =>
+        this.handlePushExamplesToST(),
+      );
+    }
+
     // Migration banner buttons
     const migratBtn = document.getElementById("migration-migrate-btn");
     const dismissBtn = document.getElementById("migration-dismiss-btn");
@@ -1817,12 +1824,16 @@ class CharacterGeneratorApp {
       "example-messages-output",
     );
     const copyExamplesBtn = document.getElementById("copy-examples-btn");
+    const pushExamplesBtn = document.getElementById("push-examples-btn");
     if (exampleMessagesOutput) {
       exampleMessagesOutput.textContent = "";
       exampleMessagesOutput.style.display = "none";
     }
     if (copyExamplesBtn) {
       copyExamplesBtn.style.display = "none";
+    }
+    if (pushExamplesBtn) {
+      pushExamplesBtn.style.display = "none";
     }
 
     // Show JSON download button whenever character data is available
@@ -2061,6 +2072,7 @@ class CharacterGeneratorApp {
     );
     const generateBtn = document.getElementById("generate-examples-btn");
     const copyBtn = document.getElementById("copy-examples-btn");
+    const pushExamplesBtn = document.getElementById("push-examples-btn");
     const outputDiv = document.getElementById("example-messages-output");
 
     try {
@@ -2078,6 +2090,9 @@ class CharacterGeneratorApp {
       outputDiv.textContent = examples;
       outputDiv.style.display = "block";
       copyBtn.style.display = "inline-block";
+      if (pushExamplesBtn && this.config.get("api.sillytavern.url")) {
+        pushExamplesBtn.style.display = "inline-block";
+      }
       this.showNotification(`Generated ${count} example message(s)`, "success");
     } catch (error) {
       console.error("Example generation failed:", error);
@@ -2103,6 +2118,106 @@ class CharacterGeneratorApp {
     } catch (error) {
       console.error("Copy failed:", error);
       this.showNotification("Failed to copy to clipboard", "error");
+    }
+  }
+
+  async handlePushExamplesToST() {
+    const stUrl = this.config.get("api.sillytavern.url");
+    if (!stUrl) {
+      this.showNotification(
+        "Configure SillyTavern URL in settings first",
+        "warning",
+      );
+      return;
+    }
+
+    if (!this.currentCharacter) {
+      this.showNotification("No character loaded", "warning");
+      return;
+    }
+
+    const outputDiv = document.getElementById("example-messages-output");
+    const examples = outputDiv?.textContent?.trim();
+    if (!examples) {
+      this.showNotification("Generate example messages first", "warning");
+      return;
+    }
+
+    const pushBtn = document.getElementById("push-examples-btn");
+    try {
+      if (pushBtn) {
+        pushBtn.disabled = true;
+        pushBtn.textContent = "Pushing…";
+      }
+      this.showNotification("Pushing example messages to SillyTavern…", "info");
+
+      // Temporarily embed the examples into the character for PNG encoding
+      const prevMesExample = this.currentCharacter.mesExample;
+      this.currentCharacter.mesExample = examples;
+
+      // Build PNG with embedded mes_example (same flow as regular push)
+      let imageBlob = this.currentImageUrl
+        ? await this.imageGenerator.convertToBlob(this.currentImageUrl)
+        : null;
+
+      if (!imageBlob) {
+        this.currentCharacter.mesExample = prevMesExample;
+        this.showNotification(
+          "A character image is required to push to SillyTavern. Generate or upload an image first.",
+          "warning",
+        );
+        return;
+      }
+
+      imageBlob = await this.imageGenerator.optimizeImageForCard(imageBlob);
+      const specV2Data = this.characterGenerator.toSpecV2Format(
+        this.currentCharacter,
+      );
+      const cardBlob = await this.pngEncoder.createCharacterCard(
+        imageBlob,
+        specV2Data,
+      );
+
+      // Restore original mes_example on the in-memory character
+      this.currentCharacter.mesExample = prevMesExample;
+
+      const arrayBuffer = await cardBlob.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          "",
+        ),
+      );
+
+      const response = await fetch("/api/st/push-examples", {
+        method: "POST",
+        headers: this.getSTHeaders(),
+        body: JSON.stringify({
+          imageBase64: base64,
+          fileName: `${this.currentCharacter.name || "character"}.png`,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Push failed");
+      }
+
+      this.showNotification(
+        `Example messages pushed to SillyTavern!`,
+        "success",
+      );
+    } catch (error) {
+      console.error("Push examples error:", error);
+      this.showNotification(
+        `Push to SillyTavern failed: ${error.message}`,
+        "error",
+      );
+    } finally {
+      if (pushBtn) {
+        pushBtn.disabled = false;
+        pushBtn.textContent = "Push to SillyTavern";
+      }
     }
   }
 

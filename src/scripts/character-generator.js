@@ -161,7 +161,7 @@ class CharacterGenerator {
         personality: character.personality || "",
         scenario: character.scenario || "",
         first_mes: character.firstMessage || "Hello!",
-        mes_example: "",
+        mes_example: character.mesExample || "",
         tags: [],
       },
     };
