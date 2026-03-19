@@ -1138,6 +1138,43 @@ textarea.content-box {
     }
 }
 
+/* ── Generation progress bar ─────────────────────────────────────────────── */
+.generation-progress {
+    margin-top: 0.6rem;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.generation-progress-bar {
+    height: 100%;
+    width: 40%;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: progress-slide 1.4s ease-in-out infinite;
+    transform-origin: left center;
+}
+
+@keyframes progress-slide {
+    0%   { transform: translateX(-100%) scaleX(1); }
+    50%  { transform: translateX(150%) scaleX(1.4); }
+    100% { transform: translateX(400%) scaleX(1); }
+}
+
+/* ── Field-change highlight ───────────────────────────────────────────────── */
+.field-changed {
+    border-left: 3px solid var(--accent) !important;
+    background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface-strong) 40%) !important;
+    transition:
+        border-color var(--transition),
+        background var(--transition);
+}
+
+[data-theme="dark"] .field-changed {
+    background: color-mix(in srgb, var(--accent-soft) 15%, var(--surface-strong) 85%) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

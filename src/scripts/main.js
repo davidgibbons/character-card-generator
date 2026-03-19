@@ -529,6 +529,16 @@ class CharacterGeneratorApp {
       return;
     }
 
+    // Snapshot current field values for change highlighting after generation
+    const prevFieldValues = this.currentCharacter
+      ? {
+          description: this.currentCharacter.description || "",
+          personality: this.currentCharacter.personality || "",
+          scenario: this.currentCharacter.scenario || "",
+          firstMessage: this.currentCharacter.firstMessage || "",
+        }
+      : null;
+
     this.isGenerating = true;
     this.setGeneratingState(true);
     this.clearStream();
@@ -579,8 +589,9 @@ class CharacterGeneratorApp {
 
       this.showStreamMessage("\n\n✅ Character generation complete!\n");
 
-      // Display character
+      // Display character and highlight changed fields
       this.displayCharacter();
+      if (prevFieldValues) this.highlightChangedFields(prevFieldValues);
 
       // Check if image generation is configured and enabled
       const imageApiBase = this.config.get("api.image.baseUrl");
@@ -1477,6 +1488,9 @@ class CharacterGeneratorApp {
     // Update currentCharacter with the edited content
     this.currentCharacter[currentField] = textarea.value;
 
+    // Remove change highlight once the user starts editing
+    textarea.classList.remove("field-changed");
+
     // Show/hide reset button based on whether content has changed
     const currentContent = textarea.value.trim();
     const originalContent = (originalValue || "").trim();
@@ -1603,17 +1617,45 @@ class CharacterGeneratorApp {
     const stopBtn = document.getElementById("stop-btn");
     const btnText = generateBtn.querySelector(".btn-text");
     const btnLoading = generateBtn.querySelector(".btn-loading");
+    const progressBar = document.getElementById("generation-progress");
 
     if (isGenerating) {
       generateBtn.disabled = true;
       btnText.style.display = "none";
       btnLoading.style.display = "inline";
       stopBtn.style.display = "inline-block";
+      if (progressBar) progressBar.style.display = "block";
+      this.clearFieldHighlights();
     } else {
       generateBtn.disabled = false;
       btnText.style.display = "inline";
       btnLoading.style.display = "none";
       stopBtn.style.display = "none";
+      if (progressBar) progressBar.style.display = "none";
+    }
+  }
+
+  clearFieldHighlights() {
+    ["character-description", "character-personality", "character-scenario", "character-first-message"].forEach((id) => {
+      document.getElementById(id)?.classList.remove("field-changed");
+    });
+  }
+
+  highlightChangedFields(prevValues) {
+    const fieldMap = {
+      description: "character-description",
+      personality: "character-personality",
+      scenario: "character-scenario",
+      firstMessage: "character-first-message",
+    };
+    for (const [field, elemId] of Object.entries(fieldMap)) {
+      const el = document.getElementById(elemId);
+      if (!el) continue;
+      const prev = (prevValues[field] || "").trim();
+      const next = (this.currentCharacter[field] || "").trim();
+      if (prev && next && prev !== next) {
+        el.classList.add("field-changed");
+      }
     }
   }
 
