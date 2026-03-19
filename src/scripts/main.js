@@ -33,9 +33,18 @@ class CharacterGeneratorApp {
     await this.config.waitForConfig();
     await this.ensureStorageReady();
     this.config.saveToForm();
+    this.applyTheme(localStorage.getItem("theme") || "light");
     this.bindEvents();
     this.checkAPIStatus();
     this.refreshLibraryViews();
+  }
+
+  applyTheme(theme) {
+    document.documentElement.dataset.theme = theme === "dark" ? "dark" : "";
+    const moon = document.getElementById("theme-icon-moon");
+    const sun = document.getElementById("theme-icon-sun");
+    if (moon) moon.style.display = theme === "dark" ? "none" : "";
+    if (sun) sun.style.display = theme === "dark" ? "" : "none";
   }
 
   async ensureStorageReady() {
@@ -59,6 +68,13 @@ class CharacterGeneratorApp {
   }
 
   bindEvents() {
+    // Theme toggle
+    document.getElementById("theme-toggle-btn").addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", next);
+      this.applyTheme(next);
+    });
+
     // Generate button
     const generateBtn = document.getElementById("generate-btn");
     generateBtn.addEventListener("click", () => this.handleGenerate());
@@ -307,6 +323,30 @@ class CharacterGeneratorApp {
       });
     }
 
+    // Debug Response Modal functionality
+    const debugResponseBtn = document.getElementById("debug-response-btn");
+    const debugResponseModal = document.getElementById("debug-response-modal");
+    const debugResponseCloseBtn = document.getElementById("debug-response-close-btn");
+    const debugResponseContent = document.getElementById("debug-response-content");
+
+    debugResponseBtn.addEventListener("click", () => {
+      const raw = this.characterGenerator && this.characterGenerator.rawCharacterData;
+      debugResponseContent.textContent = raw || "No response captured yet.";
+      debugResponseModal.classList.add("show");
+      document.body.style.overflow = "hidden";
+    });
+
+    const closeDebugModal = () => {
+      debugResponseModal.classList.remove("show");
+      document.body.style.overflow = "";
+    };
+
+    debugResponseCloseBtn.addEventListener("click", closeDebugModal);
+
+    debugResponseModal.addEventListener("click", (e) => {
+      if (e.target === debugResponseModal) closeDebugModal();
+    });
+
     // API Settings Modal functionality
     const apiSettingsBtn = document.getElementById("api-settings-btn");
     const modalOverlay = document.getElementById("api-settings-modal");
@@ -327,10 +367,11 @@ class CharacterGeneratorApp {
     // Close modal with close button
     modalCloseBtn.addEventListener("click", closeModal);
 
-    // Close modal with escape key
+    // Close modals with escape key
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modalOverlay.classList.contains("show")) {
-        closeModal();
+      if (e.key === "Escape") {
+        if (debugResponseModal.classList.contains("show")) closeDebugModal();
+        if (modalOverlay.classList.contains("show")) closeModal();
       }
     });
 
@@ -1264,23 +1305,37 @@ class CharacterGeneratorApp {
           // Measure which tags fit, remove overflow, add +N
           if (sorted.length > 0) {
             const tagSpans = tagsEl.querySelectorAll(".tag");
-            const maxWidth = tagsEl.clientWidth;
+            const containerRight = tagsEl.getBoundingClientRect().right;
             let fittingCount = 0;
 
             for (let i = 0; i < tagSpans.length; i++) {
-              if (tagSpans[i].offsetLeft + tagSpans[i].offsetWidth > maxWidth) break;
+              if (tagSpans[i].getBoundingClientRect().right > containerRight) break;
               fittingCount++;
             }
 
             if (fittingCount < sorted.length) {
+              // Add +N badge first (hidden) to measure its width, then back off
+              // enough visible tags so the badge itself fits too
+              const moreEl = document.createElement("span");
+              moreEl.className = "st-tag-more";
+              moreEl.style.visibility = "hidden";
+              moreEl.textContent = `+${sorted.length - fittingCount}`;
+              tagsEl.appendChild(moreEl);
+              const moreWidth = moreEl.getBoundingClientRect().width;
+              tagsEl.removeChild(moreEl);
+              moreEl.style.visibility = "";
+
+              // Back off visible tags until there's room for the badge
+              while (fittingCount > 0 && tagSpans[fittingCount - 1].getBoundingClientRect().right + moreWidth > containerRight) {
+                fittingCount--;
+              }
+              moreEl.textContent = `+${sorted.length - fittingCount}`;
+
               // Remove tags that don't fit
               for (let i = tagSpans.length - 1; i >= fittingCount; i--) {
                 tagSpans[i].remove();
               }
               const hiddenTags = sorted.slice(fittingCount);
-              const moreEl = document.createElement("span");
-              moreEl.className = "st-tag-more";
-              moreEl.textContent = `+${hiddenTags.length}`;
               moreEl.addEventListener("mouseenter", (e) => {
                 sharedTooltip.innerHTML = hiddenTags.map((t) => `<span class="tag">${this.escapeHtml(t)}</span>`).join("");
                 sharedTooltip.style.top = `${e.clientY}px`;

@@ -111,3 +111,10 @@ In-app API Settings:
 ## License
 
 MIT. See `LICENSE`.
+
+---
+
+## Acknowledgements
+
+This project is a derivative of the original **SillyTavern Character Generator** by [Tremontaine](https://codeberg.org/Tremontaine), available at:
+https://codeberg.org/Tremontaine/character-card-generator

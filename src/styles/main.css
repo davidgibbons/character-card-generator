@@ -625,6 +625,53 @@ textarea.content-box {
     box-shadow: 0 0 0 4px rgba(201, 61, 74, 0.2);
 }
 
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-icon:hover {
+    background: var(--bg-hover, #f0f4f8);
+    color: var(--text-primary);
+    border-color: var(--border-hover, #b0bec5);
+}
+
+.debug-response-modal {
+    width: min(760px, 100%);
+    max-height: min(80vh, 900px);
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+}
+
+.debug-response-content {
+    margin: 0;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    background: var(--bg-secondary, #f8fbff);
+    border-radius: var(--radius);
+    min-height: 8rem;
+}
+
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -653,7 +700,7 @@ textarea.content-box {
 .api-settings-modal {
     width: min(760px, 100%);
     max-height: min(88vh, 980px);
-    overflow: hidden;
+    overflow: auto;
     border-radius: var(--radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.45);
     background: linear-gradient(180deg, #ffffff, #f8fbff);
@@ -846,6 +893,137 @@ textarea.content-box {
     font-size: 0.9rem;
     font-weight: 600;
 }
+
+/* ── Dark theme ─────────────────────────────────────────── */
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-strong);
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.btn-icon:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+[data-theme="dark"] {
+    --bg-page: #111827;
+    --bg-orb-a: #1c2a3f;
+    --bg-orb-b: #0e1f35;
+    --bg-orb-c: #1c1428;
+    --surface: rgba(22, 32, 48, 0.92);
+    --surface-strong: #1a2637;
+    --surface-muted: #141e2e;
+    --text-primary: #e2eaf4;
+    --text-secondary: #8ba4be;
+    --text-soft: #546a80;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --accent: #1aaabf;
+    --accent-strong: #0e8fa0;
+    --accent-soft: #0d2d35;
+    --success: #22c07a;
+    --warning: #e0a020;
+    --error: #e05060;
+    --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 16px 44px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="dark"] .header {
+    border-color: rgba(255, 255, 255, 0.07);
+    background: linear-gradient(
+        120deg,
+        rgba(22, 32, 48, 0.92),
+        rgba(16, 24, 38, 0.82)
+    );
+}
+
+[data-theme="dark"] .btn-outline,
+[data-theme="dark"] .btn-small {
+    background: linear-gradient(180deg, #1e2d42, #18253a);
+}
+
+[data-theme="dark"] .stream-box {
+    background: repeating-linear-gradient(
+        180deg,
+        #141e2e,
+        #141e2e 28px,
+        #111827 28px,
+        #111827 56px
+    );
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .image-preview .content-box {
+    background: linear-gradient(160deg, #141e2e 0%, #0f1a2e 100%);
+}
+
+[data-theme="dark"] .library-list {
+    background: #0f1623;
+}
+
+[data-theme="dark"] .library-item {
+    background: var(--surface-strong);
+}
+
+[data-theme="dark"] .footer {
+    background: rgba(16, 24, 38, 0.88);
+}
+
+[data-theme="dark"] .api-settings-modal {
+    background: linear-gradient(180deg, #1a2637, #141e2e);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .modal-header {
+    background: rgba(20, 30, 46, 0.96);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .modal-close {
+    background: var(--surface-strong);
+}
+
+[data-theme="dark"] .modal-close:hover {
+    background: #223044;
+}
+
+[data-theme="dark"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .api-status {
+    background: var(--surface-strong);
+}
+
+[data-theme="dark"] textarea.content-box {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .slider {
+    background: #2e4060;
+}
+
+[data-theme="dark"] .tag {
+    background: #1a2e42;
+}
+
+[data-theme="dark"] .form-section {
+    background: #141e2e;
+}
+
+/* ── End dark theme ─────────────────────────────────────── */
 
 @media (max-width: 980px) {
     .container {
