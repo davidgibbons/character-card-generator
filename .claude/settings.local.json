@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(cmux browser:*)",
+      "Bash(python3 -c \"import sys,json; print\\(json.load\\(sys.stdin\\)[''''path'''']\\)\")",
+      "Bash(grep -E \"\\\\.\\(js|json\\)$\")",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(curl -s http://localhost:2426/health)",
+      "Bash(cmux --json browser surface:30 click e312 --snapshot-after)",
+      "Bash(python3 -c \"import sys,json; print\\(''''ok''''\\)\")",
+      "Bash(cmux --json browser surface:30 click e421)",
+      "Bash(cmux --json browser*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ]
+  }
+}

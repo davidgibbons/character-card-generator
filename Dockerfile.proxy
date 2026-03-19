@@ -1,6 +1,8 @@
 # Proxy-only Dockerfile
 FROM node:18-alpine
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 # Copy package files
@@ -10,7 +12,7 @@ COPY proxy/package*.json ./
 RUN npm ci --only=production
 
 # Copy proxy source
-COPY proxy/server.js ./
+COPY proxy/server.js proxy/cards.js ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \

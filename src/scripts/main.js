@@ -37,6 +37,7 @@ class CharacterGeneratorApp {
     this.bindEvents();
     this.checkAPIStatus();
     this.refreshLibraryViews();
+    this.checkMigrationBanner();
   }
 
   applyTheme(theme) {
@@ -414,6 +415,77 @@ class CharacterGeneratorApp {
         this.handleCopyExampleMessages(),
       );
     }
+
+    // Migration banner buttons
+    const migratBtn = document.getElementById("migration-migrate-btn");
+    const dismissBtn = document.getElementById("migration-dismiss-btn");
+    if (migratBtn) {
+      migratBtn.addEventListener("click", () => this.handleMigrateCards());
+    }
+    if (dismissBtn) {
+      dismissBtn.addEventListener("click", () => this.dismissMigrationBanner());
+    }
+  }
+
+  async checkMigrationBanner() {
+    // Only show if not already dismissed and server storage is active
+    if (localStorage.getItem("migrationDismissed")) return;
+    if (!(this.storage instanceof ServerBackedStorage)) return;
+
+    try {
+      const existing = await this.storage.listIndexedDBCards();
+      if (existing.length > 0) {
+        const banner = document.getElementById("migration-banner");
+        if (banner) banner.style.display = "block";
+      }
+    } catch {}
+  }
+
+  dismissMigrationBanner() {
+    localStorage.setItem("migrationDismissed", "1");
+    const banner = document.getElementById("migration-banner");
+    if (banner) banner.style.display = "none";
+  }
+
+  async handleMigrateCards() {
+    const migratBtn = document.getElementById("migration-migrate-btn");
+    if (migratBtn) {
+      migratBtn.disabled = true;
+      migratBtn.textContent = "Migrating…";
+    }
+
+    try {
+      const cards = await this.storage.listIndexedDBCards();
+      let migrated = 0;
+      for (const card of cards) {
+        try {
+          const full = await this.storage.getIndexedDBCard(card.id);
+          if (!full?.character) continue;
+          await this.storage.saveCard({
+            characterName: full.characterName,
+            character: full.character,
+            imageBlob: full.imageBlob instanceof Blob ? full.imageBlob : null,
+            steeringInput: null,
+          });
+          await this.storage.deleteIndexedDBCard(card.id);
+          migrated++;
+        } catch (err) {
+          console.warn("Failed to migrate card:", card.characterName, err);
+        }
+      }
+      this.showNotification(
+        `Migrated ${migrated} card${migrated === 1 ? "" : "s"} to server storage.`,
+        "success",
+      );
+      this.dismissMigrationBanner();
+      await this.refreshLibraryViews();
+    } catch (error) {
+      this.showNotification(`Migration failed: ${error.message}`, "error");
+      if (migratBtn) {
+        migratBtn.disabled = false;
+        migratBtn.textContent = "Migrate to Server";
+      }
+    }
   }
 
   async checkAPIStatus() {
@@ -584,7 +656,7 @@ class CharacterGeneratorApp {
       this.originalCharacter = JSON.parse(
         JSON.stringify(this.currentCharacter),
       );
-      await this.saveCardToLibrary();
+      await this.saveCardToLibrary(concept);
       await this.refreshLibraryViews();
 
       this.showStreamMessage("\n\n✅ Character generation complete!\n");
@@ -2120,7 +2192,7 @@ class CharacterGeneratorApp {
     return safe;
   }
 
-  async saveCardToLibrary() {
+  async saveCardToLibrary(steeringInput = null) {
     if (!this.storageReady || !this.storage || !this.currentCharacter) return;
 
     try {
@@ -2139,6 +2211,7 @@ class CharacterGeneratorApp {
         characterName: this.currentCharacter.name || "Unnamed Character",
         character: JSON.parse(JSON.stringify(this.currentCharacter)),
         imageBlob,
+        steeringInput,
       });
     } catch (error) {
       console.error("Failed to save card:", error);
@@ -2284,7 +2357,9 @@ class CharacterGeneratorApp {
     if (!actionElement) return;
 
     const action = actionElement.dataset.action;
-    const id = Number(actionElement.dataset.id);
+    // Card IDs may be slugs (strings) with server storage or numeric with IndexedDB
+    const rawId = actionElement.dataset.id;
+    const id = /^\d+$/.test(rawId) ? Number(rawId) : rawId;
 
     try {
       if (action === "load-card") {
@@ -2308,6 +2383,14 @@ class CharacterGeneratorApp {
           imageContainer.innerHTML = `
             <div class="image-container">
               <img src="${this.currentImageUrl}" alt="${card.character.name || "Character"}" class="generated-image">
+            </div>
+          `;
+        } else if (card.avatarUrl) {
+          this.currentImageUrl = card.avatarUrl;
+          const imageContainer = document.getElementById("image-content");
+          imageContainer.innerHTML = `
+            <div class="image-container">
+              <img src="${card.avatarUrl}" alt="${card.character.name || "Character"}" class="generated-image">
             </div>
           `;
         }

@@ -4,6 +4,7 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 const FormData = require("form-data");
 require("dotenv").config({ path: "../.env" });
+const { router: cardsRouter, initGit } = require("./cards");
 
 const app = express();
 const PORT = process.env.PORT || 2426;
@@ -654,8 +655,17 @@ app.post("/api/st/pull", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.use("/api/cards", cardsRouter);
+
+app.listen(PORT, async () => {
   console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
   console.log(`📡 Ready to proxy requests to configured APIs`);
   console.log(`🔑 API URLs will be provided via request headers`);
+
+  try {
+    await initGit();
+    console.log("📦 Card storage (git-backed) initialized");
+  } catch (err) {
+    console.warn("⚠️  Card storage init failed:", err.message);
+  }
 });
