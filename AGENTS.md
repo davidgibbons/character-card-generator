@@ -4,10 +4,13 @@ Guidance for AI agents working in this repository.
 
 ## Repo Context
 
-This is a derivative of the original character-card-generator by Tremontaine, who has moved his repo to:
+This is a derivative of the original character-card-generator by Tremontaine:
 https://codeberg.org/Tremontaine/character-card-generator
 
-We are no longer tracking upstream or preparing PRs. `origin/main` is the authoritative working branch.
+Additional inspiration from ewizza's fork (A1111/SD API support):
+https://github.com/ewizza/character-card-generator
+
+We are not tracking any upstream. `origin/main` is the authoritative working branch.
 
 ## Branch Strategy
 
@@ -53,3 +56,4 @@ Hard refresh via cmux: use `cmux browser <surface> navigate http://localhost:242
 | Dark mode | Moon/sun toggle in footer, persists via localStorage |
 | API settings modal scroll | Fixed `overflow: hidden` that cut off fields |
 | ST character browser tags | Fixed tag measurement and +N badge clipping |
+| A1111/SD API image support | Auto-detects KoboldCpp/A1111 endpoints, falls back to OpenAI; `/api/image/samplers` endpoint added |
