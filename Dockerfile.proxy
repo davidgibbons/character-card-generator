@@ -12,6 +12,8 @@ RUN npm ci --only=production
 # Copy proxy source
 COPY proxy/server.js proxy/cards.js ./
 
+ENV DATA_DIR=/data
+
 # Expose port
 EXPOSE 2426
 

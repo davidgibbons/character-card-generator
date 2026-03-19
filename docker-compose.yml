@@ -37,9 +37,10 @@ services:
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-2427}}
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-Character Generator}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-cards@character-generator.local}
+      - DATA_DIR=${DATA_DIR:-/data}
     volumes:
-      # cards/ is the git repo root — history persists across restarts
-      - cards-data:/app/cards
+      # git repo root — history persists across restarts
+      - cards-data:/data
     networks:
       - app-network
     healthcheck:

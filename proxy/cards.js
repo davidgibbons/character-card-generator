@@ -16,8 +16,9 @@ const { simpleGit } = require("simple-git");
 
 const router = express.Router();
 
-// All data (cards + git repo) lives here
-const CARDS_DIR = path.join(__dirname, "cards");
+// All data (cards + git repo) lives here.
+// Override with DATA_DIR env var (e.g. /data in Docker, a mounted volume path elsewhere).
+const CARDS_DIR = process.env.DATA_DIR || path.join(__dirname, "cards");
 
 let _git = null;
 function getGit() {
