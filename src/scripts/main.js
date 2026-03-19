@@ -33,9 +33,18 @@ class CharacterGeneratorApp {
     await this.config.waitForConfig();
     await this.ensureStorageReady();
     this.config.saveToForm();
+    this.applyTheme(localStorage.getItem("theme") || "light");
     this.bindEvents();
     this.checkAPIStatus();
     this.refreshLibraryViews();
+  }
+
+  applyTheme(theme) {
+    document.documentElement.dataset.theme = theme === "dark" ? "dark" : "";
+    const moon = document.getElementById("theme-icon-moon");
+    const sun = document.getElementById("theme-icon-sun");
+    if (moon) moon.style.display = theme === "dark" ? "none" : "";
+    if (sun) sun.style.display = theme === "dark" ? "" : "none";
   }
 
   async ensureStorageReady() {
@@ -59,6 +68,13 @@ class CharacterGeneratorApp {
   }
 
   bindEvents() {
+    // Theme toggle
+    document.getElementById("theme-toggle-btn").addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", next);
+      this.applyTheme(next);
+    });
+
     // Generate button
     const generateBtn = document.getElementById("generate-btn");
     generateBtn.addEventListener("click", () => this.handleGenerate());
