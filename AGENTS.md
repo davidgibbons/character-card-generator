@@ -65,5 +65,6 @@ Hard refresh via cmux: use `cmux browser <surface> navigate http://localhost:242
 
 | Branch | Description | Status |
 |--------|-------------|--------|
-| `feature/debug-response` | Debug button in footer to inspect raw AI response | Ready — awaiting upstream interest |
+| `feature/debug-response` | Bug icon button in footer to inspect raw AI response | Ready — awaiting upstream interest |
+| `feature/dark-mode` | Moon/sun toggle in footer-left, full dark theme via `[data-theme="dark"]` | Ready — awaiting upstream interest |
 | `main` (modal overflow fix, `0ddff7f`) | `overflow: hidden` → `auto` on API settings modal | In main only; cherry-pick candidate for upstream |
