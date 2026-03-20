@@ -1,60 +1,28 @@
 services:
-  # Frontend container (Nginx + static files)
-  frontend:
+  app:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
-    container_name: character-generator-frontend
+      dockerfile: Dockerfile
+    container_name: character-generator
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-2427}:80"
-    volumes:
-      - ./logs:/var/log/nginx
-    networks:
-      - app-network
-    depends_on:
-      proxy:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  # Backend container (Node.js proxy + cards API)
-  proxy:
-    build:
-      context: .
-      dockerfile: Dockerfile.proxy
-    container_name: character-generator-proxy
-    restart: unless-stopped
-    ports:
-      - "${PROXY_PORT:-2426}:2426"
+      - "${PORT:-2426}:2426"
     environment:
       - NODE_ENV=production
       - PORT=2426
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-2427}}
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-Character Generator}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-cards@character-generator.local}
       - DATA_DIR=${DATA_DIR:-/data}
     volumes:
-      # git repo root — history persists across restarts
+      # Persistent storage for cards, prompts, and git history
       - cards-data:/data
-    networks:
-      - app-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:2426/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2426/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 20s
 
-networks:
-  app-network:
-    driver: bridge
-    name: character-generator-network
-
 volumes:
   cards-data:
-    name: character-generator-cards
+    name: character-generator-data
