@@ -468,10 +468,24 @@ class CharacterGeneratorApp {
     if (!(this.storage instanceof ServerBackedStorage)) return;
 
     try {
-      const existing = await this.storage.listIndexedDBCards();
-      if (existing.length > 0) {
+      const [existingCards, existingPrompts] = await Promise.all([
+        this.storage.listIndexedDBCards(),
+        this.storage.listIndexedDBPrompts(),
+      ]);
+      const hasLegacyData = existingCards.length > 0 || existingPrompts.length > 0;
+      if (hasLegacyData) {
         const banner = document.getElementById("migration-banner");
-        if (banner) banner.style.display = "block";
+        if (banner) {
+          // Update text to reflect what's being migrated
+          const textEl = banner.querySelector(".migration-banner-text");
+          if (textEl) {
+            const parts = [];
+            if (existingCards.length > 0) parts.push(`${existingCards.length} card${existingCards.length === 1 ? "" : "s"}`);
+            if (existingPrompts.length > 0) parts.push(`${existingPrompts.length} prompt${existingPrompts.length === 1 ? "" : "s"}`);
+            textEl.textContent = `You have saved ${parts.join(" and ")} in local browser storage.`;
+          }
+          banner.style.display = "block";
+        }
       }
     } catch {}
   }
@@ -490,8 +504,9 @@ class CharacterGeneratorApp {
     }
 
     try {
+      // Migrate cards
       const cards = await this.storage.listIndexedDBCards();
-      let migrated = 0;
+      let migratedCards = 0;
       for (const card of cards) {
         try {
           const full = await this.storage.getIndexedDBCard(card.id);
@@ -503,13 +518,42 @@ class CharacterGeneratorApp {
             steeringInput: null,
           });
           await this.storage.deleteIndexedDBCard(card.id);
-          migrated++;
+          migratedCards++;
         } catch (err) {
           console.warn("Failed to migrate card:", card.characterName, err);
         }
       }
+
+      // Migrate prompts
+      let migratedPrompts = 0;
+      if (this.storage.listIndexedDBPrompts) {
+        const prompts = await this.storage.listIndexedDBPrompts();
+        for (const prompt of prompts) {
+          try {
+            const full = await this.storage.getIndexedDBPrompt(prompt.id);
+            if (!full) continue;
+            // savePrompt expects a record with fingerprint set
+            const fingerprint = [
+              full.concept || "",
+              full.characterName || "",
+              full.pov || "",
+              full.referenceImageDescription || "",
+            ].join("::");
+            await this.storage.savePrompt({ ...full, fingerprint });
+            await this.storage.deleteIndexedDBPrompt(prompt.id);
+            migratedPrompts++;
+          } catch (err) {
+            console.warn("Failed to migrate prompt:", prompt.characterName, err);
+          }
+        }
+      }
+
+      const parts = [];
+      if (migratedCards > 0) parts.push(`${migratedCards} card${migratedCards === 1 ? "" : "s"}`);
+      if (migratedPrompts > 0) parts.push(`${migratedPrompts} prompt${migratedPrompts === 1 ? "" : "s"}`);
+      const summary = parts.length > 0 ? parts.join(" and ") : "0 items";
       this.showNotification(
-        `Migrated ${migrated} card${migrated === 1 ? "" : "s"} to server storage.`,
+        `Migrated ${summary} to server storage.`,
         "success",
       );
       this.dismissMigrationBanner();
@@ -2470,7 +2514,9 @@ class CharacterGeneratorApp {
     if (!actionElement) return;
 
     const action = actionElement.dataset.action;
-    const id = Number(actionElement.dataset.id);
+    // Prompt IDs may be slugs (strings) with server storage or numeric with IndexedDB
+    const rawId = actionElement.dataset.id;
+    const id = /^\d+$/.test(rawId) ? Number(rawId) : rawId;
 
     try {
       if (action === "load-prompt") {
