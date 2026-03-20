@@ -1,10 +1,12 @@
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
+const compression = require("compression");
 const fetch = require("node-fetch");
 const FormData = require("form-data");
 require("dotenv").config({ path: "../.env" });
 const { router: cardsRouter, initGit } = require("./cards");
+const { router: promptsRouter, initPrompts } = require("./prompts");
 
 const app = express();
 const PORT = process.env.PORT || 2426;
@@ -66,12 +68,36 @@ function buildSdSamplersUrl(apiUrl) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Enable CORS
+// Enable CORS and gzip compression
 app.use(cors());
+app.use(compression());
 
-// Serve static frontend files
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self' http: https: data: blob: 'unsafe-inline'",
+  );
+  next();
+});
+
+// Serve static frontend files with cache headers
 const staticRoot = process.env.STATIC_ROOT || path.join(__dirname, "..");
-app.use(express.static(staticRoot));
+app.use(
+  express.static(staticRoot, {
+    setHeaders(res, filePath) {
+      if (filePath.endsWith(".js")) {
+        // No caching for JS — always fetch fresh so updates take effect immediately
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      } else if (/\.(css|png|jpg|jpeg|gif|ico|svg)$/.test(filePath)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }),
+);
 
 // Increase payload limits for vision requests that include base64 images.
 app.use(express.json({ limit: "12mb" }));
@@ -722,6 +748,7 @@ app.post("/api/st/pull", async (req, res) => {
 });
 
 app.use("/api/cards", cardsRouter);
+app.use("/api/prompts", promptsRouter);
 
 app.listen(PORT, async () => {
   console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
@@ -733,5 +760,11 @@ app.listen(PORT, async () => {
     console.log("📦 Card storage (git-backed) initialized");
   } catch (err) {
     console.warn("⚠️  Card storage init failed:", err.message);
+  }
+
+  try {
+    await initPrompts();
+  } catch (err) {
+    console.warn("⚠️  Prompt storage init failed:", err.message);
   }
 });

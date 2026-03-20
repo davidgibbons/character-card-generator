@@ -309,4 +309,4 @@ function extractSteeringInput(message) {
   return colonIdx !== -1 ? message.slice(colonIdx + 2) : null;
 }
 
-module.exports = { router, initGit };
+module.exports = { router, initGit, getGit, CARDS_DIR };
