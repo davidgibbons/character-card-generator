@@ -71,7 +71,9 @@ Card data (git-backed) lives in a Docker named volume `character-generator-cards
 | IndexedDB migration banner | 2c | One-time banner offers to migrate existing browser cards to server |
 | Version history modal | 3a | "History" button on library cards; lists commits, previews any version, restore |
 | Regeneration diff modal | 3b | "Show what changed" link after generation; side-by-side field diff |
-| ST example message push | 4 | "Push to SillyTavern" button after generating example messages |
+| ST push (full card) | 4 | "Push to SillyTavern" button — PNG with embedded data if image present, JSON otherwise; `mes_example` always included |
+| Prompt template persistence | 5 | Save/load prompt templates via server-side git-backed storage (`DATA_DIR/prompts/`) |
+| Mobile-responsive diff modal | — | Diff before/after stacks vertically on screens narrower than 600px |
 
 ## API Endpoints (Proxy)
 
@@ -82,8 +84,7 @@ Card data (git-backed) lives in a Docker named volume `character-generator-cards
 | GET | `/api/image/samplers` | SD API sampler list |
 | GET | `/api/proxy-image` | CORS-bypass image fetch |
 | POST | `/api/st/characters` | List ST characters |
-| POST | `/api/st/push` | Push character PNG to ST |
-| POST | `/api/st/push-examples` | Push character PNG with updated mes_example to ST |
+| POST | `/api/st/push` | Push character to ST — PNG if image present, JSON otherwise |
 | POST | `/api/st/pull` | Export character from ST as JSON |
 | GET | `/api/cards` | List all saved cards |
 | GET | `/api/cards/:slug` | Get latest card + avatar URL |
@@ -93,7 +94,11 @@ Card data (git-backed) lives in a Docker named volume `character-generator-cards
 | GET | `/api/cards/:slug/history` | Git log for a card |
 | GET | `/api/cards/:slug/version/:hash` | Card JSON at a specific commit |
 | GET | `/api/cards/:slug/diff/:a/:b` | Field diff between two commits |
+| GET | `/api/prompts` | List all saved prompt templates |
+| GET | `/api/prompts/:slug` | Get a prompt template |
+| POST | `/api/prompts/:slug` | Save a prompt template (commits to git) |
+| DELETE | `/api/prompts/:slug` | Delete a prompt template |
 
-## Current Status (2026-03-19)
+## Current Status (2026-03-20)
 
-Phases 1–4 shipped and running via docker-compose. Focus is now on iterating/testing these phases before moving to Phase 5 (prompt server persistence). See IDEAS.md for known gaps.
+All phases (1–5) shipped and running via a single Docker container. Current focus: polish and iterating on shipped features. See IDEAS.md for known gaps and next candidates.

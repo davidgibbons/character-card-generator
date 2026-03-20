@@ -1378,6 +1378,13 @@ textarea.content-box {
     background: color-mix(in srgb, var(--success) 8%, var(--surface-muted) 92%);
 }
 
+/* Responsive diff modal — stack before/after vertically on narrow screens */
+@media (max-width: 600px) {
+    .diff-field {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Show-changes link */
 .show-changes-link {
     display: inline-flex;
