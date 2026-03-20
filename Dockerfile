@@ -18,6 +18,7 @@ COPY src/ ./src/
 ENV NODE_ENV=production
 ENV PORT=2426
 ENV STATIC_ROOT=/app
+ENV DATA_DIR=/data
 
 EXPOSE 2426
 
