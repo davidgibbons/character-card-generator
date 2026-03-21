@@ -10,12 +10,16 @@ class CharacterGeneratorApp {
     this.storageReady = false;
 
     this.currentCharacter = null;
+    this.currentCardSlug = null;
     this.originalCharacter = null; // Store the original AI-generated version
     this.currentImageUrl = null;
     this.lorebookData = null; // Store loaded lorebook data
     this.referenceImageDataUrl = "";
     // Removed currentImageBlob - we now convert fresh from URL on download
+    this.lockedFields = new Set();
     this.isGenerating = false;
+    this.activeTab = 'create';
+    this.activeSubtab = 'char-image';
 
     this.init();
   }
@@ -34,7 +38,18 @@ class CharacterGeneratorApp {
     await this.ensureStorageReady();
     this.config.saveToForm();
     this.applyTheme(localStorage.getItem("theme") || "light");
+    this.initTabs();
+    this.initSubtabs();
+    this.initSplitPane();
+    this.initLibraryDrawer();
     this.bindEvents();
+    // Attach @mention autocomplete to concept and revision textareas
+    if (typeof MentionAutocomplete !== "undefined") {
+      this.mentionConcept = new MentionAutocomplete("character-concept", this.storage);
+      this.mentionConcept.attach();
+      this.mentionRevision = new MentionAutocomplete("revision-instruction", this.storage);
+      this.mentionRevision.attach();
+    }
     this.checkAPIStatus();
     this.refreshLibraryViews();
     this.checkMigrationBanner();
@@ -66,6 +81,169 @@ class CharacterGeneratorApp {
         "IndexedDB failed to initialize. Prompt/card saving is disabled.",
       );
     }
+  }
+
+  // ── Tab management ──────────────────────────────────────────────────────
+  initTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
+    });
+    // Keyboard nav (left/right arrows)
+    const tabBar = document.querySelector('.tab-bar');
+    if (tabBar) {
+      tabBar.addEventListener('keydown', (e) => {
+        const tabs = [...tabBar.querySelectorAll('.tab-btn')];
+        const idx = tabs.indexOf(document.activeElement);
+        if (idx < 0) return;
+        if (e.key === 'ArrowRight' && idx < tabs.length - 1) {
+          tabs[idx + 1].focus();
+          tabs[idx + 1].click();
+        } else if (e.key === 'ArrowLeft' && idx > 0) {
+          tabs[idx - 1].focus();
+          tabs[idx - 1].click();
+        }
+      });
+    }
+  }
+
+  slugifyName(name) {
+    return (
+      (name || "unnamed")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "unnamed"
+    );
+  }
+
+  enableEditorTab() {
+    const btn = document.querySelector('.tab-btn[data-tab="editor"]');
+    if (btn) btn.disabled = false;
+  }
+
+  switchTab(name) {
+    const targetBtn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+    if (targetBtn?.disabled) return;
+    this.activeTab = name;
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      const isActive = btn.dataset.tab === name;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    document.querySelectorAll('.tab-panel').forEach((panel) => {
+      panel.classList.toggle('active', panel.id === `tab-${name}`);
+    });
+    this.clearTabBadge(name);
+  }
+
+  notifyTab(name) {
+    if (this.activeTab === name) return;
+    const badge = document.getElementById(`${name}-badge`);
+    if (badge) badge.classList.add('visible');
+  }
+
+  clearTabBadge(name) {
+    const badge = document.getElementById(`${name}-badge`);
+    if (badge) badge.classList.remove('visible');
+  }
+
+  // ── Subtab management ──────────────────────────────────────────────────
+  initSubtabs() {
+    const subtabBtns = document.querySelectorAll('.subtab-btn');
+    subtabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => this.switchSubtab(btn.dataset.subtab));
+    });
+  }
+
+  switchSubtab(name) {
+    this.activeSubtab = name;
+    document.querySelectorAll('.subtab-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.subtab === name);
+    });
+    document.querySelectorAll('.subtab-panel').forEach((panel) => {
+      panel.classList.toggle('active', panel.id === `subtab-${name}`);
+    });
+  }
+
+  // ── Split pane ─────────────────────────────────────────────────────────
+  initSplitPane() {
+    const divider = document.getElementById('split-divider');
+    if (!divider) return;
+
+    const pane = divider.closest('.split-pane');
+    const left = pane?.querySelector('.split-left');
+    const right = pane?.querySelector('.split-right');
+    if (!pane || !left || !right) return;
+
+    // Restore saved ratio
+    const savedRatio = localStorage.getItem('splitPaneRatio');
+    if (savedRatio) {
+      const ratio = parseFloat(savedRatio);
+      if (ratio > 0.2 && ratio < 0.8) {
+        left.style.flex = `0 0 ${ratio * 100}%`;
+        right.style.flex = `1 1 auto`;
+      }
+    }
+
+    let isDragging = false;
+
+    const onPointerDown = (e) => {
+      // Only horizontal drag on desktop
+      if (window.innerWidth <= 700) return;
+      isDragging = true;
+      divider.classList.add('dragging');
+      divider.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      const paneRect = pane.getBoundingClientRect();
+      const ratio = Math.min(0.8, Math.max(0.2, (e.clientX - paneRect.left) / paneRect.width));
+      left.style.flex = `0 0 ${ratio * 100}%`;
+      right.style.flex = `1 1 auto`;
+      localStorage.setItem('splitPaneRatio', String(ratio));
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+      divider.classList.remove('dragging');
+    };
+
+    divider.addEventListener('pointerdown', onPointerDown);
+    divider.addEventListener('pointermove', onPointerMove);
+    divider.addEventListener('pointerup', onPointerUp);
+    divider.addEventListener('pointercancel', onPointerUp);
+  }
+
+  // ── Library drawer ─────────────────────────────────────────────────────
+  initLibraryDrawer() {
+    const openBtn = document.getElementById('library-drawer-btn');
+    const closeBtn = document.getElementById('library-drawer-close');
+    const backdrop = document.getElementById('library-drawer-backdrop');
+
+    if (openBtn) openBtn.addEventListener('click', () => this.openLibraryDrawer());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.closeLibraryDrawer());
+    if (backdrop) backdrop.addEventListener('click', () => this.closeLibraryDrawer());
+
+    // Escape key handled in existing keydown handler
+  }
+
+  openLibraryDrawer() {
+    const drawer = document.getElementById('library-drawer');
+    const backdrop = document.getElementById('library-drawer-backdrop');
+    if (drawer) drawer.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    this.refreshLibraryViews();
+  }
+
+  closeLibraryDrawer() {
+    const drawer = document.getElementById('library-drawer');
+    const backdrop = document.getElementById('library-drawer-backdrop');
+    if (drawer) drawer.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   bindEvents() {
@@ -178,32 +356,28 @@ class CharacterGeneratorApp {
       this.handleRegeneratePrompt(),
     );
 
-    // Character field reset buttons
-    const resetDescriptionBtn = document.getElementById(
-      "reset-description-btn",
-    );
-    const resetPersonalityBtn = document.getElementById(
-      "reset-personality-btn",
-    );
-    const resetScenarioBtn = document.getElementById("reset-scenario-btn");
-    const resetFirstMessageBtn = document.getElementById(
-      "reset-first-message-btn",
-    );
+    // Field history and lock buttons (delegated)
+    document.querySelector('.split-left')?.addEventListener('click', (e) => {
+      const histBtn = e.target.closest('.btn-field-history');
+      if (histBtn) { this.openFieldHistory(histBtn.dataset.field); return; }
 
-    resetDescriptionBtn.addEventListener("click", () =>
-      this.handleResetField("description"),
-    );
-    resetPersonalityBtn.addEventListener("click", () =>
-      this.handleResetField("personality"),
-    );
-    resetScenarioBtn.addEventListener("click", () =>
-      this.handleResetField("scenario"),
-    );
-    resetFirstMessageBtn.addEventListener("click", () =>
-      this.handleResetField("firstMessage"),
-    );
+      const lockBtn = e.target.closest('.btn-field-lock');
+      if (lockBtn) this.toggleFieldLock(lockBtn.dataset.field, lockBtn);
+    });
 
-    // Character field textareas - show reset button when edited
+    // Field history modal close
+    document.getElementById('field-history-close-btn')?.addEventListener('click', () => {
+      document.getElementById('field-history-modal').classList.remove('show');
+      document.body.style.overflow = '';
+    });
+    document.getElementById('field-history-modal')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Character field textareas - update model on edit
     const descriptionTextarea = document.getElementById(
       "character-description",
     );
@@ -331,8 +505,11 @@ class CharacterGeneratorApp {
     const debugResponseContent = document.getElementById("debug-response-content");
 
     debugResponseBtn.addEventListener("click", () => {
-      const raw = this.characterGenerator && this.characterGenerator.rawCharacterData;
-      debugResponseContent.textContent = raw || "No response captured yet.";
+      const raw = this.apiHandler && this.apiHandler.lastRawResponse;
+      const display = raw
+        ? (typeof raw === "string" ? raw : JSON.stringify(raw, null, 2))
+        : "No response captured yet.";
+      debugResponseContent.textContent = display;
       debugResponseModal.classList.add("show");
       document.body.style.overflow = "hidden";
     });
@@ -377,6 +554,8 @@ class CharacterGeneratorApp {
         if (hm?.classList.contains("show")) this.closeHistoryModal();
         const dm = document.getElementById("diff-modal");
         if (dm?.classList.contains("show")) this.closeDiffModal();
+        const ld = document.getElementById("library-drawer");
+        if (ld?.classList.contains("open")) this.closeLibraryDrawer();
       }
     });
 
@@ -387,15 +566,7 @@ class CharacterGeneratorApp {
       }
     });
 
-    const promptList = document.getElementById("stored-prompts-list");
     const cardList = document.getElementById("stored-cards-list");
-
-    if (promptList) {
-      promptList.addEventListener("click", (event) =>
-        this.handleLibraryPromptClick(event),
-      );
-    }
-
     if (cardList) {
       cardList.addEventListener("click", (event) =>
         this.handleLibraryCardClick(event),
@@ -699,19 +870,9 @@ class CharacterGeneratorApp {
         effectiveConcept += `\n\nReference appearance guidance:\n${referenceImageDescription}`;
       }
 
-      const promptSaved = await this.savePromptToLibrary({
-        concept,
-        characterName,
-        pov,
-        lorebookData: this.lorebookData,
-        referenceImageDescription: referenceImageDescription || "",
-        referenceImageDataUrl: this.referenceImageDataUrl || "",
-      });
-      await this.refreshLibraryViews();
-      if (!promptSaved) {
-        this.showStreamMessage(
-          "⚠️ Prompt could not be saved to local library.\n",
-        );
+      // Expand @mentions into referenced card context
+      if (typeof expandMentions === "function") {
+        effectiveConcept = await expandMentions(effectiveConcept, this.storage);
       }
 
       // Generate character data with streaming
@@ -865,6 +1026,13 @@ class CharacterGeneratorApp {
       }
 
       this.showNotification("Character generated successfully!", "success");
+
+      // Auto-switch to Editor tab if user is still on Create
+      if (this.activeTab === 'create') {
+        this.switchTab('editor');
+      } else {
+        this.notifyTab('editor');
+      }
     } catch (error) {
       console.error("Generation error:", error);
 
@@ -1160,51 +1328,6 @@ class CharacterGeneratorApp {
 
     // Note: We don't store blob here anymore - download converts fresh from URL
     // This ensures regenerated images are properly included in downloads
-  }
-
-  handleResetField(field) {
-    if (!this.originalCharacter) {
-      this.showNotification("No original character to reset to", "warning");
-      return;
-    }
-
-    let textarea, resetBtn, originalValue, fieldName;
-
-    switch (field) {
-      case "description":
-        textarea = document.getElementById("character-description");
-        resetBtn = document.getElementById("reset-description-btn");
-        originalValue = this.originalCharacter.description;
-        fieldName = "Description";
-        break;
-      case "personality":
-        textarea = document.getElementById("character-personality");
-        resetBtn = document.getElementById("reset-personality-btn");
-        originalValue = this.originalCharacter.personality;
-        fieldName = "Personality";
-        break;
-      case "scenario":
-        textarea = document.getElementById("character-scenario");
-        resetBtn = document.getElementById("reset-scenario-btn");
-        originalValue = this.originalCharacter.scenario;
-        fieldName = "Scenario";
-        break;
-      case "firstMessage":
-        textarea = document.getElementById("character-first-message");
-        resetBtn = document.getElementById("reset-first-message-btn");
-        originalValue = this.originalCharacter.firstMessage;
-        fieldName = "First message";
-        break;
-    }
-
-    // Reset the field value
-    textarea.value = originalValue || "";
-    this.currentCharacter[field] = originalValue || "";
-
-    // Hide reset button
-    resetBtn.style.display = "none";
-
-    this.showNotification(`${fieldName} reset to original`, "success");
   }
 
   async handleDownloadJSON() {
@@ -1543,9 +1666,10 @@ class CharacterGeneratorApp {
       // Show image controls
       document.getElementById("image-controls").style.display = "block";
 
-      // Close modal
+      // Close modal and switch to Editor tab
       modal.classList.remove("show");
       document.body.style.overflow = "";
+      this.switchTab('editor');
 
       this.showNotification(
         `Pulled "${name}" from SillyTavern!`,
@@ -1593,54 +1717,20 @@ class CharacterGeneratorApp {
   }
 
   handleCharacterEdit(field) {
-    if (!this.originalCharacter || !this.currentCharacter) {
-      return;
-    }
+    if (!this.currentCharacter) return;
 
-    let textarea, resetBtn, originalValue, currentField;
+    const textareaMap = {
+      description: "character-description",
+      personality: "character-personality",
+      scenario: "character-scenario",
+      firstMessage: "character-first-message",
+    };
 
-    switch (field) {
-      case "description":
-        textarea = document.getElementById("character-description");
-        resetBtn = document.getElementById("reset-description-btn");
-        originalValue = this.originalCharacter.description;
-        currentField = "description";
-        break;
-      case "personality":
-        textarea = document.getElementById("character-personality");
-        resetBtn = document.getElementById("reset-personality-btn");
-        originalValue = this.originalCharacter.personality;
-        currentField = "personality";
-        break;
-      case "scenario":
-        textarea = document.getElementById("character-scenario");
-        resetBtn = document.getElementById("reset-scenario-btn");
-        originalValue = this.originalCharacter.scenario;
-        currentField = "scenario";
-        break;
-      case "firstMessage":
-        textarea = document.getElementById("character-first-message");
-        resetBtn = document.getElementById("reset-first-message-btn");
-        originalValue = this.originalCharacter.firstMessage;
-        currentField = "firstMessage";
-        break;
-    }
+    const textarea = document.getElementById(textareaMap[field]);
+    if (!textarea) return;
 
-    // Update currentCharacter with the edited content
-    this.currentCharacter[currentField] = textarea.value;
-
-    // Remove change highlight once the user starts editing
+    this.currentCharacter[field] = textarea.value;
     textarea.classList.remove("field-changed");
-
-    // Show/hide reset button based on whether content has changed
-    const currentContent = textarea.value.trim();
-    const originalContent = (originalValue || "").trim();
-
-    if (currentContent !== originalContent) {
-      resetBtn.style.display = "block";
-    } else {
-      resetBtn.style.display = "none";
-    }
   }
 
   async handleImageUpload(event) {
@@ -1707,9 +1797,9 @@ class CharacterGeneratorApp {
     // Instead of just clearing, automatically trigger generation again
     this.hideResultSection();
     this.clearStream();
-    const streamSection = document.querySelector(".stream-section");
-    streamSection.style.display = "none";
+    this.switchTab('create');
     this.currentCharacter = null;
+    this.currentCardSlug = null;
     this.currentImageUrl = null;
     document.getElementById("image-controls").style.display = "none";
 
@@ -1829,23 +1919,6 @@ class CharacterGeneratorApp {
     scenarioTextarea.value = this.currentCharacter.scenario || "";
     firstMessageTextarea.value = this.currentCharacter.firstMessage || "";
 
-    // Hide all reset buttons initially (will show if user edits)
-    const resetDescriptionBtn = document.getElementById(
-      "reset-description-btn",
-    );
-    const resetPersonalityBtn = document.getElementById(
-      "reset-personality-btn",
-    );
-    const resetScenarioBtn = document.getElementById("reset-scenario-btn");
-    const resetFirstMessageBtn = document.getElementById(
-      "reset-first-message-btn",
-    );
-
-    if (resetDescriptionBtn) resetDescriptionBtn.style.display = "none";
-    if (resetPersonalityBtn) resetPersonalityBtn.style.display = "none";
-    if (resetScenarioBtn) resetScenarioBtn.style.display = "none";
-    if (resetFirstMessageBtn) resetFirstMessageBtn.style.display = "none";
-
     // Reset example messages section for new character
     const exampleMessagesOutput = document.getElementById(
       "example-messages-output",
@@ -1853,7 +1926,6 @@ class CharacterGeneratorApp {
     const copyExamplesBtn = document.getElementById("copy-examples-btn");
     if (exampleMessagesOutput) {
       exampleMessagesOutput.textContent = "";
-      exampleMessagesOutput.style.display = "none";
     }
     if (copyExamplesBtn) {
       copyExamplesBtn.style.display = "none";
@@ -1867,12 +1939,11 @@ class CharacterGeneratorApp {
   }
 
   showResultSection() {
-    const resultSection = document.querySelector(".result-section");
+    this.enableEditorTab();
     const downloadBtn = document.getElementById("download-btn");
     const downloadJsonBtn = document.getElementById("download-json-btn");
 
-    resultSection.style.display = "block";
-    downloadBtn.style.display = "inline-flex";
+    if (downloadBtn) downloadBtn.style.display = "inline-flex";
 
     // Show JSON download button when character data is available
     if (downloadJsonBtn && this.currentCharacter) {
@@ -1884,18 +1955,13 @@ class CharacterGeneratorApp {
     if (pushStBtn && this.config.get("api.sillytavern.url")) {
       pushStBtn.style.display = "inline-flex";
     }
-
-    // Smooth scroll to results
-    resultSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   hideResultSection() {
-    const resultSection = document.querySelector(".result-section");
     const downloadBtn = document.getElementById("download-btn");
     const downloadJsonBtn = document.getElementById("download-json-btn");
 
-    resultSection.style.display = "none";
-    downloadBtn.style.display = "none";
+    if (downloadBtn) downloadBtn.style.display = "none";
     if (downloadJsonBtn) downloadJsonBtn.style.display = "none";
     const pushStBtn = document.getElementById("push-st-btn");
     if (pushStBtn) pushStBtn.style.display = "none";
@@ -2038,6 +2104,7 @@ class CharacterGeneratorApp {
       }
 
       document.getElementById("image-controls").style.display = "block";
+      this.switchTab('editor');
       await this.saveCardToLibrary();
       await this.refreshLibraryViews();
       this.showNotification("Card imported for editing", "success");
@@ -2063,23 +2130,59 @@ class CharacterGeneratorApp {
       return;
     }
 
+    const reviseBtn = document.getElementById("revise-character-btn");
+    const editorProgress = document.getElementById("editor-progress");
     try {
       const pov = document.getElementById("pov-select")?.value || "first";
+      if (reviseBtn) {
+        reviseBtn.disabled = true;
+        reviseBtn.textContent = "Revising...";
+      }
+      if (editorProgress) editorProgress.style.display = "block";
+      // Tell the AI which fields to skip
+      let effectiveInstruction = revisionInstruction;
+      if (this.lockedFields.size > 0) {
+        const lockedNames = [...this.lockedFields].map((f) =>
+          f === "firstMessage" ? "firstMessage" : f
+        );
+        effectiveInstruction += `\n\nIMPORTANT: Do NOT modify these locked fields — return them exactly as-is: ${lockedNames.join(", ")}`;
+      }
+
+      // Expand @mentions into referenced card context
+      if (typeof expandMentions === "function") {
+        effectiveInstruction = await expandMentions(effectiveInstruction, this.storage);
+      }
+
       this.showNotification("Applying AI revision...", "info");
       const revised = await this.apiHandler.reviseCharacter(
         this.currentCharacter,
-        revisionInstruction,
+        effectiveInstruction,
         pov,
       );
+
+      // Enforce locks — overwrite revised fields with originals for locked fields
+      for (const lockedField of this.lockedFields) {
+        if (this.currentCharacter[lockedField] != null) {
+          revised[lockedField] = this.currentCharacter[lockedField];
+        }
+      }
+
       this.currentCharacter = revised;
       this.originalCharacter = JSON.parse(JSON.stringify(revised));
       this.displayCharacter();
       await this.saveCardToLibrary();
       await this.refreshLibraryViews();
       this.showNotification("Character revised successfully", "success");
+      document.getElementById("revision-instruction").value = "";
     } catch (error) {
       console.error("Revision failed:", error);
       this.showNotification(`Revision failed: ${error.message}`, "error");
+    } finally {
+      if (reviseBtn) {
+        reviseBtn.disabled = false;
+        reviseBtn.textContent = "Revise Card with AI";
+      }
+      if (editorProgress) editorProgress.style.display = "none";
     }
   }
 
@@ -2097,9 +2200,11 @@ class CharacterGeneratorApp {
     const copyBtn = document.getElementById("copy-examples-btn");
     const outputDiv = document.getElementById("example-messages-output");
 
+    const editorProgress = document.getElementById("editor-progress");
     try {
       generateBtn.disabled = true;
       generateBtn.textContent = "⏳ Generating...";
+      if (editorProgress) editorProgress.style.display = "block";
       this.showNotification("Generating example messages...", "info");
 
       const pov = document.getElementById("pov-select")?.value || "first";
@@ -2111,7 +2216,6 @@ class CharacterGeneratorApp {
 
       this.currentCharacter.mesExample = examples;
       outputDiv.textContent = examples;
-      outputDiv.style.display = "block";
       copyBtn.style.display = "inline-block";
       this.showNotification(`Generated ${count} example message(s)`, "success");
     } catch (error) {
@@ -2119,7 +2223,8 @@ class CharacterGeneratorApp {
       this.showNotification(`Generation failed: ${error.message}`, "error");
     } finally {
       generateBtn.disabled = false;
-      generateBtn.textContent = "✨ Generate Examples";
+      generateBtn.textContent = "✨ Generate";
+      if (editorProgress) editorProgress.style.display = "none";
     }
   }
 
@@ -2266,6 +2371,29 @@ class CharacterGeneratorApp {
   async saveCardToLibrary(steeringInput = null) {
     if (!this.storageReady || !this.storage || !this.currentCharacter) return;
 
+    const name = this.currentCharacter.name || "Unnamed Character";
+    const slug = this.slugifyName(name);
+
+    // If this is a different card than what's currently loaded, check for conflicts
+    if (slug !== this.currentCardSlug) {
+      try {
+        const cards = await this.storage.listCards();
+        const existing = cards.find((c) => c.id === slug);
+        if (existing) {
+          const existingDate = existing.updatedAt
+            ? new Date(existing.updatedAt).toLocaleDateString()
+            : "unknown date";
+          if (!confirm(
+            `A card named "${existing.characterName}" (saved ${existingDate}) already exists in your library.\n\nOverwrite it with the new "${name}"?`
+          )) {
+            return;
+          }
+        }
+      } catch {
+        // If check fails, proceed with save
+      }
+    }
+
     try {
       let imageBlob = null;
       if (this.currentImageUrl) {
@@ -2279,11 +2407,15 @@ class CharacterGeneratorApp {
       }
 
       await this.storage.saveCard({
-        characterName: this.currentCharacter.name || "Unnamed Character",
+        characterName: name,
         character: JSON.parse(JSON.stringify(this.currentCharacter)),
         imageBlob,
         steeringInput,
       });
+      this.currentCardSlug = slug;
+      // Invalidate @mention autocomplete cache so new/updated cards appear
+      if (this.mentionConcept) this.mentionConcept.invalidateCache();
+      if (this.mentionRevision) this.mentionRevision.invalidateCache();
     } catch (error) {
       console.error("Failed to save card:", error);
     }
@@ -2302,35 +2434,8 @@ class CharacterGeneratorApp {
     }
 
     try {
-      const [prompts, cards] = await Promise.all([
-        this.storage.listPrompts(),
-        this.storage.listCards(),
-      ]);
-
-      const promptList = document.getElementById("stored-prompts-list");
+      const cards = await this.storage.listCards();
       const cardList = document.getElementById("stored-cards-list");
-
-      if (promptList) {
-        if (!prompts.length) {
-          promptList.innerHTML =
-            '<p class="library-empty">No saved prompts yet.</p>';
-        } else {
-          promptList.innerHTML = prompts
-            .map(
-              (prompt) => `
-                <div class="library-item">
-                  <div class="library-item-title">${prompt.characterName || "(No name)"} - ${prompt.pov || "first"} POV</div>
-                  <div class="library-item-date">${this.formatLibraryTime(prompt.updatedAt)}</div>
-                  <div class="library-item-actions">
-                    <button class="btn-small" data-action="load-prompt" data-id="${prompt.id}">Load</button>
-                    <button class="btn-small" data-action="delete-prompt" data-id="${prompt.id}">Delete</button>
-                  </div>
-                </div>
-              `,
-            )
-            .join("");
-        }
-      }
 
       if (cardList) {
         if (!cards.length) {
@@ -2356,7 +2461,7 @@ class CharacterGeneratorApp {
       }
 
       this.updateLibraryStatus(
-        `Saved ${prompts.length} prompt${prompts.length === 1 ? "" : "s"} and ${cards.length} card${cards.length === 1 ? "" : "s"}.`,
+        `${cards.length} saved card${cards.length === 1 ? "" : "s"}.`,
       );
     } catch (error) {
       console.error("Failed to refresh IndexedDB library view:", error);
@@ -2365,14 +2470,9 @@ class CharacterGeneratorApp {
   }
 
   renderStorageUnavailableState() {
-    const promptList = document.getElementById("stored-prompts-list");
     const cardList = document.getElementById("stored-cards-list");
     const message =
       '<p class="library-empty">Local storage is unavailable in this browser/session.</p>';
-
-    if (promptList) {
-      promptList.innerHTML = message;
-    }
     if (cardList) {
       cardList.innerHTML = message;
     }
@@ -2439,6 +2539,7 @@ class CharacterGeneratorApp {
       if (action === "load-card") {
         const card = await this.storage.getCard(id);
         if (!card?.character) return;
+        this.currentCardSlug = id;
         this.currentCharacter = card.character;
         this.originalCharacter = JSON.parse(JSON.stringify(card.character));
         this.displayCharacter();
@@ -2468,6 +2569,8 @@ class CharacterGeneratorApp {
             </div>
           `;
         }
+        this.closeLibraryDrawer();
+        this.switchTab('editor');
         this.showNotification("Card loaded", "success");
       } else if (action === "view-history") {
         const name = actionElement.dataset.name || id;
@@ -2484,7 +2587,13 @@ class CharacterGeneratorApp {
   }
 
   showNotification(message, type = "info") {
-    // Create notification element
+    // Dismiss any existing notification immediately
+    if (this._currentNotification && this._currentNotification.parentNode) {
+      this._currentNotification.parentNode.removeChild(this._currentNotification);
+    }
+    clearTimeout(this._notificationFadeTimer);
+    clearTimeout(this._notificationRemoveTimer);
+
     const notification = document.createElement("div");
     notification.className = `notification notification-${type}`;
     notification.style.cssText = `
@@ -2502,7 +2611,6 @@ class CharacterGeneratorApp {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         `;
 
-    // Set background color based on type
     const colors = {
       success: "#28a745",
       error: "#dc3545",
@@ -2514,6 +2622,7 @@ class CharacterGeneratorApp {
     notification.textContent = message;
 
     document.body.appendChild(notification);
+    this._currentNotification = notification;
 
     // Animate in
     setTimeout(() => {
@@ -2521,11 +2630,14 @@ class CharacterGeneratorApp {
     }, 10);
 
     // Remove after 5 seconds
-    setTimeout(() => {
+    this._notificationFadeTimer = setTimeout(() => {
       notification.style.transform = "translateX(100%)";
-      setTimeout(() => {
+      this._notificationRemoveTimer = setTimeout(() => {
         if (notification.parentNode) {
           document.body.removeChild(notification);
+        }
+        if (this._currentNotification === notification) {
+          this._currentNotification = null;
         }
       }, 300);
     }, 5000);
@@ -2626,6 +2738,7 @@ class CharacterGeneratorApp {
         this.showResultSection();
         document.getElementById("history-modal").classList.remove("show");
         document.body.style.overflow = "";
+        this.switchTab('editor');
         this.showNotification("Version restored", "success");
       };
     } catch (err) {
@@ -2637,6 +2750,249 @@ class CharacterGeneratorApp {
     const modal = document.getElementById("history-modal");
     if (modal) modal.classList.remove("show");
     document.body.style.overflow = "";
+  }
+
+  // ── Field lock ─────────────────────────────────────────────────────────────
+
+  toggleFieldLock(field, btn) {
+    const isLocked = this.lockedFields.has(field);
+    if (isLocked) {
+      this.lockedFields.delete(field);
+      btn.classList.remove("locked");
+      btn.textContent = "🔓";
+      btn.title = "Lock field from AI revision";
+    } else {
+      this.lockedFields.add(field);
+      btn.classList.add("locked");
+      btn.textContent = "🔒";
+      btn.title = "Unlock field for AI revision";
+    }
+    // Visual indicator on the field container
+    const fieldEl = btn.closest(".character-field");
+    if (fieldEl) fieldEl.classList.toggle("field-locked", !isLocked);
+  }
+
+  // ── Diff rendering (powered by jsdiff) ──────────────────────────────────────
+
+  /**
+   * Render an inline diff between two texts.
+   * @param {string} oldText - The older/selected version
+   * @param {string} newText - The current/editor version
+   * @param {'words'|'sentences'|'lines'} mode - Diff granularity
+   * @returns {string} HTML with inline diff markup
+   */
+  renderDiffHtml(oldText, newText, mode = "words") {
+    const opts = { timeout: 500 };
+    const diffFn = {
+      words: Diff.diffWordsWithSpace,
+      sentences: Diff.diffSentences,
+      lines: Diff.diffLines,
+    }[mode] || Diff.diffSentences;
+
+    const parts = diffFn(oldText, newText, opts);
+    if (!parts) {
+      return `<span class="diff-removed">${this.escapeHtml(oldText)}</span><span class="diff-added">${this.escapeHtml(newText)}</span>`;
+    }
+    return parts.map((part) => {
+      const escaped = this.escapeHtml(part.value);
+      if (part.removed) return `<span class="diff-removed">${escaped}</span>`;
+      if (part.added) return `<span class="diff-added">${escaped}</span>`;
+      return escaped;
+    }).join("");
+  }
+
+  // ── Per-Field History Modal ─────────────────────────────────────────────────
+
+  async openFieldHistory(field) {
+    if (!this.currentCharacter?.name) {
+      this.showNotification("No character loaded", "warning");
+      return;
+    }
+
+    const fieldLabels = {
+      description: "Description",
+      personality: "Personality",
+      scenario: "Scenario",
+      firstMessage: "First Message",
+    };
+
+    const slug = this.slugifyName(this.currentCharacter.name);
+    const modal = document.getElementById("field-history-modal");
+    const titleEl = document.getElementById("field-history-title");
+    const versionsEl = document.getElementById("field-history-versions");
+    const diffEl = document.getElementById("field-history-diff");
+    const actionsEl = document.getElementById("field-history-actions");
+
+    titleEl.textContent = `${fieldLabels[field] || field} — History`;
+    versionsEl.innerHTML = '<p class="library-empty">Loading...</p>';
+    diffEl.innerHTML = '<p style="color: var(--text-soft); font-style: italic;">Select a version to compare</p>';
+    actionsEl.style.display = "none";
+
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    try {
+      const res = await fetch(`/api/cards/${slug}/history`);
+      if (!res.ok) throw new Error("Failed to load history");
+      const history = await res.json();
+
+      if (!history.length) {
+        versionsEl.innerHTML = '<p class="library-empty">No version history yet</p>';
+        return;
+      }
+
+      // Fetch all versions to get field values
+      const versions = await Promise.all(
+        history.map(async (entry) => {
+          try {
+            const vRes = await fetch(`/api/cards/${slug}/version/${entry.hash}`);
+            if (!vRes.ok) return null;
+            const data = await vRes.json();
+            return {
+              hash: entry.hash,
+              timestamp: entry.timestamp,
+              steeringInput: entry.steeringInput,
+              card: data.card,
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      const validVersions = versions.filter(Boolean);
+      if (!validVersions.length) {
+        versionsEl.innerHTML = '<p class="library-empty">No versions available</p>';
+        return;
+      }
+
+      // Get current editor value for comparison
+      const textareaMap = {
+        description: "character-description",
+        personality: "character-personality",
+        scenario: "character-scenario",
+        firstMessage: "character-first-message",
+      };
+      // Map internal field names to possible stored key names
+      const altKeys = {
+        firstMessage: ["firstMessage", "first_mes"],
+        mesExample: ["mesExample", "mes_example"],
+      };
+
+      const getFieldValue = (card) => {
+        if (card[field] != null && card[field] !== "") return card[field];
+        const alts = altKeys[field];
+        if (alts) {
+          for (const key of alts) {
+            if (card[key] != null && card[key] !== "") return card[key];
+          }
+        }
+        return "";
+      };
+
+      const currentValue = document.getElementById(textareaMap[field])?.value || "";
+
+      // View state
+      let activeViewMode = "view"; // "view" or "diff"
+      let activeDiffGranularity = "sentences";
+      let activeSelectedValue = null;
+
+      const granularityEl = document.getElementById("field-history-diff-granularity");
+
+      const renderContent = () => {
+        if (activeSelectedValue === null) return;
+        const isSame = currentValue.trim() === activeSelectedValue.trim();
+
+        if (activeViewMode === "view") {
+          granularityEl.style.display = "none";
+          diffEl.innerHTML = `
+            <div class="field-history-diff-panel">
+              <div class="diff-text">${this.escapeHtml(activeSelectedValue || "(empty)")}</div>
+            </div>
+          `;
+        } else {
+          granularityEl.style.display = "flex";
+          if (isSame) {
+            diffEl.innerHTML = `
+              <div class="field-history-diff-panel">
+                <p style="font-size: 0.82rem; color: var(--text-soft); font-style: italic; margin-bottom: 0.5rem;">No differences from current editor</p>
+                <div class="diff-text">${this.escapeHtml(currentValue || "(empty)")}</div>
+              </div>
+            `;
+          } else {
+            diffEl.innerHTML = `
+              <div class="field-history-diff-panel">
+                <div class="diff-legend">
+                  <span class="diff-legend-item"><span class="diff-removed">removed</span> from selected</span>
+                  <span class="diff-legend-item"><span class="diff-added">added</span> in current</span>
+                </div>
+                <div class="diff-text diff-inline">${this.renderDiffHtml(activeSelectedValue, currentValue, activeDiffGranularity)}</div>
+              </div>
+            `;
+          }
+        }
+
+        // Show revert button if versions differ (in either mode)
+        if (!isSame) {
+          actionsEl.style.display = "flex";
+          document.getElementById("field-history-revert-btn").onclick = () => {
+            const textarea = document.getElementById(textareaMap[field]);
+            if (textarea) {
+              textarea.value = activeSelectedValue;
+              this.currentCharacter[field] = activeSelectedValue;
+            }
+            modal.classList.remove("show");
+            document.body.style.overflow = "";
+            this.showNotification(`${fieldLabels[field]} reverted to selected version`, "success");
+          };
+        } else {
+          actionsEl.style.display = "none";
+        }
+      };
+
+      // Wire up view/diff toggle
+      modal.querySelectorAll("#field-history-view-toggle .diff-mode-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.view === activeViewMode);
+        btn.onclick = () => {
+          activeViewMode = btn.dataset.view;
+          modal.querySelectorAll("#field-history-view-toggle .diff-mode-btn").forEach((b) => b.classList.toggle("active", b === btn));
+          renderContent();
+        };
+      });
+
+      // Wire up diff granularity toggle
+      granularityEl.querySelectorAll(".diff-mode-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.mode === activeDiffGranularity);
+        btn.onclick = () => {
+          activeDiffGranularity = btn.dataset.mode;
+          granularityEl.querySelectorAll(".diff-mode-btn").forEach((b) => b.classList.toggle("active", b === btn));
+          renderContent();
+        };
+      });
+
+      // Render version list
+      versionsEl.innerHTML = "";
+      validVersions.forEach((v, i) => {
+        const btn = document.createElement("button");
+        btn.className = "field-history-version-btn";
+        const date = new Date(v.timestamp);
+        const dateStr = date.toLocaleDateString();
+        const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const label = i === 0 ? "Latest saved" : v.steeringInput ? v.steeringInput.slice(0, 30) : `Version ${validVersions.length - i}`;
+        btn.innerHTML = `<span class="version-label">${this.escapeHtml(label)}</span><span class="version-date">${dateStr} ${timeStr}</span>`;
+
+        btn.addEventListener("click", () => {
+          versionsEl.querySelectorAll(".field-history-version-btn").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeSelectedValue = getFieldValue(v.card);
+          renderContent();
+        });
+
+        versionsEl.appendChild(btn);
+      });
+    } catch (err) {
+      versionsEl.innerHTML = `<p class="library-empty">Error: ${err.message}</p>`;
+    }
   }
 
   // ── Regeneration Diff Modal ────────────────────────────────────────────────
@@ -2707,15 +3063,15 @@ class CharacterGeneratorApp {
     });
     if (!hasChanges) return;
 
-    const resultSection = document.querySelector(".result-section");
-    if (!resultSection) return;
+    const splitLeft = document.querySelector(".split-left");
+    if (!splitLeft) return;
 
     const btn = document.createElement("button");
     btn.id = "show-changes-link";
     btn.className = "show-changes-link";
     btn.textContent = "⟷ Show what changed";
     btn.addEventListener("click", () => this.showDiffModal(prevValues));
-    resultSection.insertBefore(btn, resultSection.firstChild);
+    splitLeft.insertBefore(btn, splitLeft.firstChild);
   }
 
   _removeChangesLink() {
