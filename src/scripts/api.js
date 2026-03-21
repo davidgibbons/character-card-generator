@@ -6,6 +6,7 @@ class APIHandler {
     this.currentAbortController = null; // Store current abort controller for stopping generation
     this.currentReader = null; // Store current stream reader for cancellation
     this.userStopRequested = false;
+    this.lastRawResponse = null; // Store last raw API response for debug modal
   }
 
   async makeRequest(endpoint, data, isImageRequest = false, stream = false) {
@@ -190,6 +191,7 @@ class APIHandler {
         }
       }
 
+      this.lastRawResponse = fullContent;
       return fullContent;
     } catch (error) {
       console.error("Stream processing error:", error);
@@ -918,6 +920,7 @@ BEGIN IMAGE PROMPT NOW:`;
   }
 
   processNormalResponse(response) {
+    this.lastRawResponse = response;
     // Handle different response formats
     if (
       response.choices &&
@@ -1111,7 +1114,7 @@ Generate ${count} example dialogue message(s) for this character. Remember: one-
         },
       ],
       temperature: 0.8,
-      max_tokens: 1024,
+      max_tokens: 4096,
       stream: false,
     };
 
