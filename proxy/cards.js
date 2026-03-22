@@ -105,6 +105,7 @@ router.get("/", async (req, res) => {
             name: card.name || slug,
             updatedAt: stat.mtime.toISOString(),
             commitCount,
+            qualityScore: card.qualityScore ?? null,
           };
         } catch {
           return null;

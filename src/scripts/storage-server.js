@@ -146,6 +146,7 @@ class ServerBackedStorage {
         characterName: c.name,
         updatedAt: c.updatedAt,
         commitCount: c.commitCount,
+        qualityScore: c.qualityScore ?? null,
       }));
     } catch (error) {
       console.error("listCards failed:", error);

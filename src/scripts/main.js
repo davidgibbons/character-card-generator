@@ -17,6 +17,7 @@ class CharacterGeneratorApp {
     this.referenceImageDataUrl = "";
     // Removed currentImageBlob - we now convert fresh from URL on download
     this.lockedFields = new Set();
+    this.lastEvaluation = null;
     this.isGenerating = false;
     this.activeTab = 'create';
     this.activeSubtab = 'char-image';
@@ -226,6 +227,17 @@ class CharacterGeneratorApp {
     if (closeBtn) closeBtn.addEventListener('click', () => this.closeLibraryDrawer());
     if (backdrop) backdrop.addEventListener('click', () => this.closeLibraryDrawer());
 
+    const librarySearch = document.getElementById('library-search');
+    if (librarySearch) {
+      librarySearch.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('#stored-cards-list .library-item').forEach((item) => {
+          const name = item.dataset.cardName || "";
+          item.style.display = name.includes(query) ? "" : "none";
+        });
+      });
+    }
+
     // Escape key handled in existing keydown handler
   }
 
@@ -340,6 +352,22 @@ class CharacterGeneratorApp {
       reviseCharacterBtn.addEventListener("click", () =>
         this.handleReviseCharacter(),
       );
+    }
+
+    // Save card button
+    const saveCardBtn = document.getElementById("save-card-btn");
+    if (saveCardBtn) {
+      saveCardBtn.addEventListener("click", () => this.handleSaveCard());
+    }
+
+    // Quality evaluation buttons
+    const evaluateCardBtn = document.getElementById("evaluate-card-btn");
+    if (evaluateCardBtn) {
+      evaluateCardBtn.addEventListener("click", () => this.handleEvaluateCard());
+    }
+    const optimizeCardBtn = document.getElementById("optimize-card-btn");
+    if (optimizeCardBtn) {
+      optimizeCardBtn.addEventListener("click", () => this.handleOptimizeCard());
     }
 
     // Regenerate image button
@@ -1107,23 +1135,8 @@ class CharacterGeneratorApp {
     try {
       this.showNotification("Creating character card...", "info");
 
-      // Get the current (possibly edited) character fields
-      const descriptionTextarea = document.getElementById(
-        "character-description",
-      );
-      const personalityTextarea = document.getElementById(
-        "character-personality",
-      );
-      const scenarioTextarea = document.getElementById("character-scenario");
-      const firstMessageTextarea = document.getElementById(
-        "character-first-message",
-      );
-
-      // Update currentCharacter with edited content
-      this.currentCharacter.description = descriptionTextarea.value.trim();
-      this.currentCharacter.personality = personalityTextarea.value.trim();
-      this.currentCharacter.scenario = scenarioTextarea.value.trim();
-      this.currentCharacter.firstMessage = firstMessageTextarea.value.trim();
+      // Sync editor fields into currentCharacter
+      this.syncFieldsFromEditor();
 
       // Always convert from currentImageUrl to ensure we get the latest image
       // This ensures regenerated or uploaded images are properly included
@@ -1339,23 +1352,8 @@ class CharacterGeneratorApp {
     try {
       this.showNotification("Preparing character JSON...", "info");
 
-      // Get the current (possibly edited) character fields
-      const descriptionTextarea = document.getElementById(
-        "character-description",
-      );
-      const personalityTextarea = document.getElementById(
-        "character-personality",
-      );
-      const scenarioTextarea = document.getElementById("character-scenario");
-      const firstMessageTextarea = document.getElementById(
-        "character-first-message",
-      );
-
-      // Update currentCharacter with edited content
-      this.currentCharacter.description = descriptionTextarea.value.trim();
-      this.currentCharacter.personality = personalityTextarea.value.trim();
-      this.currentCharacter.scenario = scenarioTextarea.value.trim();
-      this.currentCharacter.firstMessage = firstMessageTextarea.value.trim();
+      // Sync editor fields into currentCharacter
+      this.syncFieldsFromEditor();
 
       // Convert to Spec V2 format
       const specV2Data = this.characterGenerator.toSpecV2Format(
@@ -1417,16 +1415,8 @@ class CharacterGeneratorApp {
     try {
       this.showNotification("Pushing to SillyTavern...", "info");
 
-      // Sync current form field edits into the character
-      const descriptionTextarea = document.getElementById("character-description");
-      const personalityTextarea = document.getElementById("character-personality");
-      const scenarioTextarea = document.getElementById("character-scenario");
-      const firstMessageTextarea = document.getElementById("character-first-message");
-
-      this.currentCharacter.description = descriptionTextarea.value.trim();
-      this.currentCharacter.personality = personalityTextarea.value.trim();
-      this.currentCharacter.scenario = scenarioTextarea.value.trim();
-      this.currentCharacter.firstMessage = firstMessageTextarea.value.trim();
+      // Sync editor fields into currentCharacter
+      this.syncFieldsFromEditor();
 
       const specV2Data = this.characterGenerator.toSpecV2Format(this.currentCharacter);
       const name = this.currentCharacter.name || "character";
@@ -1901,6 +1891,24 @@ class CharacterGeneratorApp {
     }
   }
 
+  syncFieldsFromEditor() {
+    if (!this.currentCharacter) return;
+    const desc = document.getElementById("character-description");
+    const pers = document.getElementById("character-personality");
+    const scen = document.getElementById("character-scenario");
+    const first = document.getElementById("character-first-message");
+    if (desc) this.currentCharacter.description = desc.value.trim();
+    if (pers) this.currentCharacter.personality = pers.value.trim();
+    if (scen) this.currentCharacter.scenario = scen.value.trim();
+    if (first) this.currentCharacter.firstMessage = first.value.trim();
+
+    const mesEx = document.getElementById("example-messages-output");
+    if (mesEx) {
+      const text = (mesEx.innerText || mesEx.textContent || "").trim();
+      if (text) this.currentCharacter.mesExample = text;
+    }
+  }
+
   displayCharacter() {
     // Update all character fields
     const descriptionTextarea = document.getElementById(
@@ -1955,6 +1963,9 @@ class CharacterGeneratorApp {
     if (pushStBtn && this.config.get("api.sillytavern.url")) {
       pushStBtn.style.display = "inline-flex";
     }
+
+    const saveCardBtn = document.getElementById("save-card-btn");
+    if (saveCardBtn) saveCardBtn.style.display = "inline-flex";
   }
 
   hideResultSection() {
@@ -1965,6 +1976,8 @@ class CharacterGeneratorApp {
     if (downloadJsonBtn) downloadJsonBtn.style.display = "none";
     const pushStBtn = document.getElementById("push-st-btn");
     if (pushStBtn) pushStBtn.style.display = "none";
+    const saveCardBtn = document.getElementById("save-card-btn");
+    if (saveCardBtn) saveCardBtn.style.display = "none";
   }
 
   async handleReferenceImageUpload(event) {
@@ -2181,6 +2194,257 @@ class CharacterGeneratorApp {
       if (reviseBtn) {
         reviseBtn.disabled = false;
         reviseBtn.textContent = "Revise Card with AI";
+      }
+      if (editorProgress) editorProgress.style.display = "none";
+    }
+  }
+
+  async handleSaveCard() {
+    if (!this.currentCharacter) {
+      this.showNotification("No character to save", "warning");
+      return;
+    }
+    this.syncFieldsFromEditor();
+    await this.saveCardToLibrary();
+    await this.refreshLibraryViews();
+    this.showNotification("Card saved", "success");
+  }
+
+  async handleEvaluateCard() {
+    if (!this.currentCharacter) {
+      this.showNotification("Generate or import a character first", "warning");
+      return;
+    }
+
+    const evaluateBtn = document.getElementById("evaluate-card-btn");
+    const editorProgress = document.getElementById("editor-progress");
+    try {
+      if (evaluateBtn) {
+        evaluateBtn.disabled = true;
+        evaluateBtn.textContent = "Evaluating...";
+      }
+      if (editorProgress) editorProgress.style.display = "block";
+
+      const evaluation = await this.apiHandler.evaluateCard(this.currentCharacter);
+      this.lastEvaluation = evaluation;
+      this.renderQualityResults(evaluation);
+
+      // Persist quality score on the character for library display
+      this.currentCharacter.qualityScore = evaluation.overallScore;
+      await this.saveCardToLibrary();
+      await this.refreshLibraryViews();
+
+      const optimizeBtn = document.getElementById("optimize-card-btn");
+      if (optimizeBtn) optimizeBtn.style.display = "";
+
+      this.showNotification(`Quality score: ${evaluation.overallScore}/100`, "success");
+    } catch (error) {
+      console.error("Evaluation failed:", error);
+      this.showNotification(`Evaluation failed: ${error.message}`, "error");
+    } finally {
+      if (evaluateBtn) {
+        evaluateBtn.disabled = false;
+        evaluateBtn.textContent = "Evaluate Card";
+      }
+      if (editorProgress) editorProgress.style.display = "none";
+    }
+  }
+
+  renderQualityResults(evaluation) {
+    const resultsEl = document.getElementById("quality-results");
+    if (!resultsEl) return;
+    resultsEl.style.display = "";
+
+    // Score circle
+    const scoreValue = document.getElementById("quality-score-value");
+    const scoreCircle = document.getElementById("quality-score-circle");
+    if (scoreValue) scoreValue.textContent = evaluation.overallScore;
+    if (scoreCircle) {
+      const score = evaluation.overallScore;
+      const color = score >= 80 ? "var(--success)" : score >= 60 ? "var(--warning)" : "var(--error)";
+      scoreCircle.style.borderColor = color;
+      scoreCircle.querySelector(".quality-score-value").style.color = color;
+    }
+
+    // Dimension bars
+    const dimensionsEl = document.getElementById("quality-dimensions");
+    if (dimensionsEl) {
+      const labels = {
+        consistency: "Consistency",
+        richness: "Richness",
+        voice: "Voice",
+        roleplayability: "Roleplayability",
+        firstImpression: "First Impression",
+        fieldPlacement: "Field Placement",
+      };
+      dimensionsEl.innerHTML = "";
+      for (const [key, label] of Object.entries(labels)) {
+        const dim = evaluation.dimensions?.[key];
+        if (!dim) continue;
+        const color = dim.score >= 80 ? "var(--success)" : dim.score >= 60 ? "var(--warning)" : "var(--error)";
+        dimensionsEl.innerHTML += `
+          <div class="quality-dimension">
+            <div class="quality-dimension-header">
+              <span class="quality-dimension-label">${label}</span>
+              <span class="quality-dimension-score" style="color: ${color}">${dim.score}</span>
+            </div>
+            <div class="quality-bar-track"><div class="quality-bar-fill" style="width: ${dim.score}%; background: ${color}"></div></div>
+            <p class="quality-dimension-comment">${dim.comment}</p>
+          </div>`;
+      }
+    }
+
+    // Contradictions
+    const contradictionsSection = document.getElementById("quality-contradictions-section");
+    const contradictionsList = document.getElementById("quality-contradictions-list");
+    if (contradictionsSection && contradictionsList) {
+      if (evaluation.contradictions?.length) {
+        contradictionsSection.style.display = "";
+        contradictionsList.innerHTML = evaluation.contradictions
+          .map((c, i) => `<li data-index="${i}" data-type="contradiction"><strong>${c.fields?.join(" / ") || "General"}</strong>: ${c.issue}</li>`)
+          .join("");
+      } else {
+        contradictionsSection.style.display = "none";
+      }
+    }
+
+    // Suggestions
+    const suggestionsSection = document.getElementById("quality-suggestions-section");
+    const suggestionsList = document.getElementById("quality-suggestions-list");
+    if (suggestionsSection && suggestionsList) {
+      if (evaluation.suggestions?.length) {
+        suggestionsSection.style.display = "";
+        suggestionsList.innerHTML = evaluation.suggestions
+          .map((s, i) => `<li data-index="${i}" data-type="suggestion">${s}</li>`)
+          .join("");
+      } else {
+        suggestionsSection.style.display = "none";
+      }
+    }
+
+    // Misplaced content
+    const misplacedSection = document.getElementById("quality-misplaced-section");
+    const misplacedList = document.getElementById("quality-misplaced-list");
+    if (misplacedSection && misplacedList) {
+      if (evaluation.misplacedContent?.length) {
+        misplacedSection.style.display = "";
+        misplacedList.innerHTML = evaluation.misplacedContent
+          .map((m, i) => `<li data-index="${i}" data-type="misplaced"><strong>${m.currentField} → ${m.suggestedField}</strong>: "${m.excerpt}" — ${m.reason}</li>`)
+          .join("");
+      } else {
+        misplacedSection.style.display = "none";
+      }
+    }
+
+    // Click-to-toggle on list items
+    const toggleExclude = (e) => {
+      const li = e.target.closest("li[data-type]");
+      if (li) li.classList.toggle("quality-excluded");
+    };
+    if (contradictionsList) contradictionsList.addEventListener("click", toggleExclude);
+    if (suggestionsList) suggestionsList.addEventListener("click", toggleExclude);
+    if (misplacedList) misplacedList.addEventListener("click", toggleExclude);
+
+    // Show additional notes field
+    const notesSection = document.getElementById("quality-optimize-notes-section");
+    if (notesSection) notesSection.style.display = "";
+  }
+
+  async handleOptimizeCard() {
+    if (!this.lastEvaluation || !this.currentCharacter) {
+      this.showNotification("Run an evaluation first", "warning");
+      return;
+    }
+
+    const optimizeBtn = document.getElementById("optimize-card-btn");
+    const editorProgress = document.getElementById("editor-progress");
+    try {
+      if (optimizeBtn) {
+        optimizeBtn.disabled = true;
+        optimizeBtn.textContent = "Optimizing...";
+      }
+      if (editorProgress) editorProgress.style.display = "block";
+
+      // Build revision instruction from evaluation findings, filtering out excluded items
+      const getExcluded = (selector) => new Set(
+        [...document.querySelectorAll(selector)].map((li) => li.dataset.index)
+      );
+      const excludedContradictions = getExcluded("#quality-contradictions-list li.quality-excluded");
+      const excludedMisplaced = getExcluded("#quality-misplaced-list li.quality-excluded");
+      const excludedSuggestions = getExcluded("#quality-suggestions-list li.quality-excluded");
+
+      const parts = [];
+      const activeContradictions = (this.lastEvaluation.contradictions || [])
+        .filter((_, i) => !excludedContradictions.has(String(i)));
+      const activeMisplaced = (this.lastEvaluation.misplacedContent || [])
+        .filter((_, i) => !excludedMisplaced.has(String(i)));
+      const activeSuggestions = (this.lastEvaluation.suggestions || [])
+        .filter((_, i) => !excludedSuggestions.has(String(i)));
+
+      if (activeContradictions.length) {
+        parts.push("Fix these contradictions:\n" +
+          activeContradictions.map((c) => `- ${c.fields?.join(" / ")}: ${c.issue}`).join("\n"));
+      }
+      if (activeMisplaced.length) {
+        parts.push("Move misplaced content to the correct fields:\n" +
+          activeMisplaced.map((m) => `- Move "${m.excerpt}" from ${m.currentField} to ${m.suggestedField} (${m.reason})`).join("\n"));
+      }
+      if (activeSuggestions.length) {
+        parts.push("Apply these improvements:\n" +
+          activeSuggestions.map((s) => `- ${s}`).join("\n"));
+      }
+
+      const additionalNotes = document.getElementById("quality-optimize-notes")?.value?.trim();
+      if (additionalNotes) {
+        parts.push("Additional notes from the author:\n" + additionalNotes);
+      }
+
+      if (!parts.length) {
+        parts.push("Improve the overall quality, coherence, and roleplay-readiness of this character card.");
+      }
+
+      let instruction = parts.join("\n\n");
+
+      // Respect locked fields
+      if (this.lockedFields.size > 0) {
+        const lockedNames = [...this.lockedFields];
+        instruction += `\n\nIMPORTANT: Do NOT modify these locked fields — return them exactly as-is: ${lockedNames.join(", ")}`;
+      }
+
+      this.showNotification("Optimizing character card...", "info");
+      const pov = document.getElementById("pov-select")?.value || "first";
+      const revised = await this.apiHandler.reviseCharacter(this.currentCharacter, instruction, pov);
+
+      // Enforce locks
+      for (const lockedField of this.lockedFields) {
+        if (this.currentCharacter[lockedField] != null) {
+          revised[lockedField] = this.currentCharacter[lockedField];
+        }
+      }
+
+      this.currentCharacter = revised;
+      this.originalCharacter = JSON.parse(JSON.stringify(revised));
+      this.displayCharacter();
+      await this.saveCardToLibrary();
+      await this.refreshLibraryViews();
+
+      // Clear evaluation and switch to Character subtab
+      this.lastEvaluation = null;
+      document.getElementById("quality-results").style.display = "none";
+      document.getElementById("optimize-card-btn").style.display = "none";
+      const notesEl = document.getElementById("quality-optimize-notes");
+      if (notesEl) notesEl.value = "";
+      const notesSection = document.getElementById("quality-optimize-notes-section");
+      if (notesSection) notesSection.style.display = "none";
+      this.switchSubtab("char-image");
+      this.showNotification("Card optimized! Review the changes, then re-evaluate if desired.", "success");
+    } catch (error) {
+      console.error("Optimization failed:", error);
+      this.showNotification(`Optimization failed: ${error.message}`, "error");
+    } finally {
+      if (optimizeBtn) {
+        optimizeBtn.disabled = false;
+        optimizeBtn.textContent = "Optimize Card";
       }
       if (editorProgress) editorProgress.style.display = "none";
     }
@@ -2427,6 +2691,18 @@ class CharacterGeneratorApp {
     return date.toLocaleString();
   }
 
+  formatLibraryDate(isoString) {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return "?";
+    const now = new Date();
+    const diff = now - date;
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
   async refreshLibraryViews() {
     if (!this.storageReady || !this.storage) {
       this.renderStorageUnavailableState();
@@ -2444,17 +2720,27 @@ class CharacterGeneratorApp {
         } else {
           cardList.innerHTML = cards
             .map(
-              (card) => `
-                <div class="library-item">
-                  <div class="library-item-title">${card.characterName || "Unnamed Character"}</div>
-                  <div class="library-item-date">${this.formatLibraryTime(card.updatedAt)}${card.commitCount ? ` · ${card.commitCount} version${card.commitCount === 1 ? "" : "s"}` : ""}</div>
+              (card) => {
+                const scoreBadge = card.qualityScore != null
+                  ? `<span class="library-item-score ${card.qualityScore >= 80 ? "score-good" : card.qualityScore >= 60 ? "score-ok" : "score-low"}">${card.qualityScore}</span>`
+                  : "";
+                const dateParts = [];
+                dateParts.push(this.formatLibraryDate(card.updatedAt));
+                if (card.commitCount) dateParts.push(`${card.commitCount}v`);
+                return `
+                <div class="library-item" data-card-name="${(card.characterName || "").toLowerCase()}">
+                  <div class="library-item-header">
+                    <div class="library-item-title">${card.characterName || "Unnamed Character"}</div>
+                    <div class="library-item-meta">${scoreBadge}<span class="library-item-date">${dateParts.join(" · ")}</span></div>
+                  </div>
                   <div class="library-item-actions">
                     <button class="btn-small" data-action="load-card" data-id="${card.id}">Load</button>
                     ${card.commitCount > 0 ? `<button class="btn-small" data-action="view-history" data-id="${card.id}" data-name="${card.characterName || "Card"}">History</button>` : ""}
                     <button class="btn-small" data-action="delete-card" data-id="${card.id}">Delete</button>
                   </div>
                 </div>
-              `,
+              `;
+              },
             )
             .join("");
         }

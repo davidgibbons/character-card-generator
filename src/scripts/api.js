@@ -1055,6 +1055,85 @@ BEGIN IMAGE PROMPT NOW:`;
     };
   }
 
+  async evaluateCard(character) {
+    if (!character) {
+      throw new Error("Character is required for evaluation");
+    }
+
+    const model = this.config.get("api.text.model");
+
+    const systemPrompt = `You are an expert roleplay character card evaluator. Analyze the provided character card and return a JSON evaluation.
+
+Score each dimension 0-100:
+- consistency: Do all fields agree with each other? Check personality vs description vs first message behavior.
+- richness: Depth of unique traits, quirks, backstory details, and specificity.
+- voice: Does the character have a distinctive speaking style visible in the first message?
+- roleplayability: Does the scenario invite engagement and give the user hooks to interact with?
+- firstImpression: Does the first message hook the user and set the scene effectively?
+- fieldPlacement: Is content in the correct field? Check for these common problems:
+  - Personality traits listed in the description instead of the personality field
+  - Dialogue examples or message-style content in the description or personality fields
+  - Scenario/setting info buried in the description instead of the scenario field
+  - Character backstory in the personality field instead of description
+  - OOC instructions or system-prompt-style directives in character fields
+  - Duplicated content across multiple fields
+
+Also identify:
+- contradictions: Places where fields contradict each other (e.g., personality says shy but first message is aggressive)
+- misplacedContent: Segments of text that belong in a different field. For each, quote a short excerpt of the misplaced text, name the field it's currently in, and name the field it should be moved to. Only flag clear cases, not borderline overlap.
+- suggestions: Actionable improvements the author could make
+
+Return ONLY valid JSON in this exact format:
+{
+  "overallScore": <0-100>,
+  "dimensions": {
+    "consistency": { "score": <0-100>, "comment": "<brief explanation>" },
+    "richness": { "score": <0-100>, "comment": "<brief explanation>" },
+    "voice": { "score": <0-100>, "comment": "<brief explanation>" },
+    "roleplayability": { "score": <0-100>, "comment": "<brief explanation>" },
+    "firstImpression": { "score": <0-100>, "comment": "<brief explanation>" },
+    "fieldPlacement": { "score": <0-100>, "comment": "<brief explanation>" }
+  },
+  "contradictions": [{ "fields": ["field1", "field2"], "issue": "<description>" }],
+  "misplacedContent": [{ "excerpt": "<short quote>", "currentField": "<field name>", "suggestedField": "<field name>", "reason": "<why it belongs elsewhere>" }],
+  "suggestions": ["<actionable suggestion>"]
+}`;
+
+    const userPrompt = `Evaluate this character card:
+
+Name: ${character.name || "(empty)"}
+
+Description:
+${character.description || "(empty)"}
+
+Personality:
+${character.personality || "(empty)"}
+
+Scenario:
+${character.scenario || "(empty)"}
+
+First Message:
+${character.firstMessage || "(empty)"}
+
+Example Messages:
+${character.mesExample || "(empty)"}`;
+
+    const data = {
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 4096,
+      stream: false,
+    };
+
+    const response = await this.makeRequest("/chat/completions", data, false, false);
+    const output = this.processNormalResponse(response);
+    return this.parseJsonFromModelOutput(output);
+  }
+
   async generateExampleMessages(character, count = 3, pov = "first") {
     if (!character) {
       throw new Error("Character is required for example message generation");
