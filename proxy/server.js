@@ -206,13 +206,18 @@ app.post("/api/text/chat/completions", async (req, res) => {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      response.body.on("data", (chunk) => {
-        res.write(chunk);
-      });
-
-      response.body.on("end", () => {
-        res.end();
-      });
+      // Node 18 fetch returns a web ReadableStream, pipe it via async iterator
+      const reader = response.body.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(value);
+        }
+      } catch (streamErr) {
+        console.error("Stream read error:", streamErr);
+      }
+      res.end();
     } else {
       const data = await response.json();
       res.json(data);

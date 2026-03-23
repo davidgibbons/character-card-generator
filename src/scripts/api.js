@@ -591,7 +591,14 @@ Shortened prompt (one paragraph):`,
   }
 
   buildCharacterPrompt(concept, characterName, pov = "first", lorebook = null) {
-    const promptId = pov === "third" ? "generate_third_person" : "generate_first_person";
+    let promptId;
+    if (pov === "scenario") {
+      promptId = "generate_scenario";
+    } else if (pov === "third") {
+      promptId = "generate_third_person";
+    } else {
+      promptId = "generate_first_person";
+    }
     const prompt = getPrompt(promptId);
 
     // Handle Lorebook
@@ -601,7 +608,7 @@ Shortened prompt (one paragraph):`,
         (e) => e.enabled !== false,
       );
       if (entries.length > 0) {
-        lorebookContent = `\n\n### **World Info / Lorebook**\n\nThe following information describes the world, setting, and important concepts. Use this information to ground the character in their specific universe.\n\n`;
+        lorebookContent = `\n\n### **World Info / Lorebook**\n\nThe following information describes the world, setting, and important concepts. Use this information to ground the scenario in its specific universe.\n\n`;
         entries.forEach((entry) => {
           lorebookContent += `**Keys:** ${entry.key.join(", ")}\n`;
           lorebookContent += `**Content:**\n${entry.content}\n\n---\n\n`;
@@ -611,7 +618,7 @@ Shortened prompt (one paragraph):`,
 
     const userPrompt = renderTemplate(prompt.userPromptTemplate, {
       concept,
-      characterName,
+      characterName: pov === "scenario" ? "" : characterName,
       lorebookContent,
     });
 
@@ -852,13 +859,23 @@ Shortened prompt (one paragraph):`,
     const output = this.processNormalResponse(response);
     const parsed = this.parseJsonFromModelOutput(output);
 
-    return {
+    const result = {
       name: parsed.name || currentCharacter.name || "Unnamed Character",
       description: parsed.description || currentCharacter.description || "",
       personality: parsed.personality || currentCharacter.personality || "",
       scenario: parsed.scenario || currentCharacter.scenario || "",
       firstMessage: parsed.firstMessage || currentCharacter.firstMessage || "",
     };
+
+    // Preserve optional fields if they exist on the current character
+    if ("systemPrompt" in currentCharacter) {
+      result.systemPrompt = parsed.systemPrompt ?? currentCharacter.systemPrompt ?? "";
+    }
+    if ("postHistoryInstructions" in currentCharacter) {
+      result.postHistoryInstructions = parsed.postHistoryInstructions ?? currentCharacter.postHistoryInstructions ?? "";
+    }
+
+    return result;
   }
 
   async evaluateCard(character) {

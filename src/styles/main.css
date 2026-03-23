@@ -2277,3 +2277,43 @@ textarea.content-box {
         scroll-behavior: auto !important;
     }
 }
+
+/* ── Advanced Fields Section ───────────────────────────── */
+
+.advanced-fields-section {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+}
+
+.advanced-fields-section summary {
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.advanced-fields-section summary:hover {
+    color: var(--text-primary);
+}
+
+.advanced-fields-section[open] summary {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.advanced-fields-section .form-group {
+    padding: 0 1rem;
+    margin-bottom: 1rem;
+}
+
+.advanced-fields-section .form-group:last-child {
+    margin-bottom: 1rem;
+}

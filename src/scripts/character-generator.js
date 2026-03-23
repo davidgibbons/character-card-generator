@@ -23,7 +23,9 @@ class CharacterGenerator {
         pov,
         lorebook
       );
-      this.parsedCharacter = this.parseCharacterData(this.rawCharacterData);
+      this.parsedCharacter = pov === "scenario"
+        ? this.parseScenarioData(this.rawCharacterData)
+        : this.parseCharacterData(this.rawCharacterData);
       return this.parsedCharacter;
     } catch (error) {
       console.error("Error generating character:", error);
@@ -123,6 +125,49 @@ class CharacterGenerator {
     return character;
   }
 
+  // Parse scenario card data using section markers
+  parseScenarioData(rawData) {
+    const character = {
+      name: "",
+      description: "",
+      personality: "",
+      scenario: "",
+      firstMessage: "",
+      systemPrompt: "",
+      postHistoryInstructions: "",
+    };
+
+    // Extract name from # header
+    const nameMatch = rawData.match(/^#\s+(.+?)$/m);
+    if (nameMatch) {
+      character.name = nameMatch[1].trim();
+    }
+
+    // Helper to extract content between ## sections
+    const extractSection = (sectionName) => {
+      const pattern = new RegExp(
+        `##\\s*${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`,
+        "i"
+      );
+      const match = rawData.match(pattern);
+      return match ? match[1].trim() : "";
+    };
+
+    character.description = extractSection("Description");
+    character.personality = extractSection("Personality");
+    character.scenario = extractSection("Scenario");
+    character.firstMessage = extractSection("First Message");
+    character.systemPrompt = extractSection("System Prompt");
+    character.postHistoryInstructions = extractSection("Post-History Instructions");
+
+    if (!character.name) {
+      console.warn("Could not extract scenario name. Using default.");
+      character.name = "{{char}}";
+    }
+
+    return character;
+  }
+
   // Format character for display
   formatCharacterForDisplay(character) {
     return `
@@ -152,7 +197,7 @@ class CharacterGenerator {
 
   // Convert to SillyTavern Spec V2 format
   toSpecV2Format(character) {
-    return {
+    const spec = {
       spec: "chara_card_v2",
       spec_version: "2.0",
       data: {
@@ -165,6 +210,13 @@ class CharacterGenerator {
         tags: [],
       },
     };
+    if (character.systemPrompt) {
+      spec.data.system_prompt = character.systemPrompt;
+    }
+    if (character.postHistoryInstructions) {
+      spec.data.post_history_instructions = character.postHistoryInstructions;
+    }
+    return spec;
   }
 }
 
