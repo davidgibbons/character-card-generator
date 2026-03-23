@@ -42,6 +42,9 @@ class Config {
         persistApiKeys: false,
         enableImageGeneration: true,
       },
+      prompts: {
+        overrides: {},
+      },
     };
   }
 

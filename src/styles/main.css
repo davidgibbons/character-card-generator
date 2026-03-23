@@ -2200,6 +2200,73 @@ textarea.content-box {
     }
 }
 
+/* ── Prompt Editor (inside Settings modal) ─────────── */
+
+.prompt-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.prompt-editor select {
+    margin-bottom: 0.25rem;
+}
+
+.prompt-override-textarea {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    min-height: 200px;
+    resize: vertical;
+}
+
+.prompt-controls-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.prompt-param {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.prompt-param label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.prompt-var-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+}
+
+.prompt-var-tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    opacity: 0.8;
+}
+
+/* ── Dark mode overrides for prompt editor ──────── */
+
+@media (prefers-color-scheme: dark) {
+    .prompt-var-tag {
+        background: rgba(14, 122, 138, 0.15);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
