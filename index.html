@@ -15,23 +15,6 @@
     </head>
 
     <body>
-        <!-- Migration banner: shown when IndexedDB has existing cards (hidden by default) -->
-        <div id="migration-banner" class="migration-banner" style="display: none">
-            <div class="migration-banner-content">
-                <span class="migration-banner-text">
-                    You have saved data in local browser storage.
-                </span>
-                <div class="migration-banner-actions">
-                    <button id="migration-migrate-btn" class="btn-primary migration-btn">
-                        Migrate to Server
-                    </button>
-                    <button id="migration-dismiss-btn" class="btn-outline migration-btn">
-                        Dismiss
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="container">
             <header class="header">
                 <h1 class="title">🎭 SillyTavern Character Generator</h1>
@@ -387,8 +370,7 @@
         <script src="src/scripts/character-generator.js?v=20260218"></script>
         <script src="src/scripts/image-generator.js?v=20260218"></script>
         <script src="src/scripts/png-encoder.js?v=20260218"></script>
-        <script src="src/scripts/storage.js?v=20260215-fix1"></script>
-        <script src="src/scripts/storage-server.js?v=20260319"></script>
+        <script src="src/scripts/storage-server.js?v=20260322"></script>
         <!-- API Settings Modal -->
         <div id="api-settings-modal" class="modal-overlay">
             <div class="api-settings-modal">
