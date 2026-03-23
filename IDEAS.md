@@ -13,9 +13,7 @@ All phases (1–5) are complete and running via a single Docker container. Known
 - **Field change highlights** — `.field-changed` clears on edit. Consider keeping a subtle indicator even after editing (e.g. a dot in the label) so the user knows the field was AI-generated since last save.
 
 ### Phase 2 — Git-Backed Storage
-- **Migration banner** — not yet tested with real IndexedDB data. Needs a test pass with existing cards.
 - **Avatar gitignore toggle** — the plan included a per-card "Version control avatar" toggle to opt the image into git commits. Not yet built.
-- ~~**Prompt storage still uses IndexedDB**~~ ✅ — Prompts are now server-side (Phase 5).
 
 ### Phase 3 — Version History UI
 - **History modal is not yet end-to-end tested** — needs at least one card with multiple commits to verify rendering, restore, and diff.

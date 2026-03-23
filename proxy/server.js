@@ -2,7 +2,6 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const compression = require("compression");
-const fetch = require("node-fetch");
 const FormData = require("form-data");
 require("dotenv").config({ path: "../.env" });
 const { router: cardsRouter, initGit } = require("./cards");

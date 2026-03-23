@@ -47,8 +47,7 @@ Card data (git-backed) lives in a Docker named volume `character-generator-cards
 | `src/scripts/api.js` | LLM API calls, streaming, connection test |
 | `src/scripts/character-generator.js` | Generation pipeline; `rawCharacterData` holds last raw AI response |
 | `src/scripts/main.js` | App controller — event binding, UI logic, library, ST browser |
-| `src/scripts/storage.js` | IndexedDB storage class (`CharacterStorage`) — used for prompts |
-| `src/scripts/storage-server.js` | Server-backed storage (`ServerBackedStorage`) — cards via REST, prompts via IndexedDB |
+| `src/scripts/storage-server.js` | Server-backed storage (`ServerBackedStorage`) — cards and prompts via REST API |
 | `src/styles/main.css` | All styles |
 | `proxy/server.js` | Express proxy — LLM, image, ST, and cards API |
 | `proxy/cards.js` | Cards REST router + git operations (`/api/cards/*`) |
@@ -67,8 +66,7 @@ Card data (git-backed) lives in a Docker named volume `character-generator-cards
 | Generation progress bar | 1a | Animated bar while streaming; Generate button disabled to prevent double-fire |
 | Field change highlighting | 1b | `.field-changed` accent border on fields that changed since last generation |
 | Git-backed card storage | 2a | `proxy/cards.js` REST API; each save = git commit with steering input in message |
-| Server storage client | 2b | `storage-server.js` replaces IndexedDB for cards; prompts stay in IndexedDB |
-| IndexedDB migration banner | 2c | One-time banner offers to migrate existing browser cards to server |
+| Server storage client | 2b | `storage-server.js` — all storage via server REST API |
 | Version history modal | 3a | "History" button on library cards; lists commits, previews any version, restore |
 | Regeneration diff modal | 3b | "Show what changed" link after generation; side-by-side field diff |
 | ST push (full card) | 4 | "Push to SillyTavern" button — PNG with embedded data if image present, JSON otherwise; `mes_example` always included |

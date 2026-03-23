@@ -1,53 +1,21 @@
 // Server-backed storage for character cards and prompt templates.
-// Both use git-versioned REST APIs on the proxy server.
-//
-// Interface is compatible with CharacterStorage so main.js needs no changes
-// beyond swapping window.characterStorage.
+// Uses git-versioned REST APIs on the Express server (always same-origin).
 
 class ServerBackedStorage {
-  constructor() {
-    // Keep IndexedDB available only for one-time migration of legacy data
-    this._idb = new CharacterStorage();
-    this._proxyBase = ""; // same origin — proxy is always local
-    this._serverAvailable = true; // set false if server unreachable
-  }
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
-
   async init() {
-    // Always init IndexedDB so migration helpers work
-    await this._idb.init();
-
-    // Probe server availability (covers both cards and prompts)
-    try {
-      const res = await fetch(`${this._proxyBase}/api/cards`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      this._serverAvailable = res.ok;
-    } catch {
-      this._serverAvailable = false;
-      console.warn(
-        "⚠️  Storage server unreachable — card and prompt library unavailable until proxy is running.",
-      );
-    }
+    // Server is always available (same process serves the page)
   }
 
   // ── Prompts — REST API ─────────────────────────────────────────────────────
 
   async savePrompt(promptRecord) {
-    if (!this._serverAvailable) {
-      // Fall back to IndexedDB if server is down
-      return this._idb.savePrompt(promptRecord);
-    }
-
     const fingerprint = promptRecord.fingerprint || "";
     const slug = _promptSlug(promptRecord.characterName, fingerprint);
 
-    // Strip IDB-specific `id` field before sending to server
     const { id: _id, ...promptForServer } = promptRecord;
 
     try {
-      const res = await fetch(`${this._proxyBase}/api/prompts/${slug}`, {
+      const res = await fetch(`/api/prompts/${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: promptForServer }),
@@ -56,17 +24,15 @@ class ServerBackedStorage {
       return slug;
     } catch (error) {
       console.error("savePrompt failed:", error);
-      throw error; // let main.js handle the error and show notification
+      throw error;
     }
   }
 
   async listPrompts() {
-    if (!this._serverAvailable) return this._idb.listPrompts();
     try {
-      const res = await fetch(`${this._proxyBase}/api/prompts`);
+      const res = await fetch("/api/prompts");
       if (!res.ok) return [];
       const prompts = await res.json();
-      // Map to the shape expected by main.js (id, characterName, updatedAt, pov)
       return prompts.map((p) => ({
         id: p.slug,
         characterName: p.characterName,
@@ -81,9 +47,8 @@ class ServerBackedStorage {
   }
 
   async getPrompt(slug) {
-    if (!this._serverAvailable) return this._idb.getPrompt(slug);
     try {
-      const res = await fetch(`${this._proxyBase}/api/prompts/${slug}`);
+      const res = await fetch(`/api/prompts/${slug}`);
       if (!res.ok) return null;
       const { prompt } = await res.json();
       return { id: slug, ...prompt };
@@ -94,11 +59,8 @@ class ServerBackedStorage {
   }
 
   async deletePrompt(slug) {
-    if (!this._serverAvailable) return this._idb.deletePrompt(slug);
     try {
-      await fetch(`${this._proxyBase}/api/prompts/${slug}`, {
-        method: "DELETE",
-      });
+      await fetch(`/api/prompts/${slug}`, { method: "DELETE" });
     } catch (error) {
       console.error("deletePrompt failed:", error);
     }
@@ -107,8 +69,6 @@ class ServerBackedStorage {
   // ── Cards — REST API ───────────────────────────────────────────────────────
 
   async saveCard({ characterName, character, imageBlob, steeringInput } = {}) {
-    if (!this._serverAvailable) return;
-
     const name = characterName || character?.name || "Unnamed";
     const slug = slugifyName(name);
 
@@ -122,7 +82,7 @@ class ServerBackedStorage {
     }
 
     try {
-      const res = await fetch(`${this._proxyBase}/api/cards/${slug}`, {
+      const res = await fetch(`/api/cards/${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ card: character, steeringInput, avatarDataUrl }),
@@ -135,14 +95,12 @@ class ServerBackedStorage {
   }
 
   async listCards() {
-    if (!this._serverAvailable) return [];
     try {
-      const res = await fetch(`${this._proxyBase}/api/cards`);
+      const res = await fetch("/api/cards");
       if (!res.ok) return [];
       const cards = await res.json();
-      // Map to the shape expected by main.js (id, characterName, updatedAt)
       return cards.map((c) => ({
-        id: c.slug, // string slug used as id
+        id: c.slug,
         characterName: c.name,
         updatedAt: c.updatedAt,
         commitCount: c.commitCount,
@@ -155,9 +113,8 @@ class ServerBackedStorage {
   }
 
   async getCard(slug) {
-    if (!this._serverAvailable) return null;
     try {
-      const res = await fetch(`${this._proxyBase}/api/cards/${slug}`);
+      const res = await fetch(`/api/cards/${slug}`);
       if (!res.ok) return null;
       const { card, avatarUrl } = await res.json();
       return {
@@ -165,7 +122,7 @@ class ServerBackedStorage {
         characterName: card.name || slug,
         character: card,
         avatarUrl: avatarUrl || null,
-        imageBlob: null, // blobs not stored in server response
+        imageBlob: null,
       };
     } catch (error) {
       console.error("getCard failed:", error);
@@ -174,54 +131,11 @@ class ServerBackedStorage {
   }
 
   async deleteCard(slug) {
-    if (!this._serverAvailable) return;
     try {
-      await fetch(`${this._proxyBase}/api/cards/${slug}`, {
-        method: "DELETE",
-      });
+      await fetch(`/api/cards/${slug}`, { method: "DELETE" });
     } catch (error) {
       console.error("deleteCard failed:", error);
     }
-  }
-
-  // ── Migration helpers — IndexedDB → server ─────────────────────────────────
-
-  /** Read all cards currently in IndexedDB (for one-time migration). */
-  async listIndexedDBCards() {
-    try {
-      return await this._idb.listCards();
-    } catch {
-      return [];
-    }
-  }
-
-  /** Read a single card from IndexedDB by numeric id. */
-  async getIndexedDBCard(id) {
-    return this._idb.getCard(id);
-  }
-
-  /** Delete a single card from IndexedDB by numeric id. */
-  async deleteIndexedDBCard(id) {
-    return this._idb.deleteCard(id);
-  }
-
-  /** Read all prompts currently in IndexedDB (for one-time migration). */
-  async listIndexedDBPrompts() {
-    try {
-      return await this._idb.listPrompts();
-    } catch {
-      return [];
-    }
-  }
-
-  /** Read a single prompt from IndexedDB by numeric id. */
-  async getIndexedDBPrompt(id) {
-    return this._idb.getPrompt(id);
-  }
-
-  /** Delete a single prompt from IndexedDB by numeric id. */
-  async deleteIndexedDBPrompt(id) {
-    return this._idb.deletePrompt(id);
   }
 }
 
@@ -236,11 +150,6 @@ function slugifyName(name) {
   );
 }
 
-/**
- * Compute a stable, URL-safe slug for a prompt from its fingerprint.
- * Uses a djb2-style hash so the same fingerprint always maps to the same slug.
- * Format: "{slugifiedName}-{7-char-base36-hash}"
- */
 function _promptSlug(characterName, fingerprint) {
   let h = 5381;
   const str = fingerprint || characterName || "prompt";
@@ -260,7 +169,4 @@ function blobToDataUrl(blob) {
   });
 }
 
-// Replace the default window.characterStorage with the server-backed version.
-// CharacterStorage (from storage.js, loaded before this file) is still
-// available and used internally for migration helpers.
 window.characterStorage = new ServerBackedStorage();

@@ -575,7 +575,7 @@ textarea.content-box {
     font-style: italic;
 }
 
-/* Legacy result-grid kept for any remaining two-column needs */
+/* Result grid — two-column layout */
 .result-grid {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -1492,41 +1492,6 @@ textarea.content-box {
         width: 100%;
         max-height: 92vh;
     }
-}
-
-/* ── Migration banner ────────────────────────────────────────────────────── */
-.migration-banner {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: color-mix(in srgb, var(--warning) 12%, var(--surface-strong) 88%);
-    border-bottom: 1px solid color-mix(in srgb, var(--warning) 40%, transparent 60%);
-    padding: 0.75rem 1.25rem;
-}
-
-.migration-banner-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    max-width: 1280px;
-    margin: 0 auto;
-}
-
-.migration-banner-text {
-    font-size: 0.92rem;
-    color: var(--text-primary);
-}
-
-.migration-banner-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.migration-btn {
-    padding: 0.35rem 0.9rem;
-    font-size: 0.85rem;
 }
 
 /* ── Generation progress bar ─────────────────────────────────────────────── */

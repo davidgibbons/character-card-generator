@@ -10,7 +10,7 @@ Web app for generating, editing, importing, revising, and exporting SillyTavern 
 - Import existing cards (`.png` with embedded data or `.json`) and edit them in-place.
 - Revise an existing card with AI using natural-language instructions.
 - Example Messages Generator - create dialogue examples for manual import into SillyTavern.
-- Local IndexedDB library for saved prompts and cards (load/delete from UI).
+- Server-backed library for saved prompts and cards with git versioning.
 - Reference image flow with optional vision-based auto-description.
 - Streaming generation output with stop support.
 - Better API key handling: session-only by default, optional persistent storage toggle.
@@ -105,8 +105,8 @@ In-app API Settings:
 
 - `index.html` - UI shell
 - `src/scripts/` - frontend logic (generation, API calls, image handling, storage)
-- `proxy/server.js` - Express proxy for text/image endpoints and image passthrough
-- `src/scripts/storage.js` - IndexedDB prompt/card library
+- `proxy/server.js` - Express server — API proxying, card/prompt storage, SillyTavern integration
+- `src/scripts/storage-server.js` - Storage client (REST API)
 
 ## License
 
