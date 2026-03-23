@@ -116,6 +116,7 @@
                     <section id="tab-editor" class="tab-panel" role="tabpanel">
                         <!-- Editor toolbar -->
                         <div class="editor-toolbar">
+                            <button id="save-card-btn" class="btn-primary" style="display: none">Save</button>
                             <button id="download-btn" class="btn-secondary" style="display: none">Download PNG</button>
                             <button id="download-json-btn" class="btn-outline" style="display: none">Download JSON</button>
                             <button id="push-st-btn" class="btn-outline" style="display: none">Push to ST</button>
@@ -129,6 +130,7 @@
                         <nav class="subtab-bar" role="tablist">
                             <button class="subtab-btn active" data-subtab="char-image" role="tab">Character</button>
                             <button class="subtab-btn" data-subtab="lorebook" role="tab">Lorebook</button>
+                            <button class="subtab-btn" data-subtab="quality" role="tab">Quality</button>
                         </nav>
 
                         <div class="subtab-panels">
@@ -259,6 +261,53 @@
                                 </div>
                             </div>
 
+                            <!-- Subtab: Quality -->
+                            <div id="subtab-quality" class="subtab-panel">
+                                <div class="quality-panel">
+                                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                                        Evaluate your character card for consistency, richness, and roleplay-readiness. The AI will score the card, flag contradictions, and suggest improvements.
+                                    </p>
+                                    <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                        <button id="evaluate-card-btn" class="btn-primary">Evaluate Card</button>
+                                        <button id="optimize-card-btn" class="btn-outline" style="display: none;">Optimize Card</button>
+                                    </div>
+
+                                    <div id="quality-results" style="display: none;">
+                                        <!-- Score circle + dimension bars -->
+                                        <div class="quality-summary">
+                                            <div class="quality-score-circle" id="quality-score-circle">
+                                                <span class="quality-score-value" id="quality-score-value">--</span>
+                                                <span class="quality-score-label">Overall</span>
+                                            </div>
+                                            <div class="quality-dimensions" id="quality-dimensions"></div>
+                                        </div>
+
+                                        <!-- Contradictions -->
+                                        <div id="quality-contradictions-section" style="display: none; margin-top: 1.5rem;">
+                                            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">Contradictions <span style="font-weight: 400; font-size: 0.75rem; color: var(--text-soft);">(click to exclude)</span></h3>
+                                            <ul class="quality-list-issues" id="quality-contradictions-list"></ul>
+                                        </div>
+
+                                        <!-- Misplaced Content -->
+                                        <div id="quality-misplaced-section" style="display: none; margin-top: 1.5rem;">
+                                            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">Misplaced Content <span style="font-weight: 400; font-size: 0.75rem; color: var(--text-soft);">(click to exclude)</span></h3>
+                                            <ul class="quality-list-misplaced" id="quality-misplaced-list"></ul>
+                                        </div>
+
+                                        <!-- Suggestions -->
+                                        <div id="quality-suggestions-section" style="display: none; margin-top: 1.5rem;">
+                                            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">Suggestions <span style="font-weight: 400; font-size: 0.75rem; color: var(--text-soft);">(click to exclude)</span></h3>
+                                            <ul class="quality-list-suggestions" id="quality-suggestions-list"></ul>
+                                        </div>
+
+                                        <!-- Additional notes for optimization -->
+                                        <div id="quality-optimize-notes-section" style="display: none; margin-top: 1.25rem;">
+                                            <textarea id="quality-optimize-notes" class="textarea" rows="2" placeholder="Additional revision notes (optional)" style="font-size: 0.85rem;"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Subtab: Lorebook -->
                             <div id="subtab-lorebook" class="subtab-panel">
                                 <div class="form-group">
@@ -327,7 +376,7 @@
             </div>
             <div class="library-drawer-body">
                 <p id="library-status" class="library-status">Loading library...</p>
-                <h3 class="library-title">Saved Cards</h3>
+                <input type="search" id="library-search" class="input library-search" placeholder="Search cards..." />
                 <div id="stored-cards-list" class="content-box library-list"></div>
             </div>
         </aside>
