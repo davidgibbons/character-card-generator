@@ -591,6 +591,9 @@ class CharacterGeneratorApp {
       }
     });
 
+    // Initialize prompt editor in settings modal
+    this.initPromptEditor();
+
     const cardList = document.getElementById("stored-cards-list");
     if (cardList) {
       cardList.addEventListener("click", (event) =>
@@ -686,6 +689,146 @@ class CharacterGeneratorApp {
       }, 500);
     }
   }
+
+  // ── Prompt Editor ────────────────────────────────
+
+  initPromptEditor() {
+    const select = document.getElementById("prompt-select");
+    if (!select) return;
+
+    // Populate dropdown from registry
+    for (const [id, entry] of Object.entries(window.promptRegistry)) {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = entry.label;
+      select.appendChild(opt);
+    }
+
+    select.addEventListener("change", () => this.selectPromptEntry(select.value));
+
+    // Auto-save on blur / change
+    const textarea = document.getElementById("prompt-override-textarea");
+    const tempInput = document.getElementById("prompt-temp");
+    const maxTokensInput = document.getElementById("prompt-max-tokens");
+
+    if (textarea) textarea.addEventListener("blur", () => this.savePromptOverride());
+    if (tempInput) tempInput.addEventListener("change", () => this.savePromptOverride());
+    if (maxTokensInput) maxTokensInput.addEventListener("change", () => this.savePromptOverride());
+
+    // Reset button
+    const resetBtn = document.getElementById("prompt-reset-btn");
+    if (resetBtn) resetBtn.addEventListener("click", () => this.resetPromptOverride());
+
+    // Load first entry
+    if (select.options.length > 0) {
+      this.selectPromptEntry(select.value);
+    }
+  }
+
+  selectPromptEntry(id) {
+    const registry = window.promptRegistry[id];
+    if (!registry) return;
+
+    const overrides = this.config.get(`prompts.overrides.${id}`) || {};
+    const hasOverride = overrides.systemPrompt != null || overrides.temperature != null || overrides.maxTokens != null;
+
+    // Show (custom) indicator if this prompt has been overridden
+    const indicator = document.getElementById("prompt-custom-indicator");
+    if (indicator) indicator.style.display = hasOverride ? "block" : "none";
+
+    // Fill textarea with override if present, otherwise the default
+    const textarea = document.getElementById("prompt-override-textarea");
+    if (textarea) textarea.value = overrides.systemPrompt != null ? overrides.systemPrompt : registry.systemPrompt;
+
+    // Temperature
+    const tempInput = document.getElementById("prompt-temp");
+    if (tempInput) tempInput.value = overrides.temperature != null ? overrides.temperature : registry.temperature;
+
+    // Max tokens
+    const maxTokensInput = document.getElementById("prompt-max-tokens");
+    if (maxTokensInput) maxTokensInput.value = overrides.maxTokens != null ? overrides.maxTokens : registry.maxTokens;
+
+    // Variable tags
+    const varList = document.getElementById("prompt-variables");
+    if (varList) {
+      varList.innerHTML = "";
+      if (registry.variables && registry.variables.length > 0) {
+        registry.variables.forEach((v) => {
+          const tag = document.createElement("span");
+          tag.className = "prompt-var-tag";
+          tag.textContent = `{{${v}}}`;
+          varList.appendChild(tag);
+        });
+      }
+    }
+  }
+
+  savePromptOverride() {
+    const select = document.getElementById("prompt-select");
+    if (!select) return;
+    const id = select.value;
+    const registry = window.promptRegistry[id];
+    if (!registry) return;
+
+    const textarea = document.getElementById("prompt-override-textarea");
+    const tempInput = document.getElementById("prompt-temp");
+    const maxTokensInput = document.getElementById("prompt-max-tokens");
+
+    const overrideText = textarea ? textarea.value.trim() : "";
+    const temp = tempInput ? parseFloat(tempInput.value) : NaN;
+    const maxTokens = maxTokensInput ? parseInt(maxTokensInput.value, 10) : NaN;
+
+    const override = {};
+    let hasOverride = false;
+
+    // Only save systemPrompt override if different from default
+    if (overrideText && overrideText !== registry.systemPrompt.trim()) {
+      override.systemPrompt = overrideText;
+      hasOverride = true;
+    }
+
+    // Only save temperature if different from default
+    if (!isNaN(temp) && temp !== registry.temperature) {
+      override.temperature = temp;
+      hasOverride = true;
+    }
+
+    // Only save maxTokens if different from default
+    if (!isNaN(maxTokens) && maxTokens !== registry.maxTokens) {
+      override.maxTokens = maxTokens;
+      hasOverride = true;
+    }
+
+    if (hasOverride) {
+      this.config.set(`prompts.overrides.${id}`, override);
+    } else {
+      // Clear override entirely
+      const allOverrides = this.config.get("prompts.overrides") || {};
+      delete allOverrides[id];
+      this.config.set("prompts.overrides", allOverrides);
+    }
+
+    // Update (custom) indicator
+    const indicator = document.getElementById("prompt-custom-indicator");
+    if (indicator) indicator.style.display = hasOverride ? "block" : "none";
+  }
+
+  resetPromptOverride() {
+    const select = document.getElementById("prompt-select");
+    if (!select) return;
+    const id = select.value;
+
+    // Clear override from config
+    const allOverrides = this.config.get("prompts.overrides") || {};
+    delete allOverrides[id];
+    this.config.set("prompts.overrides", allOverrides);
+
+    // Refresh UI — will fill textarea with default and hide indicator
+    this.selectPromptEntry(id);
+    this.showNotification("Prompt reset to default", "success");
+  }
+
+  // ── End Prompt Editor ──────────────────────────
 
   async handleTestConnection() {
     this.showNotification("Testing connection...", "info");
