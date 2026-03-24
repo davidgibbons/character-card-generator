@@ -427,6 +427,20 @@ class CharacterGeneratorApp {
       this.handleCharacterEdit("firstMessage"),
     );
 
+    // Advanced fields
+    const systemPromptTextarea = document.getElementById("character-system-prompt");
+    const postHistoryTextarea = document.getElementById("character-post-history");
+    if (systemPromptTextarea) {
+      systemPromptTextarea.addEventListener("input", () =>
+        this.handleCharacterEdit("systemPrompt"),
+      );
+    }
+    if (postHistoryTextarea) {
+      postHistoryTextarea.addEventListener("input", () =>
+        this.handleCharacterEdit("postHistoryInstructions"),
+      );
+    }
+
     // Upload image button
     const uploadImageBtn = document.getElementById("upload-image-btn");
     uploadImageBtn.addEventListener("click", () => {
@@ -939,6 +953,10 @@ class CharacterGeneratorApp {
         pov,
         this.lorebookData,
       );
+
+      // Ensure optional fields are initialized
+      if (this.currentCharacter.systemPrompt == null) this.currentCharacter.systemPrompt = "";
+      if (this.currentCharacter.postHistoryInstructions == null) this.currentCharacter.postHistoryInstructions = "";
 
       // Store original for reset functionality
       this.originalCharacter = JSON.parse(
@@ -1741,6 +1759,8 @@ class CharacterGeneratorApp {
       personality: "character-personality",
       scenario: "character-scenario",
       firstMessage: "character-first-message",
+      systemPrompt: "character-system-prompt",
+      postHistoryInstructions: "character-post-history",
     };
 
     const textarea = document.getElementById(textareaMap[field]);
@@ -1748,6 +1768,27 @@ class CharacterGeneratorApp {
 
     this.currentCharacter[field] = textarea.value;
     textarea.classList.remove("field-changed");
+
+    if (field === "systemPrompt" || field === "postHistoryInstructions") {
+      this.updateAdvancedFieldsBadge();
+    }
+  }
+
+  updateAdvancedFieldsBadge() {
+    const badge = document.getElementById("advanced-fields-badge");
+    if (!badge) return;
+    const sysProm = document.getElementById("character-system-prompt");
+    const postHist = document.getElementById("character-post-history");
+    let count = 0;
+    if (sysProm && sysProm.value.trim()) count++;
+    if (postHist && postHist.value.trim()) count++;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.classList.add("visible");
+    } else {
+      badge.textContent = "";
+      badge.classList.remove("visible");
+    }
   }
 
   async handleImageUpload(event) {
@@ -1934,6 +1975,12 @@ class CharacterGeneratorApp {
       const text = (mesEx.innerText || mesEx.textContent || "").trim();
       if (text) this.currentCharacter.mesExample = text;
     }
+
+    // Advanced fields
+    const sysProm = document.getElementById("character-system-prompt");
+    const postHist = document.getElementById("character-post-history");
+    if (sysProm) this.currentCharacter.systemPrompt = sysProm.value.trim();
+    if (postHist) this.currentCharacter.postHistoryInstructions = postHist.value.trim();
   }
 
   displayCharacter() {
@@ -1953,6 +2000,19 @@ class CharacterGeneratorApp {
     personalityTextarea.value = this.currentCharacter.personality || "";
     scenarioTextarea.value = this.currentCharacter.scenario || "";
     firstMessageTextarea.value = this.currentCharacter.firstMessage || "";
+
+    // Advanced fields
+    const sysProm = document.getElementById("character-system-prompt");
+    const postHist = document.getElementById("character-post-history");
+    if (sysProm) sysProm.value = this.currentCharacter.systemPrompt || "";
+    if (postHist) postHist.value = this.currentCharacter.postHistoryInstructions || "";
+    this.updateAdvancedFieldsBadge();
+
+    // Auto-expand if either field has content
+    const advancedDetails = document.getElementById("advanced-fields");
+    if (advancedDetails) {
+      advancedDetails.open = !!(this.currentCharacter.systemPrompt || this.currentCharacter.postHistoryInstructions);
+    }
 
     // Reset example messages section for new character
     const exampleMessagesOutput = document.getElementById(
@@ -2091,6 +2151,8 @@ class CharacterGeneratorApp {
         personality: specData.data.personality || "",
         scenario: specData.data.scenario || "",
         firstMessage: specData.data.first_mes || "",
+        systemPrompt: specData.data.system_prompt || "",
+        postHistoryInstructions: specData.data.post_history_instructions || "",
       };
     }
 
@@ -2100,6 +2162,8 @@ class CharacterGeneratorApp {
       personality: specData.personality || "",
       scenario: specData.scenario || "",
       firstMessage: specData.firstMessage || specData.first_mes || "",
+      systemPrompt: specData.systemPrompt || specData.system_prompt || "",
+      postHistoryInstructions: specData.postHistoryInstructions || specData.post_history_instructions || "",
     };
   }
 
@@ -2192,6 +2256,9 @@ class CharacterGeneratorApp {
       if (typeof expandMentions === "function") {
         effectiveInstruction = await expandMentions(effectiveInstruction, this.storage);
       }
+
+      // Sync editor fields before revision so the AI sees current content
+      this.syncFieldsFromEditor();
 
       this.showNotification("Applying AI revision...", "info");
       const revised = await this.apiHandler.reviseCharacter(
