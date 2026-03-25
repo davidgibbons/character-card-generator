@@ -9,24 +9,45 @@ class APIHandler {
     this.lastRawResponse = null; // Store last raw API response for debug modal
   }
 
-  async makeRequest(endpoint, data, isImageRequest = false, stream = false) {
-    // Use proxy server to bypass browser API restrictions
-    // Both Nginx (prod/docker) and http-server (dev) are configured to proxy /api to the backend
-    const baseUrl = "";
-    const proxyEndpoint = isImageRequest
-      ? "/api/image/generations"
-      : "/api/text/chat/completions";
-    endpoint = proxyEndpoint;
+  /**
+   * Apply message-level transforms (prefixes, etc.) before sending.
+   */
+  prepareMessages(messages) {
+    if (!messages) return messages;
 
-    const apiKey = isImageRequest
-      ? this.config.get("api.image.apiKey")
-      : this.config.get("api.text.apiKey");
-    const apiUrl = isImageRequest
-      ? this.config.get("api.image.baseUrl")
-      : this.config.get("api.text.baseUrl");
-    const timeout = isImageRequest
-      ? this.config.get("api.image.timeout")
-      : this.config.get("api.text.timeout");
+    if (this.config.get("prompts.contentPolicyPrefix")) {
+      const prefix = getPrompt("content_policy_prefix").systemPrompt;
+      if (prefix) {
+        messages = messages.map((m) =>
+          m.role === "system" ? { ...m, content: prefix + "\n\n" + m.content } : m,
+        );
+      }
+    }
+
+    return messages;
+  }
+
+  /**
+   * Resolve endpoint, credentials, and timeout for a request type.
+   */
+  resolveRequestConfig(isImageRequest) {
+    const kind = isImageRequest ? "image" : "text";
+    return {
+      endpoint: isImageRequest ? "/api/image/generations" : "/api/text/chat/completions",
+      apiKey: this.config.get(`api.${kind}.apiKey`),
+      apiUrl: this.config.get(`api.${kind}.baseUrl`),
+      timeout: this.config.get(`api.${kind}.timeout`),
+    };
+  }
+
+  async makeRequest(endpoint, data, isImageRequest = false, stream = false) {
+    if (!isImageRequest && data.messages) {
+      data = { ...data, messages: this.prepareMessages(data.messages) };
+    }
+
+    const reqConfig = this.resolveRequestConfig(isImageRequest);
+    endpoint = reqConfig.endpoint;
+    const { apiKey, apiUrl, timeout } = reqConfig;
 
     if (!apiKey) {
       throw new Error(
@@ -40,7 +61,7 @@ class APIHandler {
       );
     }
 
-    const url = `${baseUrl}${endpoint}`;
+    const url = endpoint;
     // Proxy server handles authentication, pass API key and actual API URL in headers
     const headers = {
       "Content-Type": "application/json",
@@ -61,7 +82,7 @@ class APIHandler {
     this.config.log(`Making request to: ${url}`);
     this.config.log(`Request data:`, data);
     this.config.log(`Headers:`, headers);
-    this.config.log(`Using proxy server: ${baseUrl}`);
+    this.config.log(`Using proxy endpoint: ${endpoint}`);
     this.config.log(`API Key (first 10 chars): ${apiKey.substring(0, 10)}...`);
     this.config.log(`API Key length: ${apiKey.length}`);
 
@@ -124,9 +145,7 @@ class APIHandler {
         throw new Error(`API Error: ${response.status} - ${errorMessage}`);
       }
 
-      if (stream) {
-        return response;
-      } else if (isImageRequest) {
+      if (stream || isImageRequest) {
         return response;
       } else {
         const result = await response.json();
@@ -601,19 +620,25 @@ Shortened prompt (one paragraph):`,
     }
     const prompt = getPrompt(promptId);
 
-    // Handle Lorebook
+    // Handle Lorebook — support both legacy format and new characterBook format
     let lorebookContent = "";
-    if (lorebook && lorebook.entries) {
-      const entries = Object.values(lorebook.entries).filter(
-        (e) => e.enabled !== false,
-      );
-      if (entries.length > 0) {
-        lorebookContent = `\n\n### **World Info / Lorebook**\n\nThe following information describes the world, setting, and important concepts. Use this information to ground the scenario in its specific universe.\n\n`;
-        entries.forEach((entry) => {
-          lorebookContent += `**Keys:** ${entry.key.join(", ")}\n`;
-          lorebookContent += `**Content:**\n${entry.content}\n\n---\n\n`;
-        });
+    let lorebookEntries = [];
+    if (lorebook) {
+      if (Array.isArray(lorebook.entries)) {
+        lorebookEntries = lorebook.entries.filter((e) => e.enabled !== false);
+      } else if (lorebook.entries && typeof lorebook.entries === "object") {
+        lorebookEntries = Object.values(lorebook.entries).filter(
+          (e) => e.enabled !== false,
+        );
       }
+    }
+    if (lorebookEntries.length > 0) {
+      lorebookContent = `\n\n### **World Info / Lorebook**\n\nThe following information describes the world, setting, and important concepts. Use this information to ground the scenario in its specific universe.\n\n`;
+      lorebookEntries.forEach((entry) => {
+        const keys = entry.keys || entry.key || [];
+        lorebookContent += `**Keys:** ${keys.join(", ")}\n`;
+        lorebookContent += `**Content:**\n${entry.content}\n\n---\n\n`;
+      });
     }
 
     const userPrompt = renderTemplate(prompt.userPromptTemplate, {
@@ -874,6 +899,9 @@ Shortened prompt (one paragraph):`,
     if ("postHistoryInstructions" in currentCharacter) {
       result.postHistoryInstructions = parsed.postHistoryInstructions ?? currentCharacter.postHistoryInstructions ?? "";
     }
+    if ("mesExample" in currentCharacter) {
+      result.mesExample = parsed.mesExample ?? currentCharacter.mesExample ?? "";
+    }
 
     return result;
   }
@@ -886,6 +914,15 @@ Shortened prompt (one paragraph):`,
     const model = this.config.get("api.text.model");
     const prompt = getPrompt("evaluate");
 
+    // Summarize lorebook entries for evaluation context
+    const entries = character.characterBook?.entries || [];
+    const lorebookSummary = entries.length > 0
+      ? entries
+          .filter((e) => e.enabled !== false)
+          .map((e) => `- ${e.name || e.keys?.[0] || "unnamed"} [keys: ${(e.keys || []).join(", ")}]: ${(e.content || "").substring(0, 200)}${(e.content || "").length > 200 ? "…" : ""}`)
+          .join("\n")
+      : "";
+
     const userPrompt = renderTemplate(prompt.userPromptTemplate, {
       characterName: character.name || "(empty)",
       description: character.description || "(empty)",
@@ -893,6 +930,7 @@ Shortened prompt (one paragraph):`,
       scenario: character.scenario || "(empty)",
       firstMessage: character.firstMessage || "(empty)",
       mesExample: character.mesExample || "(empty)",
+      lorebookSummary,
     });
 
     const data = {
@@ -996,6 +1034,127 @@ Shortened prompt (one paragraph):`,
     );
 
     return this.processNormalResponse(response).trim();
+  }
+
+  async extractLorebook(character) {
+    if (!character) {
+      throw new Error("Character is required for lorebook extraction");
+    }
+
+    const model = this.config.get("api.text.model");
+    const prompt = getPrompt("extract_lorebook");
+
+    // Build existing entries summary to avoid duplicates
+    const existingEntries = character.characterBook?.entries?.length
+      ? character.characterBook.entries
+          .map((e) => `- ${e.name || e.keys?.[0] || "unnamed"}: ${e.keys?.join(", ")}`)
+          .join("\n")
+      : "";
+
+    const userPrompt = renderTemplate(prompt.userPromptTemplate, {
+      characterName: character.name || "(unnamed)",
+      description: character.description || "(empty)",
+      personality: character.personality || "(empty)",
+      scenario: character.scenario || "(empty)",
+      existingEntries,
+    });
+
+    const data = {
+      model,
+      messages: [
+        { role: "system", content: prompt.systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: prompt.temperature ?? 0.6,
+      max_tokens: prompt.maxTokens ?? 8192,
+      stream: true,
+    };
+
+    const response = await this.makeRequest("/chat/completions", data, false, true);
+    const output = await this.handleStreamResponse(response, () => {});
+    return this.parseLorebookResponse(output);
+  }
+
+  async generateLorebook(character, existingEntries = [], guidance = "") {
+    if (!character) {
+      throw new Error("Character is required for lorebook generation");
+    }
+
+    const model = this.config.get("api.text.model");
+    const prompt = getPrompt("generate_lorebook");
+
+    // Build full card context — this is the source of truth
+    const cardParts = [];
+    if (character.name) cardParts.push(`Name: ${character.name}`);
+    if (character.description) cardParts.push(`Description:\n${character.description}`);
+    if (character.personality) cardParts.push(`Personality:\n${character.personality}`);
+    if (character.scenario) cardParts.push(`Scenario:\n${character.scenario}`);
+    const cardContext = cardParts.join("\n\n");
+
+    // Send full entry content so the AI can fix inconsistencies
+    const existingEntriesSummary = existingEntries.length
+      ? existingEntries
+          .map((e) => {
+            const name = e.name || e.keys?.[0] || "unnamed";
+            const keys = (e.keys || []).join(", ");
+            const content = e.content || "(empty)";
+            const constant = e.constant ? " [constant]" : "";
+            return `### ${name}${constant}\nKeys: ${keys}\n${content}`;
+          })
+          .join("\n\n")
+      : "";
+
+    const userPrompt = renderTemplate(prompt.userPromptTemplate, {
+      cardContext,
+      existingEntries: existingEntriesSummary,
+      guidance,
+    });
+
+    const data = {
+      model,
+      messages: [
+        { role: "system", content: prompt.systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: prompt.temperature ?? 0.8,
+      max_tokens: prompt.maxTokens ?? 8192,
+      stream: true,
+    };
+
+    const response = await this.makeRequest("/chat/completions", data, false, true);
+    const output = await this.handleStreamResponse(response, () => {});
+    return this.parseLorebookResponse(output);
+  }
+
+  parseLorebookResponse(output) {
+    if (!output || typeof output !== "string") {
+      throw new Error("Empty response from AI");
+    }
+
+    let cleaned = output.trim();
+
+    // Strip markdown code fences anywhere in the output
+    cleaned = cleaned.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+
+    // Try to find a JSON array in the output (model may include prose before/after)
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      cleaned = arrayMatch[0];
+    } else {
+      console.error("No JSON array found in lorebook response:", output.substring(0, 500));
+      // Show the model's actual response (truncated) so the user can see refusals etc.
+      const preview = cleaned.substring(0, 150).replace(/\n/g, " ").trim();
+      throw new Error(`AI did not return valid entries: "${preview}${cleaned.length > 150 ? "…" : ""}"`);
+    }
+
+    const entries = JSON.parse(cleaned);
+    if (!Array.isArray(entries)) {
+      throw new Error("Expected JSON array of entries");
+    }
+
+    return entries.map((entry) =>
+      window.characterGenerator.normalizeLorebookEntry(entry),
+    );
   }
 
   // Method to stop current generation
