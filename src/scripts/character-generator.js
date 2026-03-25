@@ -216,7 +216,45 @@ class CharacterGenerator {
     if (character.postHistoryInstructions) {
       spec.data.post_history_instructions = character.postHistoryInstructions;
     }
+    if (character.characterBook && character.characterBook.entries?.length > 0) {
+      spec.data.character_book = {
+        name: character.characterBook.name || "",
+        description: character.characterBook.description || "",
+        scan_depth: character.characterBook.scan_depth ?? 2,
+        token_budget: character.characterBook.token_budget ?? 2048,
+        recursive_scanning: character.characterBook.recursive_scanning ?? false,
+        extensions: {},
+        entries: character.characterBook.entries.map((e) => this.normalizeLorebookEntry(e)),
+      };
+    }
     return spec;
+  }
+
+  normalizeLorebookEntry(entry) {
+    return {
+      name: entry.name || "",
+      keys: Array.isArray(entry.keys) ? entry.keys : (entry.key || []),
+      secondary_keys: Array.isArray(entry.secondary_keys) ? entry.secondary_keys : [],
+      content: entry.content || "",
+      enabled: entry.enabled !== false,
+      insertion_order: entry.insertion_order ?? 0,
+      case_sensitive: entry.case_sensitive ?? false,
+      priority: entry.priority ?? 10,
+      id: entry.id ?? Date.now() + Math.floor(Math.random() * 1000),
+      comment: entry.comment || "",
+      selective: entry.selective ?? false,
+      constant: entry.constant ?? false,
+      position: entry.position || "before_char",
+      extensions: {
+        depth: entry.extensions?.depth ?? 4,
+        weight: entry.extensions?.weight ?? 10,
+        probability: entry.extensions?.probability ?? 100,
+        selectiveLogic: entry.extensions?.selectiveLogic ?? 0,
+        useProbability: entry.extensions?.useProbability !== false,
+      },
+      probability: entry.probability ?? 100,
+      selectiveLogic: entry.selectiveLogic ?? 0,
+    };
   }
 }
 
