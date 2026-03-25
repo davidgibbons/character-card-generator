@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const compression = require("compression");
-const FormData = require("form-data");
+// Native FormData and Blob used for multipart uploads (Node 18+)
 require("dotenv").config({ path: "../.env" });
 const { router: cardsRouter, initGit } = require("./cards");
 const { router: promptsRouter, initPrompts } = require("./prompts");
@@ -518,9 +518,11 @@ async function getSTCsrfToken(stUrl, stPassword) {
   const text = await response.text();
   try {
     const json = JSON.parse(text);
-    return { token: json.token || text, cookies: response.headers.raw()["set-cookie"] || [] };
+    const cookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
+    return { token: json.token || text, cookies };
   } catch {
-    return { token: text, cookies: response.headers.raw()["set-cookie"] || [] };
+    const cookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
+    return { token: text, cookies };
   }
 }
 
@@ -597,29 +599,23 @@ app.post("/api/st/push", async (req, res) => {
 
     const { token, cookies } = await getSTCsrfToken(stUrl, stPassword);
 
-    // Build multipart form data for ST import
+    // Build multipart form data for ST import (native FormData for native fetch)
     const form = new FormData();
     if (imageBase64) {
       // PNG with character data embedded in metadata
       const imageBuffer = Buffer.from(imageBase64, "base64");
-      form.append("avatar", imageBuffer, {
-        filename: fileName || "character.png",
-        contentType: "image/png",
-      });
+      const imageBlob = new Blob([imageBuffer], { type: "image/png" });
+      form.append("avatar", imageBlob, fileName || "character.png");
       form.append("file_type", "png");
     } else {
       // No image — import as JSON character card
-      const jsonBuffer = Buffer.from(JSON.stringify(characterJson));
-      form.append("avatar", jsonBuffer, {
-        filename: fileName || "character.json",
-        contentType: "application/json",
-      });
+      const jsonBlob = new Blob([JSON.stringify(characterJson)], { type: "application/json" });
+      form.append("avatar", jsonBlob, fileName || "character.json");
       form.append("file_type", "json");
     }
 
     const headers = {
       "X-CSRF-Token": token,
-      ...form.getHeaders(),
     };
     if (cookies.length > 0) {
       headers["Cookie"] = cookies.map((c) => c.split(";")[0]).join("; ");
