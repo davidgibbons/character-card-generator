@@ -13,7 +13,6 @@ class CharacterGeneratorApp {
     this.currentCardSlug = null;
     this.originalCharacter = null; // Store the original AI-generated version
     this.currentImageUrl = null;
-    this.lorebookData = null; // Store loaded lorebook data
     this.referenceImageDataUrl = "";
     // Removed currentImageBlob - we now convert fresh from URL on download
     this.lockedFields = new Set();
@@ -21,6 +20,7 @@ class CharacterGeneratorApp {
     this.isGenerating = false;
     this.activeTab = 'create';
     this.activeSubtab = 'char-image';
+    this._openLorebookIndex = null;
 
     this.init();
   }
@@ -44,6 +44,7 @@ class CharacterGeneratorApp {
     this.initSplitPane();
     this.initLibraryDrawer();
     this.bindEvents();
+    this.initLorebookEvents();
     // Attach @mention autocomplete to concept and revision textareas
     if (typeof MentionAutocomplete !== "undefined") {
       this.mentionConcept = new MentionAutocomplete("character-concept", this.storage);
@@ -451,12 +452,6 @@ class CharacterGeneratorApp {
     const imageUploadInput = document.getElementById("image-upload-input");
     imageUploadInput.addEventListener("change", (e) =>
       this.handleImageUpload(e),
-    );
-
-    // Lorebook upload input
-    const lorebookInput = document.getElementById("lorebook-file");
-    lorebookInput.addEventListener("change", (e) =>
-      this.handleLorebookUpload(e),
     );
 
     // Reference image upload input
@@ -951,12 +946,29 @@ class CharacterGeneratorApp {
         characterName,
         (token, fullContent) => this.handleCharacterStream(token, fullContent),
         pov,
-        this.lorebookData,
+        null,
       );
 
       // Ensure optional fields are initialized
       if (this.currentCharacter.systemPrompt == null) this.currentCharacter.systemPrompt = "";
       if (this.currentCharacter.postHistoryInstructions == null) this.currentCharacter.postHistoryInstructions = "";
+
+      // Auto-generate lorebook entries if checkbox is checked
+      const generateLorebook = document.getElementById("generate-lorebook-checkbox")?.checked;
+      if (generateLorebook) {
+        try {
+          this.showStreamMessage("\n\n📚 Generating lorebook entries...\n");
+          const lorebookEntries = await this.apiHandler.generateLorebook(this.currentCharacter);
+          if (lorebookEntries.length > 0) {
+            this.ensureCharacterBook();
+            this.currentCharacter.characterBook.entries = lorebookEntries;
+            this.showStreamMessage(`✅ Generated ${lorebookEntries.length} lorebook entries\n`);
+          }
+        } catch (error) {
+          console.error("Lorebook generation failed:", error);
+          this.showStreamMessage(`\n⚠️ Lorebook generation failed: ${error.message}\n`);
+        }
+      }
 
       // Store original for reset functionality
       this.originalCharacter = JSON.parse(
@@ -1981,6 +1993,9 @@ class CharacterGeneratorApp {
     const postHist = document.getElementById("character-post-history");
     if (sysProm) this.currentCharacter.systemPrompt = sysProm.value.trim();
     if (postHist) this.currentCharacter.postHistoryInstructions = postHist.value.trim();
+
+    // Sync open lorebook entry
+    this.syncLorebookEntryFromEditor();
   }
 
   displayCharacter() {
@@ -2031,6 +2046,9 @@ class CharacterGeneratorApp {
     if (downloadJsonBtn) {
       downloadJsonBtn.style.display = "inline-flex";
     }
+
+    // Render lorebook entries
+    this.renderLorebookEntries();
   }
 
   showResultSection() {
@@ -2145,7 +2163,7 @@ class CharacterGeneratorApp {
 
   normalizeCharacterFromSpec(specData) {
     if (specData?.data) {
-      return {
+      const char = {
         name: specData.data.name || "Unnamed Character",
         description: specData.data.description || "",
         personality: specData.data.personality || "",
@@ -2154,9 +2172,14 @@ class CharacterGeneratorApp {
         systemPrompt: specData.data.system_prompt || "",
         postHistoryInstructions: specData.data.post_history_instructions || "",
       };
+      if (specData.data.character_book) {
+        const cb = this.normalizeCharacterBook(specData.data.character_book);
+        if (cb) char.characterBook = cb;
+      }
+      return char;
     }
 
-    return {
+    const char = {
       name: specData.name || "Unnamed Character",
       description: specData.description || "",
       personality: specData.personality || "",
@@ -2164,6 +2187,25 @@ class CharacterGeneratorApp {
       firstMessage: specData.firstMessage || specData.first_mes || "",
       systemPrompt: specData.systemPrompt || specData.system_prompt || "",
       postHistoryInstructions: specData.postHistoryInstructions || specData.post_history_instructions || "",
+    };
+    if (specData.character_book || specData.characterBook) {
+      const cb = this.normalizeCharacterBook(specData.character_book || specData.characterBook);
+      if (cb) char.characterBook = cb;
+    }
+    return char;
+  }
+
+  normalizeCharacterBook(cb) {
+    if (!cb) return null;
+    return {
+      name: cb.name || "",
+      description: cb.description || "",
+      scan_depth: cb.scan_depth ?? 2,
+      token_budget: cb.token_budget ?? 2048,
+      recursive_scanning: cb.recursive_scanning ?? false,
+      entries: (cb.entries || []).map((e) =>
+        window.characterGenerator.normalizeLorebookEntry(e),
+      ),
     };
   }
 
@@ -2274,6 +2316,11 @@ class CharacterGeneratorApp {
         }
       }
 
+      // Preserve characterBook through revision
+      if (this.currentCharacter.characterBook) {
+        revised.characterBook = this.currentCharacter.characterBook;
+      }
+
       this.currentCharacter = revised;
       this.originalCharacter = JSON.parse(JSON.stringify(revised));
       this.displayCharacter();
@@ -2319,6 +2366,7 @@ class CharacterGeneratorApp {
       }
       if (editorProgress) editorProgress.style.display = "block";
 
+      this.syncFieldsFromEditor();
       const evaluation = await this.apiHandler.evaluateCard(this.currentCharacter);
       this.lastEvaluation = evaluation;
       this.renderQualityResults(evaluation);
@@ -2516,6 +2564,11 @@ class CharacterGeneratorApp {
         }
       }
 
+      // Preserve characterBook through revision
+      if (this.currentCharacter.characterBook) {
+        revised.characterBook = this.currentCharacter.characterBook;
+      }
+
       this.currentCharacter = revised;
       this.originalCharacter = JSON.parse(JSON.stringify(revised));
       this.displayCharacter();
@@ -2693,7 +2746,6 @@ class CharacterGeneratorApp {
       pov: promptData?.pov || "first",
       referenceImageDescription: promptData?.referenceImageDescription || "",
       referenceImageDataUrl: "",
-      lorebookData: null,
       _trimmedFields: [],
     };
 
@@ -2707,19 +2759,6 @@ class CharacterGeneratorApp {
         safe.referenceImageDataUrl = referenceImageDataUrl;
       } else {
         safe._trimmedFields.push("reference-image");
-      }
-    }
-
-    if (promptData?.lorebookData) {
-      try {
-        const lorebookJson = JSON.stringify(promptData.lorebookData);
-        if (lorebookJson.length <= maxEmbeddedChars) {
-          safe.lorebookData = JSON.parse(lorebookJson);
-        } else {
-          safe._trimmedFields.push("lorebook");
-        }
-      } catch (error) {
-        safe._trimmedFields.push("lorebook");
       }
     }
 
@@ -2891,7 +2930,7 @@ class CharacterGeneratorApp {
           this.referenceImageDataUrl = prompt.referenceImageDataUrl;
           this.updateReferenceImagePreview(prompt.referenceImageDataUrl);
         }
-        this.lorebookData = prompt.lorebookData || null;
+        // Lorebook data is now part of the card, not stored separately in prompts
         this.showNotification("Prompt loaded", "success");
       } else if (action === "delete-prompt") {
         await this.storage.deletePrompt(id);
@@ -3510,22 +3549,503 @@ class CharacterGeneratorApp {
     reader.onload = (e) => {
       try {
         const json = JSON.parse(e.target.result);
-        this.lorebookData = json;
 
-        // Update UI to show loaded status
-        const statusIcon = document.getElementById("lorebook-status");
-        statusIcon.style.display = "block";
-        this.showNotification("Lorebook loaded successfully!", "success");
-        console.log("Lorebook loaded:", this.lorebookData);
+        // Detect format: standalone lorebook, or character card with character_book
+        let entries = [];
+        if (json.entries && Array.isArray(json.entries)) {
+          // Standalone lorebook format
+          entries = json.entries;
+        } else if (json.data?.character_book?.entries) {
+          // Character card with character_book
+          entries = json.data.character_book.entries;
+        } else if (Array.isArray(json)) {
+          // Raw array of entries
+          entries = json;
+        } else {
+          // Legacy format: entries as object keyed by number
+          const possibleEntries = Object.values(json.entries || json);
+          if (possibleEntries.length > 0 && possibleEntries[0].content) {
+            entries = possibleEntries;
+          }
+        }
+
+        if (entries.length === 0) {
+          this.showNotification("No lorebook entries found in file", "warning");
+          return;
+        }
+
+        const normalizedEntries = entries.map((e) =>
+          window.characterGenerator.normalizeLorebookEntry(e),
+        );
+
+        // If no character loaded yet, user can't add entries to the editor
+        if (!this.currentCharacter) {
+          this.showNotification("Generate or import a character first", "warning");
+          return;
+        }
+
+        this.ensureCharacterBook();
+        const existing = this.currentCharacter.characterBook.entries;
+
+        if (existing.length > 0) {
+          const action = confirm(
+            `This card already has ${existing.length} lorebook entries.\n\nOK = Append ${normalizedEntries.length} new entries\nCancel = Replace all entries`,
+          );
+          if (action) {
+            this.currentCharacter.characterBook.entries = existing.concat(normalizedEntries);
+          } else {
+            this.currentCharacter.characterBook.entries = normalizedEntries;
+          }
+        } else {
+          this.currentCharacter.characterBook.entries = normalizedEntries;
+        }
+
+        this.renderLorebookEntries();
+        this.showNotification(`Loaded ${normalizedEntries.length} lorebook entries`, "success");
       } catch (error) {
         console.error("Error parsing lorebook:", error);
         this.showNotification("Failed to parse Lorebook JSON", "error");
-        this.lorebookData = null;
-        document.getElementById("lorebook-status").style.display = "none";
       }
     };
     reader.readAsText(file);
+    event.target.value = "";
   }
+
+  ensureCharacterBook() {
+    if (!this.currentCharacter) return;
+    if (!this.currentCharacter.characterBook) {
+      this.currentCharacter.characterBook = {
+        name: "",
+        description: "",
+        scan_depth: 2,
+        token_budget: 2048,
+        recursive_scanning: false,
+        entries: [],
+      };
+    }
+    if (!this.currentCharacter.characterBook.entries) {
+      this.currentCharacter.characterBook.entries = [];
+    }
+  }
+
+  getLorebookEntries() {
+    return this.currentCharacter?.characterBook?.entries || [];
+  }
+
+  renderLorebookEntries() {
+    const container = document.getElementById("lorebook-entries-list");
+    const countEl = document.getElementById("lorebook-entry-count");
+    const exportBtn = document.getElementById("lorebook-export-btn");
+    if (!container) return;
+
+    const entries = this.getLorebookEntries();
+    countEl.textContent = `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
+
+    if (exportBtn) {
+      exportBtn.style.display = entries.length > 0 ? "inline-flex" : "none";
+    }
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="lorebook-empty-state">No lorebook entries yet. Add entries manually, upload a JSON file, or use AI to generate them.</div>';
+      return;
+    }
+
+    container.innerHTML = entries
+      .map((entry, i) => {
+        const isOpen = this._openLorebookIndex === i;
+        const displayName = entry.name || (entry.keys?.length ? entry.keys[0] : `Entry ${i + 1}`);
+        const keysPreview = (entry.keys || []).join(", ");
+        return `
+        <div class="lorebook-entry-row${isOpen ? " open" : ""}${entry.enabled === false ? " disabled" : ""}" data-index="${i}">
+          <div class="lorebook-entry-header" data-action="toggle" data-index="${i}">
+            <input type="checkbox" class="lorebook-entry-checkbox" ${entry.enabled !== false ? "checked" : ""} data-action="enable" data-index="${i}" title="Enable/disable entry" />
+            <span class="lorebook-entry-name">${this.escapeHtml(displayName)}</span>
+            <span class="lorebook-entry-keys">${this.escapeHtml(keysPreview)}</span>
+            <span class="lorebook-entry-menu-btn" data-action="menu" data-index="${i}" title="More actions">&#8942;</span>
+          </div>
+          <div class="lorebook-entry-editor">
+            ${isOpen ? this.buildLorebookEditorHtml(entry, i) : ""}
+          </div>
+        </div>`;
+      })
+      .join("");
+  }
+
+  buildLorebookEditorHtml(entry, index) {
+    const posOptions = [
+      ["before_char", "Before Character"],
+      ["after_char", "After Character"],
+    ];
+    return `
+      <div class="form-group">
+        <label class="label">Name</label>
+        <input type="text" class="input" data-field="name" value="${this.escapeAttr(entry.name || "")}" />
+      </div>
+      <div class="form-group">
+        <label class="label">Keys (comma-separated)</label>
+        <input type="text" class="input" data-field="keys" value="${this.escapeAttr((entry.keys || []).join(", "))}" />
+      </div>
+      <div class="form-group">
+        <label class="label">Content</label>
+        <textarea class="textarea" data-field="content" rows="6">${this.escapeHtml(entry.content || "")}</textarea>
+      </div>
+      <details class="lorebook-advanced-settings">
+        <summary>Advanced Settings</summary>
+        <div class="lorebook-advanced-grid">
+          <div class="form-group">
+            <label class="label">Secondary Keys</label>
+            <input type="text" class="input" data-field="secondary_keys" value="${this.escapeAttr((entry.secondary_keys || []).join(", "))}" />
+          </div>
+          <div class="form-group">
+            <label class="label">Position</label>
+            <select class="input" data-field="position">
+              ${posOptions.map(([v, l]) => `<option value="${v}"${entry.position === v ? " selected" : ""}>${l}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="label"><input type="checkbox" data-field="constant" ${entry.constant ? "checked" : ""} /> Constant</label>
+          </div>
+          <div class="form-group">
+            <label class="label"><input type="checkbox" data-field="selective" ${entry.selective ? "checked" : ""} /> Selective</label>
+          </div>
+          <div class="form-group">
+            <label class="label">Insertion Order</label>
+            <input type="number" class="input" data-field="insertion_order" value="${entry.insertion_order ?? 0}" />
+          </div>
+          <div class="form-group">
+            <label class="label">Priority</label>
+            <input type="number" class="input" data-field="priority" value="${entry.priority ?? 10}" />
+          </div>
+          <div class="form-group">
+            <label class="label">Depth</label>
+            <input type="number" class="input" data-field="depth" value="${entry.extensions?.depth ?? 4}" />
+          </div>
+          <div class="form-group">
+            <label class="label">Weight (0-100)</label>
+            <input type="number" class="input" data-field="weight" value="${entry.extensions?.weight ?? 10}" min="0" max="100" />
+          </div>
+          <div class="form-group">
+            <label class="label">Probability (0-100)</label>
+            <input type="number" class="input" data-field="probability" value="${entry.extensions?.probability ?? 100}" min="0" max="100" />
+          </div>
+          <div class="form-group">
+            <label class="label"><input type="checkbox" data-field="case_sensitive" ${entry.case_sensitive ? "checked" : ""} /> Case Sensitive</label>
+          </div>
+        </div>
+      </details>
+      <button class="btn-primary btn-sm lorebook-entry-done-btn" data-action="done" data-index="${index}">Done</button>
+    `;
+  }
+
+  escapeAttr(str) {
+    return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  openLorebookEntry(index) {
+    // Close any currently open entry first
+    this.syncLorebookEntryFromEditor();
+    this._openLorebookIndex = index;
+    this.renderLorebookEntries();
+  }
+
+  closeLorebookEntry() {
+    this.syncLorebookEntryFromEditor();
+    this._openLorebookIndex = null;
+    this.renderLorebookEntries();
+  }
+
+  syncLorebookEntryFromEditor() {
+    if (this._openLorebookIndex == null) return;
+    const entries = this.getLorebookEntries();
+    const entry = entries[this._openLorebookIndex];
+    if (!entry) return;
+
+    const container = document.querySelector(`.lorebook-entry-row[data-index="${this._openLorebookIndex}"] .lorebook-entry-editor`);
+    if (!container) return;
+
+    const get = (field) => container.querySelector(`[data-field="${field}"]`);
+
+    const nameInput = get("name");
+    if (nameInput) entry.name = nameInput.value.trim();
+
+    const keysInput = get("keys");
+    if (keysInput) entry.keys = keysInput.value.split(",").map((k) => k.trim()).filter(Boolean);
+
+    const contentInput = get("content");
+    if (contentInput) entry.content = contentInput.value;
+
+    const secKeysInput = get("secondary_keys");
+    if (secKeysInput) entry.secondary_keys = secKeysInput.value.split(",").map((k) => k.trim()).filter(Boolean);
+
+    const posInput = get("position");
+    if (posInput) entry.position = posInput.value;
+
+    const constantInput = get("constant");
+    if (constantInput) entry.constant = constantInput.checked;
+
+    const selectiveInput = get("selective");
+    if (selectiveInput) entry.selective = selectiveInput.checked;
+
+    const orderInput = get("insertion_order");
+    if (orderInput) entry.insertion_order = parseInt(orderInput.value) || 0;
+
+    const priorityInput = get("priority");
+    if (priorityInput) entry.priority = parseInt(priorityInput.value) || 10;
+
+    const depthInput = get("depth");
+    if (depthInput) {
+      if (!entry.extensions) entry.extensions = {};
+      entry.extensions.depth = parseInt(depthInput.value) || 4;
+    }
+
+    const weightInput = get("weight");
+    if (weightInput) {
+      if (!entry.extensions) entry.extensions = {};
+      entry.extensions.weight = parseInt(weightInput.value) || 10;
+    }
+
+    const probInput = get("probability");
+    if (probInput) {
+      if (!entry.extensions) entry.extensions = {};
+      entry.extensions.probability = parseInt(probInput.value) || 100;
+    }
+
+    const caseInput = get("case_sensitive");
+    if (caseInput) entry.case_sensitive = caseInput.checked;
+  }
+
+  addLorebookEntry() {
+    this.ensureCharacterBook();
+    const entries = this.currentCharacter.characterBook.entries;
+    const newEntry = window.characterGenerator.normalizeLorebookEntry({
+      insertion_order: entries.length,
+    });
+    entries.push(newEntry);
+    this.openLorebookEntry(entries.length - 1);
+  }
+
+  deleteLorebookEntry(index) {
+    const entries = this.getLorebookEntries();
+    const entry = entries[index];
+    const name = entry?.name || entry?.keys?.[0] || `Entry ${index + 1}`;
+    if (!confirm(`Delete "${name}"?`)) return;
+    entries.splice(index, 1);
+    if (this._openLorebookIndex === index) this._openLorebookIndex = null;
+    else if (this._openLorebookIndex > index) this._openLorebookIndex--;
+    this.renderLorebookEntries();
+  }
+
+  duplicateLorebookEntry(index) {
+    const entries = this.getLorebookEntries();
+    const original = entries[index];
+    if (!original) return;
+    const copy = window.characterGenerator.normalizeLorebookEntry({
+      ...JSON.parse(JSON.stringify(original)),
+      name: (original.name || "Entry") + " (copy)",
+      id: Date.now() + Math.floor(Math.random() * 1000),
+    });
+    entries.splice(index + 1, 0, copy);
+    this.renderLorebookEntries();
+  }
+
+  moveLorebookEntry(index, direction) {
+    const entries = this.getLorebookEntries();
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= entries.length) return;
+    [entries[index], entries[newIndex]] = [entries[newIndex], entries[index]];
+    if (this._openLorebookIndex === index) this._openLorebookIndex = newIndex;
+    else if (this._openLorebookIndex === newIndex) this._openLorebookIndex = index;
+    this.renderLorebookEntries();
+  }
+
+  toggleLorebookEntry(index) {
+    const entries = this.getLorebookEntries();
+    if (entries[index]) {
+      entries[index].enabled = !entries[index].enabled;
+      this.renderLorebookEntries();
+    }
+  }
+
+  handleLorebookExport() {
+    if (!this.currentCharacter?.characterBook?.entries?.length) {
+      this.showNotification("No lorebook entries to export", "warning");
+      return;
+    }
+    const cb = this.currentCharacter.characterBook;
+    const exportData = {
+      name: cb.name || this.currentCharacter.name + " Lorebook",
+      description: cb.description || "",
+      scan_depth: cb.scan_depth ?? 2,
+      token_budget: cb.token_budget ?? 2048,
+      recursive_scanning: cb.recursive_scanning ?? false,
+      extensions: {},
+      entries: cb.entries.map((e) => window.characterGenerator.normalizeLorebookEntry(e)),
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const name = (this.currentCharacter.name || "character").replace(/[^a-zA-Z0-9_-]/g, "_");
+    this.downloadBlob(blob, `${name}_lorebook.json`);
+    this.showNotification("Lorebook exported", "success");
+  }
+
+  async handleLorebookGenerate() {
+    if (!this.currentCharacter) {
+      this.showNotification("Generate or import a character first", "warning");
+      return;
+    }
+
+    const conceptInput = document.getElementById("lorebook-concept");
+    const guidance = conceptInput?.value?.trim() || "";
+
+    this.syncFieldsFromEditor();
+    this.ensureCharacterBook();
+    const existing = this.currentCharacter.characterBook.entries;
+
+    // Warn if this will replace existing entries
+    if (existing.length > 0) {
+      if (!confirm(
+        `This will regenerate all ${existing.length} lorebook entries to be consistent with the card. Existing entries will be reviewed and may be kept, revised, or replaced.\n\nContinue?`,
+      )) {
+        return;
+      }
+    }
+
+    const goBtn = document.getElementById("lorebook-generate-go-btn");
+    try {
+      goBtn.disabled = true;
+      goBtn.textContent = "Generating...";
+
+      const newEntries = await this.apiHandler.generateLorebook(
+        this.currentCharacter,
+        existing,
+        guidance,
+      );
+
+      if (!newEntries.length) {
+        this.showNotification("No entries generated", "info");
+        return;
+      }
+
+      // Full replacement — the AI produced the definitive set
+      this.currentCharacter.characterBook.entries = newEntries;
+
+      this.renderLorebookEntries();
+      this.showNotification(
+        existing.length > 0
+          ? `Regenerated lorebook: ${newEntries.length} entries`
+          : `Generated ${newEntries.length} entries`,
+        "success",
+      );
+    } catch (error) {
+      console.error("Lorebook generation failed:", error);
+      this.showNotification(`Generation failed: ${error.message}`, "error");
+    } finally {
+      goBtn.disabled = false;
+      goBtn.textContent = "Generate Entries";
+    }
+  }
+
+  initLorebookEvents() {
+    // Upload
+    document.getElementById("lorebook-upload-btn")?.addEventListener("click", () => {
+      document.getElementById("lorebook-file")?.click();
+    });
+    document.getElementById("lorebook-file")?.addEventListener("change", (e) =>
+      this.handleLorebookUpload(e),
+    );
+
+    // Export
+    document.getElementById("lorebook-export-btn")?.addEventListener("click", () =>
+      this.handleLorebookExport(),
+    );
+
+    // Add new entry
+    document.getElementById("lorebook-add-btn")?.addEventListener("click", () =>
+      this.addLorebookEntry(),
+    );
+
+    // Generate toggle
+    document.getElementById("lorebook-generate-btn")?.addEventListener("click", () => {
+      const inputDiv = document.getElementById("lorebook-generate-input");
+      if (inputDiv) {
+        inputDiv.style.display = inputDiv.style.display === "none" ? "flex" : "none";
+      }
+    });
+
+    // Generate go
+    document.getElementById("lorebook-generate-go-btn")?.addEventListener("click", () =>
+      this.handleLorebookGenerate(),
+    );
+
+    // Delegate clicks on entry list
+    document.getElementById("lorebook-entries-list")?.addEventListener("click", (e) => {
+      const target = e.target;
+
+      // Checkbox toggle
+      if (target.matches("[data-action='enable']")) {
+        e.stopPropagation();
+        const idx = parseInt(target.dataset.index);
+        this.toggleLorebookEntry(idx);
+        return;
+      }
+
+      // Menu button
+      if (target.matches("[data-action='menu']")) {
+        e.stopPropagation();
+        this.showLorebookMenu(target, parseInt(target.dataset.index));
+        return;
+      }
+
+      // Done button
+      if (target.matches("[data-action='done']")) {
+        this.closeLorebookEntry();
+        return;
+      }
+
+      // Entry header click → open/close
+      const header = target.closest("[data-action='toggle']");
+      if (header && !target.matches(".lorebook-entry-checkbox, .lorebook-entry-menu-btn")) {
+        const idx = parseInt(header.dataset.index);
+        if (this._openLorebookIndex === idx) {
+          this.closeLorebookEntry();
+        } else {
+          this.openLorebookEntry(idx);
+        }
+      }
+    });
+
+    // Close overflow menu on outside click
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".lorebook-overflow-menu") && !e.target.matches("[data-action='menu']")) {
+        document.querySelectorAll(".lorebook-overflow-menu").forEach((m) => m.remove());
+      }
+    });
+  }
+
+  showLorebookMenu(anchorEl, index) {
+    // Remove any existing menus
+    document.querySelectorAll(".lorebook-overflow-menu").forEach((m) => m.remove());
+
+    const entries = this.getLorebookEntries();
+    const menu = document.createElement("div");
+    menu.className = "lorebook-overflow-menu";
+    menu.innerHTML = `
+      <button data-menu="duplicate">Duplicate</button>
+      ${index > 0 ? '<button data-menu="up">Move Up</button>' : ""}
+      ${index < entries.length - 1 ? '<button data-menu="down">Move Down</button>' : ""}
+      <button data-menu="delete" class="danger">Delete</button>
+    `;
+    menu.addEventListener("click", (e) => {
+      const action = e.target.dataset.menu;
+      menu.remove();
+      if (action === "duplicate") this.duplicateLorebookEntry(index);
+      else if (action === "up") this.moveLorebookEntry(index, -1);
+      else if (action === "down") this.moveLorebookEntry(index, 1);
+      else if (action === "delete") this.deleteLorebookEntry(index);
+    });
+    anchorEl.style.position = "relative";
+    anchorEl.appendChild(menu);
+  }
+
 }
 
 // Update prompt character counter
