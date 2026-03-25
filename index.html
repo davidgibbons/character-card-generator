@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>SillyTavern Character Generator</title>
         <link rel="icon" type="image/png" href="favicon.png" />
-        <link rel="stylesheet" href="src/styles/main.css?v=20260323b" />
+        <link rel="stylesheet" href="src/styles/main.css?v=20260324a" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -67,6 +67,13 @@
                                         <option value="scenario">Scenario (The scenario is...)</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="generate-lorebook-checkbox" />
+                                    <span class="label" style="margin: 0;">Also generate lorebook entries</span>
+                                </label>
                             </div>
 
                             <div class="generation-buttons">
@@ -307,19 +314,27 @@
 
                             <!-- Subtab: Lorebook -->
                             <div id="subtab-lorebook" class="subtab-panel">
-                                <div class="form-group">
-                                    <label for="lorebook-file" class="label">Lorebook (World Info)</label>
-                                    <div class="file-input-wrapper" style="position: relative">
-                                        <input type="file" id="lorebook-file" class="input" accept=".json" style="padding-right: 2.5rem; height: 3rem" />
-                                        <span id="lorebook-status" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 1.2rem; display: none;" title="Lorebook loaded">📚</span>
-                                    </div>
-                                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                                        Upload a SillyTavern World Info JSON. The lorebook data will be included in character generation.
-                                    </p>
+                                <!-- Lorebook toolbar -->
+                                <div class="lorebook-toolbar">
+                                    <button id="lorebook-upload-btn" class="btn-outline btn-sm">Upload JSON</button>
+                                    <input type="file" id="lorebook-file" accept=".json" style="display: none" />
+                                    <button id="lorebook-export-btn" class="btn-outline btn-sm" style="display: none">Export JSON</button>
+                                    <button id="lorebook-add-btn" class="btn-outline btn-sm">+ New Entry</button>
+                                    <button id="lorebook-generate-btn" class="btn-secondary btn-sm">Generate</button>
                                 </div>
-                                <div style="margin-top: 1.5rem; padding: 1.5rem; border: 1px dashed var(--border); border-radius: var(--radius-md); text-align: center; color: var(--text-soft);">
-                                    <p style="font-size: 0.9rem; font-weight: 500;">Lorebook Editor</p>
-                                    <p style="font-size: 0.8rem; margin-top: 0.3rem;">Coming soon — view and edit lorebook entries directly.</p>
+
+                                <!-- Generate guidance input (hidden by default) -->
+                                <div id="lorebook-generate-input" class="lorebook-generate-input" style="display: none;">
+                                    <textarea id="lorebook-concept" class="textarea" rows="2" placeholder="Optional: focus on specific aspects (e.g. 'magic system', 'rival factions', 'more NPCs')..."></textarea>
+                                    <button id="lorebook-generate-go-btn" class="btn-primary btn-sm">Generate Entries</button>
+                                </div>
+
+                                <!-- Entry count -->
+                                <div id="lorebook-entry-count" class="lorebook-entry-count">0 entries</div>
+
+                                <!-- Entry list container -->
+                                <div id="lorebook-entries-list" class="lorebook-entries-list">
+                                    <div class="lorebook-empty-state">No lorebook entries yet. Add entries manually, upload a JSON file, or use AI to generate them.</div>
                                 </div>
                             </div>
                         </div>
@@ -617,6 +632,23 @@
                             💡 When disabled, images won't be generated
                             automatically (saves API costs). You can still
                             upload your own images and regenerate prompts.
+                        </p>
+                    </div>
+
+                    <!-- Content Policy Prefix -->
+                    <div class="form-group">
+                        <label class="label">Content Policy Override</label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label class="switch">
+                                <input type="checkbox" id="content-policy-prefix" />
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                                Unrestricted content generation
+                            </span>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.5rem;">
+                            Prepends a content policy prefix to all prompts to reduce refusals for mature/dark fictional content. Editable under Prompt Templates below.
                         </p>
                     </div>
 
