@@ -43,6 +43,7 @@ class Config {
         enableImageGeneration: true,
       },
       prompts: {
+        contentPolicyPrefix: false,
         overrides: {},
       },
     };
@@ -136,6 +137,11 @@ class Config {
     )?.checked;
     if (enableImageGeneration !== undefined)
       this.config.app.enableImageGeneration = enableImageGeneration;
+
+    // Content policy prefix toggle
+    const contentPolicyPrefix = document.getElementById("content-policy-prefix")?.checked;
+    if (contentPolicyPrefix !== undefined)
+      this.config.prompts.contentPolicyPrefix = contentPolicyPrefix;
   }
 
   get(path) {
@@ -204,6 +210,11 @@ class Config {
       if (enableImageGeneration)
         enableImageGeneration.checked =
           this.config.app.enableImageGeneration !== false;
+
+      // Content policy prefix toggle
+      const contentPolicyPrefix = document.getElementById("content-policy-prefix");
+      if (contentPolicyPrefix)
+        contentPolicyPrefix.checked = this.config.prompts.contentPolicyPrefix || false;
     }, 100);
   }
 
