@@ -103,13 +103,55 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated during roadmap creation) | | |
+| BUILD-01 | Phase 1 | Pending |
+| BUILD-02 | Phase 1 | Pending |
+| BUILD-03 | Phase 1 | Pending |
+| BUILD-04 | Phase 1 | Pending |
+| BUILD-05 | Phase 1 | Pending |
+| BUILD-06 | Phase 1 | Pending |
+| BUILD-07 | Phase 1 | Pending |
+| LIB-03 | Phase 1 | Pending |
+| LIB-04 | Phase 1 | Pending |
+| REACT-01 | Phase 2 | Pending |
+| REACT-02 | Phase 2 | Pending |
+| REACT-03 | Phase 2 | Pending |
+| REACT-04 | Phase 2 | Pending |
+| REACT-10 | Phase 2 | Pending |
+| STATE-01 | Phase 2 | Pending |
+| STATE-05 | Phase 2 | Pending |
+| CSS-01 | Phase 2 | Pending |
+| CSS-02 | Phase 2 | Pending |
+| CSS-03 | Phase 2 | Pending |
+| REACT-05 | Phase 3 | Pending |
+| REACT-06 | Phase 3 | Pending |
+| STATE-02 | Phase 3 | Pending |
+| STATE-03 | Phase 3 | Pending |
+| STREAM-01 | Phase 3 | Pending |
+| STREAM-02 | Phase 3 | Pending |
+| STREAM-03 | Phase 3 | Pending |
+| LIB-01 | Phase 3 | Pending |
+| LIB-02 | Phase 3 | Pending |
+| PARITY-01 | Phase 3 | Pending |
+| PARITY-02 | Phase 3 | Pending |
+| PARITY-07 | Phase 3 | Pending |
+| REACT-07 | Phase 4 | Pending |
+| REACT-08 | Phase 4 | Pending |
+| REACT-09 | Phase 4 | Pending |
+| REACT-11 | Phase 4 | Pending |
+| REACT-12 | Phase 4 | Pending |
+| STATE-04 | Phase 4 | Pending |
+| PARITY-03 | Phase 4 | Pending |
+| PARITY-04 | Phase 4 | Pending |
+| PARITY-05 | Phase 4 | Pending |
+| PARITY-06 | Phase 4 | Pending |
+| PARITY-08 | Phase 4 | Pending |
+| PARITY-09 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 35 total
-- Mapped to phases: 0
-- Unmapped: 35 ⚠️
+- v1 requirements: 43 total
+- Mapped to phases: 43
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-26 after roadmap creation*
