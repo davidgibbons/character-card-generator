@@ -28,7 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Running `npm run build` produces static assets in `dist/` that Express can serve
   3. Docker image builds successfully and serves the app on port 2426 with both API and static assets working
   4. All JavaScript dependencies come from npm imports -- no CDN script tags remain in the HTML
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Vite scaffold, React entry point, package.json scripts
+- [ ] 01-02-PLAN.md — Service layer conversion (config store, all modules to ES imports)
+- [ ] 01-03-PLAN.md — Docker multi-stage build, old file cleanup, end-to-end verification
 
 ### Phase 2: React App Shell
 **Goal**: Users see a working React application with tab navigation, resizable split-pane layout, settings panel, and theme switching -- the visual frame for all features
@@ -76,7 +80,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Build System + Service Layer | 0/? | Not started | - |
+| 1. Build System + Service Layer | 0/3 | Planning complete | - |
 | 2. React App Shell | 0/? | Not started | - |
 | 3. Generation + Editing | 0/? | Not started | - |
 | 4. Export, Library + Full Parity | 0/? | Not started | - |
