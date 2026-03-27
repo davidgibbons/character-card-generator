@@ -3,6 +3,7 @@ import Header from './components/layout/Header';
 import TabBar from './components/layout/TabBar';
 import ActionBar from './components/layout/ActionBar';
 import SplitPane from './components/layout/SplitPane';
+import SettingsModal from './components/settings/SettingsModal';
 import { useTheme } from './hooks/useTheme';
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
       <ActionBar />
       <SplitPane leftContent={leftPanel} rightContent={rightPanel} />
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

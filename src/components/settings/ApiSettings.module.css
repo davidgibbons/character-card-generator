@@ -1,0 +1,46 @@
+.section {
+  margin-bottom: 1.2rem;
+}
+
+.sectionHeading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  color: var(--text-primary);
+}
+
+.field {
+  margin-bottom: 0.6rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  color: var(--text-primary);
+  transition: border-color var(--transition);
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(14, 122, 138, 0.12);
+}
+
+:global([data-theme="dark"]) .input {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
