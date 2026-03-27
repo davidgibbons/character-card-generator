@@ -54,8 +54,8 @@
 
 - [ ] **LIB-01**: LLM response parsing uses standardized `## Section` format with clean parseSections() utility
 - [ ] **LIB-02**: @mention autocomplete uses react-mentions (or equivalent React library) instead of Tribute.js CDN
-- [ ] **LIB-03**: diff and tributejs loaded from npm imports instead of jsDelivr CDN
-- [ ] **LIB-04**: No CDN script dependencies remain — all JS dependencies managed via npm
+- [x] **LIB-03**: diff and tributejs loaded from npm imports instead of jsDelivr CDN
+- [x] **LIB-04**: No CDN script dependencies remain — all JS dependencies managed via npm
 
 ### Feature Parity
 
@@ -110,8 +110,8 @@
 | BUILD-05 | Phase 1 | Pending |
 | BUILD-06 | Phase 1 | Complete |
 | BUILD-07 | Phase 1 | Pending |
-| LIB-03 | Phase 1 | Pending |
-| LIB-04 | Phase 1 | Pending |
+| LIB-03 | Phase 1 | Complete |
+| LIB-04 | Phase 1 | Complete |
 | REACT-01 | Phase 2 | Pending |
 | REACT-02 | Phase 2 | Pending |
 | REACT-03 | Phase 2 | Pending |
