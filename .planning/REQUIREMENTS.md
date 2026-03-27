@@ -7,12 +7,12 @@
 
 ### Build System
 
-- [ ] **BUILD-01**: Project builds with Vite and serves a React application entry point
-- [ ] **BUILD-02**: Vite dev server proxies `/api` requests to Express backend on port 2426
-- [ ] **BUILD-03**: `npm run dev` starts both Vite dev server and Express proxy concurrently
-- [ ] **BUILD-04**: `npm run build` produces production-ready static assets in `dist/`
+- [x] **BUILD-01**: Project builds with Vite and serves a React application entry point
+- [x] **BUILD-02**: Vite dev server proxies `/api` requests to Express backend on port 2426
+- [x] **BUILD-03**: `npm run dev` starts both Vite dev server and Express proxy concurrently
+- [x] **BUILD-04**: `npm run build` produces production-ready static assets in `dist/`
 - [ ] **BUILD-05**: Dockerfile updated with multi-stage build (npm run build → Express serves dist/)
-- [ ] **BUILD-06**: Docker image uses Node 22-alpine for Vite 8 compatibility
+- [x] **BUILD-06**: Docker image uses Node 22-alpine for Vite 8 compatibility
 - [ ] **BUILD-07**: Single-container deployment preserved — Express serves both API and built static files
 
 ### React Migration
@@ -103,12 +103,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | Phase 1 | Pending |
-| BUILD-02 | Phase 1 | Pending |
-| BUILD-03 | Phase 1 | Pending |
-| BUILD-04 | Phase 1 | Pending |
+| BUILD-01 | Phase 1 | Complete |
+| BUILD-02 | Phase 1 | Complete |
+| BUILD-03 | Phase 1 | Complete |
+| BUILD-04 | Phase 1 | Complete |
 | BUILD-05 | Phase 1 | Pending |
-| BUILD-06 | Phase 1 | Pending |
+| BUILD-06 | Phase 1 | Complete |
 | BUILD-07 | Phase 1 | Pending |
 | LIB-03 | Phase 1 | Pending |
 | LIB-04 | Phase 1 | Pending |

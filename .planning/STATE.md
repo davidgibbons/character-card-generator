@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 planned (3 plans, 3 waves)
-last_updated: "2026-03-26T23:51:25.248Z"
-last_activity: 2026-03-26 -- Roadmap created
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-27T05:43:00.789Z"
+last_activity: 2026-03-27
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Modernize the frontend architecture to React + Vite so the codebase is maintainable, extensible, and uses established libraries instead of hand-rolled solutions.
-**Current focus:** Phase 1 - Build System + Service Layer
+**Current focus:** Phase 01 — build-system-service-layer
 
 ## Current Position
 
-Phase: 1 of 4 (Build System + Service Layer)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-26 -- Roadmap created
+Phase: 01 (build-system-service-layer) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-03-27
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 2min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 
 - Research recommends Context + useReducer over Zustand for state management (4 state domains, no cross-cutting subscriptions). Requirements specify Zustand (STATE-01..04) -- resolve during Phase 2 planning.
 - Research recommends phased big-bang rewrite (not incremental migration) due to window-global architecture incompatibility with ES modules.
+- [Phase 01]: Copied main.css to globals.css (original kept for Plan 03 cleanup)
+- [Phase 01]: Google Fonts link tags preserved in index.html (CSS resources, not JS CDN)
 
 ### Pending Todos
 
@@ -74,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:51:25.245Z
-Stopped at: Phase 1 planned (3 plans, 3 waves)
-Resume file: .planning/phases/01-build-system-service-layer/01-01-PLAN.md
+Last session: 2026-03-27T05:43:00.787Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None

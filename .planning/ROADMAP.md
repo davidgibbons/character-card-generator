@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. All JavaScript dependencies come from npm imports -- no CDN script tags remain in the HTML
 **Plans:** 3 plans
 Plans:
-- [ ] 01-01-PLAN.md — Vite scaffold, React entry point, package.json scripts
+- [x] 01-01-PLAN.md — Vite scaffold, React entry point, package.json scripts
 - [ ] 01-02-PLAN.md — Service layer conversion (config store, all modules to ES imports)
 - [ ] 01-03-PLAN.md — Docker multi-stage build, old file cleanup, end-to-end verification
 
