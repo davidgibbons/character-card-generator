@@ -39,12 +39,16 @@ Plans:
 **Depends on**: Phase 1
 **Requirements**: REACT-01, REACT-02, REACT-03, REACT-04, REACT-10, STATE-01, STATE-05, CSS-01, CSS-02, CSS-03
 **Success Criteria** (what must be TRUE):
-  1. User can navigate between Create, Edit, and Settings tabs and each renders its own panel content
+  1. User can navigate between Create and Edit tabs and each renders its own panel content
   2. User can resize the split-pane layout and the ratio persists across page reloads
   3. User can toggle dark/light theme and the choice persists across sessions
   4. User can configure API settings (endpoint, model, keys) and values persist correctly in session/local storage
   5. Component styles are scoped via CSS Modules and the visual appearance matches the existing design
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 02-01-PLAN.md — Layout shell (Header, TabBar, ActionBar, SplitPane), useTheme hook, CSS Modules
+- [ ] 02-02-PLAN.md — Settings modal with save/cancel, API config forms, app toggle settings
+- [ ] 02-03-PLAN.md — CSS cleanup (remove duplicated globals) and visual verification checkpoint
 **UI hint**: yes
 
 ### Phase 3: Generation + Editing
@@ -80,7 +84,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Build System + Service Layer | 0/3 | Planning complete | - |
-| 2. React App Shell | 0/? | Not started | - |
+| 1. Build System + Service Layer | 3/3 | Complete | - |
+| 2. React App Shell | 0/3 | Planning complete | - |
 | 3. Generation + Editing | 0/? | Not started | - |
 | 4. Export, Library + Full Parity | 0/? | Not started | - |
