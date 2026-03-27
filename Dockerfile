@@ -1,23 +1,34 @@
-FROM node:18-alpine
-
-RUN apk add --no-cache git
+# -- Stage 1: Build ------------------------------------------
+FROM node:22-alpine AS build
 
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-# Install proxy dependencies
+# -- Stage 2: Production -------------------------------------
+FROM node:22-alpine
+
+RUN apk add --no-cache git
+WORKDIR /app
+
+# Install proxy deps only
 COPY proxy/package*.json ./proxy/
 RUN cd proxy && npm ci --only=production
 
-# Copy proxy server
+# Copy proxy source
 COPY proxy/ ./proxy/
 
-# Copy frontend static files
-COPY index.html favicon.png ./
-COPY src/ ./src/
+# Copy built frontend from stage 1
+COPY --from=build /app/dist ./dist
+
+# Copy static assets needed at root level in dist
+COPY favicon.png ./dist/
 
 ENV NODE_ENV=production
 ENV PORT=2426
-ENV STATIC_ROOT=/app
+ENV STATIC_ROOT=/app/dist
 ENV DATA_DIR=/data
 
 EXPOSE 2426

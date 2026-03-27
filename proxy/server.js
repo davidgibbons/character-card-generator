@@ -88,10 +88,10 @@ const staticRoot = process.env.STATIC_ROOT || path.join(__dirname, "..");
 app.use(
   express.static(staticRoot, {
     setHeaders(res, filePath) {
-      if (filePath.endsWith(".js")) {
-        // No caching for JS — always fetch fresh so updates take effect immediately
+      if (filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) {
+        // No caching for HTML/JS/CSS — always fetch fresh so updates take effect immediately
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      } else if (/\.(css|png|jpg|jpeg|gif|ico|svg)$/.test(filePath)) {
+      } else if (/\.(png|jpg|jpeg|gif|ico|svg|woff2?)$/.test(filePath)) {
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       }
     },
@@ -695,6 +695,12 @@ app.post("/api/st/pull", async (req, res) => {
 
 app.use("/api/cards", cardsRouter);
 app.use("/api/prompts", promptsRouter);
+
+// SPA fallback — serve index.html for any non-API, non-file request
+// Must be AFTER all /api routes and static middleware
+app.get('*', (req, res) => {
+  res.sendFile(path.join(staticRoot, 'index.html'));
+});
 
 app.listen(PORT, async () => {
   console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
