@@ -46,8 +46,8 @@ Plans:
   5. Component styles are scoped via CSS Modules and the visual appearance matches the existing design
 **Plans:** 3 plans
 Plans:
-- [ ] 02-01-PLAN.md — Layout shell (Header, TabBar, ActionBar, SplitPane), useTheme hook, CSS Modules
-- [ ] 02-02-PLAN.md — Settings modal with save/cancel, API config forms, app toggle settings
+- [x] 02-01-PLAN.md — Layout shell (Header, TabBar, ActionBar, SplitPane), useTheme hook, CSS Modules
+- [x] 02-02-PLAN.md — Settings modal with save/cancel, API config forms, app toggle settings
 - [ ] 02-03-PLAN.md — CSS cleanup (remove duplicated globals) and visual verification checkpoint
 **UI hint**: yes
 
@@ -85,6 +85,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Build System + Service Layer | 3/3 | Complete | - |
-| 2. React App Shell | 0/3 | Planning complete | - |
+| 2. React App Shell | 2/3 | Executing | - |
 | 3. Generation + Editing | 0/? | Not started | - |
 | 4. Export, Library + Full Parity | 0/? | Not started | - |
