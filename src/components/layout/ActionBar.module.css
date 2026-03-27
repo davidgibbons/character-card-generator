@@ -1,0 +1,19 @@
+.actionBar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-page);
+}
+
+.btnGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+:global([data-theme="dark"]) .actionBar {
+  background: var(--bg-page);
+}

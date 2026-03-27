@@ -1,0 +1,28 @@
+.wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.handle {
+  width: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  transition: background 150ms;
+  cursor: col-resize;
+}
+
+.handle:hover {
+  background: var(--accent);
+}
+
+:global([data-theme="dark"]) .handle {
+  background: rgba(255, 255, 255, 0.12);
+}

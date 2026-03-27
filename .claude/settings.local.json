@@ -22,7 +22,10 @@
       "Bash(head -100 /Users/dgibbons/git/character-card-generator/proxy/cards/*/card.json)",
       "Bash(node -c /Users/dgibbons/git/character-card-generator/src/scripts/main.js)",
       "Bash(node -c /Users/dgibbons/git/character-card-generator/src/scripts/api.js)",
-      "Bash(node -c /Users/dgibbons/git/character-card-generator/src/scripts/*.js)"
+      "Bash(node -c /Users/dgibbons/git/character-card-generator/src/scripts/*.js)",
+      "Bash(node: \"$HOME/.claude/get-shit-done/bin/gsd-tools.cjs\" *)",
+      "Bash(node:*)",
+      "Bash(ls .planning/phases/02-react-app-shell/*-UI-SPEC.md)"
     ]
   }
 }
