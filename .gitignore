@@ -83,6 +83,7 @@ public
 # Vite build output
 dist/
 dist-ssr/
+*.local
 
 # Rollup.js default build output
 dist/
