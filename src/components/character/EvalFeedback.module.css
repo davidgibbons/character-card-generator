@@ -1,0 +1,75 @@
+/* EvalFeedback.module.css */
+
+.container {
+  background: var(--surface-muted, var(--bg-page));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.heading {
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+}
+
+.score {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 0.75rem;
+}
+
+.dimensionRow {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.dimensionKey {
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  min-width: 120px;
+}
+
+.dimensionVal {
+  color: var(--text-primary);
+}
+
+.section {
+  margin-top: 0.75rem;
+}
+
+.sectionLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.content {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+}

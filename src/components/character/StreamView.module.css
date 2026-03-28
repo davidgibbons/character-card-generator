@@ -1,0 +1,42 @@
+/* StreamView.module.css */
+/* Matches .stream-box contract from globals.css (UI-SPEC) */
+
+.streamBox {
+  /* Striped repeating gradient background */
+  background: repeating-linear-gradient(
+    to bottom,
+    #f6fbff 0px,
+    #f6fbff 28px,
+    #f3f8fc 28px,
+    #f3f8fc 56px
+  );
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  min-height: 150px;
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* Dark theme striped background */
+:global([data-theme="dark"]) .streamBox {
+  background: repeating-linear-gradient(
+    to bottom,
+    #141e2e 0px,
+    #141e2e 28px,
+    #111827 28px,
+    #111827 56px
+  );
+}
+
+.placeholder {
+  color: var(--text-soft, var(--text-secondary));
+  font-style: italic;
+  font-size: 0.85rem;
+}
