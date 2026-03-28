@@ -1,0 +1,152 @@
+import { useState } from 'react';
+import MentionInput from './MentionInput';
+import useGenerationStore from '../../stores/useGenerationStore';
+import { apiHandler } from '../../services/api';
+import { configStore } from '../../stores/configStore';
+import { parseSections, sectionsToCharacter } from '../../utils/parseSections';
+import styles from './CreatePanel.module.css';
+
+const POV_OPTIONS = [
+  { value: 'first', label: '1st Person' },
+  { value: 'third', label: '3rd Person' },
+  { value: 'scenario', label: 'Scenario' },
+];
+
+const FIELD_ORDER = [
+  'name', 'personality', 'description', 'scenario', 'firstMessage',
+  'tags', 'mesExample', 'systemPrompt', 'creatorNotes',
+];
+
+export default function CreatePanel() {
+  const [concept, setConcept] = useState('');
+  const [characterName, setCharacterName] = useState('');
+  const [pov, setPov] = useState('first');
+  const [conceptError, setConceptError] = useState('');
+  const [genError, setGenError] = useState('');
+
+  const isGenerating = useGenerationStore((s) => s.isGenerating);
+
+  // Content policy prefix state — read from configStore
+  const [nsfwPrefix, setNsfwPrefix] = useState(
+    () => !!configStore.get('prompts.contentPolicyPrefix')
+  );
+
+  function handleNsfwToggle(e) {
+    const checked = e.target.checked;
+    setNsfwPrefix(checked);
+    configStore.set('prompts.contentPolicyPrefix', checked);
+  }
+
+  async function handleGenerate() {
+    if (!concept.trim()) {
+      setConceptError('Enter a character concept before generating.');
+      return;
+    }
+    setConceptError('');
+    setGenError('');
+
+    const store = useGenerationStore.getState();
+    const controller = new AbortController();
+    store.reset();
+    store.setGenerating(true, controller);
+
+    try {
+      // CORRECT: pass getState().append as callback — never a React state setter
+      await apiHandler.generateCharacter(
+        concept,
+        characterName,
+        (chunk) => { useGenerationStore.getState().append(chunk); },
+        pov,
+        null  // lorebook: Phase 4
+      );
+
+      // Generation complete — parse and store character
+      const rawText = useGenerationStore.getState().streamText;
+      const sections = parseSections(rawText);
+      const character = sectionsToCharacter(sections, rawText);
+      useGenerationStore.getState().setCharacter(character);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Generation failed:', err);
+        setGenError('Generation failed. Check your API settings and try again.');
+        useGenerationStore.getState().setGenerating(false, null);
+      }
+      // AbortError = user stopped — store.abort() already set isGenerating=false
+    }
+  }
+
+  return (
+    <div className={styles.panel}>
+      {/* Character Concept */}
+      <div className={styles.formGroup}>
+        <label className={styles.label} htmlFor="concept-input">Character Concept</label>
+        <MentionInput
+          value={concept}
+          onChange={setConcept}
+          disabled={isGenerating}
+        />
+        {conceptError && (
+          <span className={styles.inlineError}>{conceptError}</span>
+        )}
+      </div>
+
+      {/* Character Name */}
+      <div className={styles.formGroup}>
+        <label className={styles.label} htmlFor="character-name">Character Name</label>
+        <input
+          id="character-name"
+          type="text"
+          className="input"
+          value={characterName}
+          onChange={(e) => setCharacterName(e.target.value)}
+          placeholder="Character name (optional — LLM will generate one)"
+          disabled={isGenerating}
+        />
+      </div>
+
+      {/* POV Mode */}
+      <div className={styles.formGroup}>
+        <label className={styles.label}>POV Mode</label>
+        <div className={styles.povGroup} role="group" aria-label="POV Mode">
+          {POV_OPTIONS.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              className={
+                pov === value
+                  ? `btn-primary ${styles.povBtn} ${styles.povBtnActive}`
+                  : `btn-small ${styles.povBtn}`
+              }
+              onClick={() => setPov(value)}
+              disabled={isGenerating}
+              aria-pressed={pov === value}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* NSFW Prefix Toggle */}
+      <div className={`${styles.formGroup} ${styles.checkboxRow}`}>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={nsfwPrefix}
+            onChange={handleNsfwToggle}
+            disabled={isGenerating}
+          />
+          <span>NSFW prefix</span>
+        </label>
+      </div>
+
+      {/* Generation error */}
+      {genError && (
+        <div className={styles.errorBlock}>{genError}</div>
+      )}
+    </div>
+  );
+}
+
+// Export FIELD_ORDER so App.jsx can pass it to CharacterEditor
+export { FIELD_ORDER };
