@@ -1,7 +1,7 @@
 .actionBar {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  flex-direction: column;
+  gap: 0.4rem;
   padding: 0.6rem 0;
   position: sticky;
   top: 0;
@@ -16,4 +16,45 @@
 
 :global([data-theme="dark"]) .actionBar {
   background: var(--bg-page);
+}
+
+.mainRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  /* Additional layout sizing if needed */
+}
+
+.stopBtn {
+  min-height: 44px;  /* Touch target per UI-SPEC */
+}
+
+.reviseRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.reviseLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reviseTextarea {
+  min-height: 64px;
+  resize: vertical;
+  width: 100%;
+}
+
+.errorMsg {
+  font-size: 0.88rem;
+  color: var(--error);
+  margin-top: 0.25rem;
 }

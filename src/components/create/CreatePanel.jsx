@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MentionInput from './MentionInput';
 import useGenerationStore from '../../stores/useGenerationStore';
 import { apiHandler } from '../../services/api';
@@ -36,6 +36,13 @@ export default function CreatePanel() {
     setNsfwPrefix(checked);
     configStore.set('prompts.contentPolicyPrefix', checked);
   }
+
+  // Listen for 'gsd:generate' dispatched by ActionBar Generate/Regenerate button
+  useEffect(() => {
+    const onGenerate = () => handleGenerate();
+    window.addEventListener('gsd:generate', onGenerate);
+    return () => window.removeEventListener('gsd:generate', onGenerate);
+  }, [concept, characterName, pov]);  // re-register when these change
 
   async function handleGenerate() {
     if (!concept.trim()) {
