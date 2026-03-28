@@ -340,6 +340,7 @@ if (typeof window !== 'undefined') {
 // Non-React accessor for service modules
 export const configStore = {
   get: (path) => useConfigStore.getState().get(path),
+  set: (path, value) => useConfigStore.getState().set(path, value),
   getState: () => useConfigStore.getState(),
 };
 

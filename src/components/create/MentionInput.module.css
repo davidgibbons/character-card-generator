@@ -1,0 +1,56 @@
+/* MentionInput.module.css */
+
+/* Wrapper container */
+.control {
+  width: 100%;
+}
+
+/* The actual textarea element — react-mentions applies class here */
+.input {
+  /* Visual styles applied via style prop to override react-mentions inline styles */
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(14, 122, 138, 0.15);
+}
+
+/* Suggestion dropdown list container */
+.suggestions {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+/* Suggestion list ul */
+.suggestions__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+/* Individual suggestion item */
+.suggestions__item {
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+/* Highlighted/focused suggestion item */
+.suggestions__item--focused {
+  background: var(--accent-soft, rgba(14, 122, 138, 0.1));
+}
+
+/* @mention pill rendered in text */
+.mention {
+  background: var(--accent-soft, rgba(14, 122, 138, 0.1));
+  color: var(--accent-strong, var(--accent));
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
+}
