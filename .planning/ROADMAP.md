@@ -13,7 +13,7 @@ Migrate the character card generator frontend from vanilla JS with window global
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Build System + Service Layer** - Vite scaffold, Docker multi-stage build, service modules converted from window globals to ES imports, all CDN deps moved to npm
-- [ ] **Phase 2: React App Shell** - Layout, tabs, split pane, config/settings, theme switching, CSS Modules, state store foundation
+- [x] **Phase 2: React App Shell** - Layout, tabs, split pane, config/settings, theme switching, CSS Modules, state store foundation
 - [ ] **Phase 3: Generation + Editing** - Character creation panel, SSE streaming, @mention autocomplete, editor panel with field locking, evaluate/revise flow
 - [ ] **Phase 4: Export, Library + Full Parity** - Image generation, PNG export, library CRUD with history/diff, SillyTavern sync, lorebook editor, final feature parity verification
 
@@ -48,7 +48,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Layout shell (Header, TabBar, ActionBar, SplitPane), useTheme hook, CSS Modules
 - [x] 02-02-PLAN.md — Settings modal with save/cancel, API config forms, app toggle settings
-- [ ] 02-03-PLAN.md — CSS cleanup (remove duplicated globals) and visual verification checkpoint
+- [x] 02-03-PLAN.md — CSS cleanup (remove duplicated globals) and visual verification checkpoint
 **UI hint**: yes
 
 ### Phase 3: Generation + Editing
@@ -61,7 +61,12 @@ Plans:
   3. User can cancel an in-progress generation and the stream stops cleanly
   4. User can edit generated character fields, lock individual fields, and see which fields changed after revision
   5. User can trigger evaluate and revise cycles, with content policy prefix toggle working
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 03-01-PLAN.md — Foundation: parseSections utility, useGenerationStore, prompt normalization, react-mentions install
+- [ ] 03-02-PLAN.md — CreatePanel with MentionInput, generation handler wired to store
+- [ ] 03-03-PLAN.md — StreamView, CharacterEditor, FieldRow, EvalFeedback components
+- [ ] 03-04-PLAN.md — App.jsx + ActionBar wiring, full state machine, visual verification
 **UI hint**: yes
 
 ### Phase 4: Export, Library + Full Parity
@@ -85,6 +90,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Build System + Service Layer | 3/3 | Complete | - |
-| 2. React App Shell | 2/3 | Executing | - |
+| 2. React App Shell | 3/3 | Complete | 2026-03-27 |
 | 3. Generation + Editing | 0/? | Not started | - |
 | 4. Export, Library + Full Parity | 0/? | Not started | - |
