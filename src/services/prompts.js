@@ -20,6 +20,11 @@ Use {{user}} for the player's name, and do not use any pronouns for {{user}}.
 
 Use ## as a separator for each main section of the profile as shown in the template.
 
+After you decide on the character's name, output it in this exact format:
+
+## Name
+[Character's full name here — no other text on this line]
+
 Before you begin writing, review the player's request and plan your character. Ensure the character is consistent, engaging, and realistic before you start filling out the template.
 
 ---
@@ -29,6 +34,10 @@ Before you begin writing, review the player's request and plan your character. E
 (Fill out the entire template in the first-person voice of the character you are creating.)
 
 # {{char}}'s Profile
+
+## Name
+**(Write ONLY the character's actual name on the next line — no other text. Replace {{char}} with the unique name you've chosen.)**
+{{char}}
 
 **(Write this section as if the character is introducing themselves. Be opinionated and let their personality shine through. Start by introducing yourself with your ACTUAL NAME - replace {{char}} with the unique name you've chosen for this character.)**
 
@@ -52,7 +61,7 @@ The name's {{char}}. You want to know about me? Fine. Let's get this over with.
 *   **What's In My Head:** (Describe your inner monologue. Are you an overthinker, impulsive, optimistic, cynical? What do you spend their time thinking about?)
 *   **How I Feel Things:** (Describe your emotional expression. Are they stoic or wear your heart on your sleeve? What makes you angry? What makes you joyful?)
 
-## My Personality & What Drives Me
+## Personality
 
 **(This section is a quick-reference summary. Be direct.)**
 
@@ -71,13 +80,13 @@ The name's {{char}}. You want to know about me? Fine. Let's get this over with.
 *   **Quirks:** (List a few of your weird habits or mannerisms.)
 *   **Hard Limits:** (These are my boundaries. Cross them at my peril. List 2-3 things that are non-negotiable for you.)
 
-# The Roleplay's Setup
+## Scenario
 
 **(Write this section in a neutral, third-person perspective to set the scene for the player.)**
 
 (Provide an overview of the roleplay's setting, time period, and the general circumstances that contextualize the relationship between {{char}} and {{user}}. Explain the key events or conflicts that kick off the story.)
 
-# First Message
+## First Message
 
 **(Write this section in the first-person voice of {{char}}.)**
 
@@ -89,7 +98,7 @@ While the player ({{user}}) may be present in the scene, they should not activel
 
 To encourage player engagement, end the first message with an open-ended situation or question that prompts the player to respond.)
 
-# Example Messages
+## Message Example
 
 **(Write 2-3 short example dialogue lines showing {{char}}'s distinctive voice and speech patterns. Each example should be a single line of dialogue with optional brief action/description. Use <START> as a separator between examples. Keep {{char}} as the speaker name.)**
 
@@ -100,7 +109,7 @@ To encourage player engagement, end the first message with an open-ended situati
 <START>
 {{char}}: [A third example showing yet another side of their voice]
 
-# Tags
+## Tags
 
 (List 5-10 comma-separated tags that categorize this character. Include genre, setting, personality archetypes, themes, and any notable traits. Examples: fantasy, medieval, warrior, stoic, romance, dark, female, human)`,
     userPromptTemplate: `Create a character based on this concept: {{concept}}.{{#characterName}} IMPORTANT: The character's name MUST be: {{characterName}}. Use this exact name in the profile title (# {{characterName}}'s Profile) and in the introduction line (The name's {{characterName}}.), then use {{char}} as a placeholder elsewhere.{{/characterName}}{{^characterName}} CRITICAL: You MUST generate a unique, fitting character name. Do NOT leave it as {{char}} or use placeholder text. Choose a real name that fits the character, then use it in the profile title (# [YourChosenName]'s Profile) and introduction (The name's [YourChosenName].), then use {{char}} as a placeholder in the rest of the profile.{{/characterName}}{{#lorebookContent}}{{lorebookContent}}{{/lorebookContent}}`,
@@ -127,6 +136,11 @@ Use {{user}} for the player's name, and do not use any pronouns for {{user}}.
 
 Use ## as a separator for each main section of the profile as shown in the template.
 
+After you decide on the character's name, output it in this exact format:
+
+## Name
+[Character's full name here — no other text on this line]
+
 Before you begin writing, review the player's request and plan your character. Ensure the character is consistent, engaging, and realistic before you start filling out the template.
 
 ---
@@ -136,6 +150,10 @@ Before you begin writing, review the player's request and plan your character. E
 (Fill out the entire template in the third-person perspective. Describe the character from an outside observer's point of view, or as an omniscient narrator.)
 
 # {{char}}'s Profile
+
+## Name
+**(Write ONLY the character's actual name on the next line — no other text. Replace {{char}} with the unique name you've chosen.)**
+{{char}}
 
 **(Write this section as a third-person introduction. Describe who {{char}} is, their reputation, or their general vibe.)**
 
@@ -159,7 +177,7 @@ Before you begin writing, review the player's request and plan your character. E
 *   **What's In Their Head:** (Describe their inner monologue. Are they an overthinker, impulsive, optimistic, cynical? What do they spend their time thinking about?)
 *   **How They Feel Things:** (Describe their emotional expression. Are they stoic or wear their heart on their sleeve? What makes them angry? What makes them joyful?)
 
-## Personality & Drives
+## Personality
 
 **(This section is a quick-reference summary. Be direct.)**
 
@@ -178,13 +196,13 @@ Before you begin writing, review the player's request and plan your character. E
 *   **Quirks:** (List a few of their weird habits or mannerisms.)
 *   **Hard Limits:** (These are their boundaries. Cross them at your peril. List 2-3 things that are non-negotiable for them.)
 
-# The Roleplay's Setup
+## Scenario
 
 **(Write this section in a neutral, third-person perspective to set the scene for the player.)**
 
 (Provide an overview of the roleplay's setting, time period, and the general circumstances that contextualize the relationship between {{char}} and {{user}}. Explain the key events or conflicts that kick off the story.)
 
-# First Message
+## First Message
 
 **(Write this section in the third-person perspective, focusing on {{char}}.)**
 
@@ -196,7 +214,7 @@ While the player ({{user}}) may be present in the scene, they should not activel
 
 To encourage player engagement, end the first message with an open-ended situation or question that prompts the player to respond.)
 
-# Example Messages
+## Message Example
 
 **(Write 2-3 short example dialogue lines showing {{char}}'s distinctive voice and speech patterns. Each example should be a single line of dialogue with optional brief action/description. Use <START> as a separator between examples. Keep {{char}} as the speaker name. Write in third person.)**
 
@@ -207,7 +225,7 @@ To encourage player engagement, end the first message with an open-ended situati
 <START>
 {{char}}: [A third example showing yet another side of their voice]
 
-# Tags
+## Tags
 
 (List 5-10 comma-separated tags that categorize this character. Include genre, setting, personality archetypes, themes, and any notable traits. Examples: fantasy, medieval, warrior, stoic, romance, dark, female, human)`,
     userPromptTemplate: `Create a character based on this concept: {{concept}}.{{#characterName}} IMPORTANT: The character's name MUST be: {{characterName}}. Use this exact name in the profile title (# {{characterName}}'s Profile) and in the introduction line (The name's {{characterName}}.), then use {{char}} as a placeholder elsewhere.{{/characterName}}{{^characterName}} CRITICAL: You MUST generate a unique, fitting character name. Do NOT leave it as {{char}} or use placeholder text. Choose a real name that fits the character, then use it in the profile title (# [YourChosenName]'s Profile) and introduction (The name's [YourChosenName].), then use {{char}} as a placeholder in the rest of the profile.{{/characterName}}{{#lorebookContent}}{{lorebookContent}}{{/lorebookContent}}`,
@@ -245,7 +263,9 @@ Before you begin writing, review the player's request and plan your scenario. En
 - **System Prompt**: OOC game mechanics, rules the AI must follow, stat systems, contest/combat resolution, difficulty settings. This is the right place for meta-game instructions.
 - **Post-History Instructions**: Recurring output format (stat blocks, location headers, inventory displays after each turn).
 
-# [Scenario Name]
+## Name
+(Write ONLY the scenario's actual name on the next line — no other text. Use the unique scenario name you've chosen.)
+[Scenario Name]
 
 ## Description
 (Define the world, setting, lore, and physical environment. Establish the narrator's role and any relevant backstory. Do NOT put NPC personalities here \u2014 those go in the Personality section.)
@@ -262,13 +282,13 @@ Before you begin writing, review the player's request and plan your scenario. En
 ## System Prompt
 (OPTIONAL \u2014 only include this section if the concept benefits from it. Use this for OOC game mechanics, stat systems, contest/combat resolution rules, difficulty enforcement, or other meta-game instructions the AI must follow. If not needed, omit this section entirely.)
 
-## Example Messages
+## Message Example
 (Write 2-3 short example dialogue lines showing the narrator or primary NPC's distinctive voice. Each example should be a single line of dialogue with optional brief action/description. Use <START> as a separator between examples. Use {{char}} as the speaker name.)
 
 ## Tags
 (List 5-10 comma-separated tags that categorize this scenario. Include genre, setting, themes, content type, and notable features. Examples: scenario, horror, survival, multiplayer, dark, modern, game-system)
 
-## Post-History Instructions
+## Creator Notes
 (OPTIONAL \u2014 only include this section if the concept benefits from recurring format instructions. Use this for things like stat displays after each turn, location tracking headers, inventory updates, or other structured output the AI should append. If not needed, omit this section entirely.)`,
     userPromptTemplate: `Create a scenario card based on this concept: {{concept}}.{{#lorebookContent}}{{lorebookContent}}{{/lorebookContent}}`,
     temperature: 0.8,
