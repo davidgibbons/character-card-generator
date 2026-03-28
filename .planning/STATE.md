@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-28T18:16:05.095Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-28T18:16:12.752Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
@@ -80,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 03]: sectionsToCharacter() uses 'creator notes' key to match CharacterEditor field name (not 'post history instructions')
 - [Phase 03]: configStore non-React accessor now exposes set() — was missing, required for CreatePanel NSFW toggle
 - [Phase 03]: react-mentions requires dual styling: style prop for input/highlighter inline overrides, classNames prop for suggestion dropdown
+- [Phase 03]: EvalFeedback renders structured object properties — never passes object directly to a text node
+- [Phase 03]: FieldRow subscribes directly to useGenerationStore for lockedFields/toggleLock — not passed as props
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:15:57.795Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-28T18:16:12.749Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
