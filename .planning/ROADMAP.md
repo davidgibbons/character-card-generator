@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Build System + Service Layer** - Vite scaffold, Docker multi-stage build, service modules converted from window globals to ES imports, all CDN deps moved to npm
 - [x] **Phase 2: React App Shell** - Layout, tabs, split pane, config/settings, theme switching, CSS Modules, state store foundation
-- [ ] **Phase 3: Generation + Editing** - Character creation panel, SSE streaming, @mention autocomplete, editor panel with field locking, evaluate/revise flow
+- [x] **Phase 3: Generation + Editing** - Character creation panel, SSE streaming, @mention autocomplete, editor panel with field locking, evaluate/revise flow (completed 2026-03-28)
 - [ ] **Phase 4: Export, Library + Full Parity** - Image generation, PNG export, library CRUD with history/diff, SillyTavern sync, lorebook editor, final feature parity verification
 
 ## Phase Details
@@ -61,12 +61,12 @@ Plans:
   3. User can cancel an in-progress generation and the stream stops cleanly
   4. User can edit generated character fields, lock individual fields, and see which fields changed after revision
   5. User can trigger evaluate and revise cycles, with content policy prefix toggle working
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 03-01-PLAN.md — Foundation: parseSections utility, useGenerationStore, prompt normalization, react-mentions install
 - [x] 03-02-PLAN.md — CreatePanel with MentionInput, generation handler wired to store
 - [x] 03-03-PLAN.md — StreamView, CharacterEditor, FieldRow, EvalFeedback components
-- [ ] 03-04-PLAN.md — App.jsx + ActionBar wiring, full state machine, visual verification
+- [x] 03-04-PLAN.md — App.jsx + ActionBar wiring, full state machine, visual verification
 **UI hint**: yes
 
 ### Phase 4: Export, Library + Full Parity
@@ -91,5 +91,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Build System + Service Layer | 3/3 | Complete | - |
 | 2. React App Shell | 3/3 | Complete | 2026-03-27 |
-| 3. Generation + Editing | 3/4 | In Progress|  |
+| 3. Generation + Editing | 4/4 | Complete   | 2026-03-28 |
 | 4. Export, Library + Full Parity | 0/? | Not started | - |
