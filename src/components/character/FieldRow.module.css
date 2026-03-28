@@ -1,0 +1,60 @@
+/* FieldRow.module.css */
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.label {
+  flex: 1;
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* Lock button — unlocked state */
+.lockBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 6px);
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+  line-height: 1;
+}
+
+.lockBtn:hover {
+  opacity: 0.7;
+}
+
+/* Lock button — locked state */
+.lockBtn.locked {
+  opacity: 1;
+  border-color: var(--warning, #cf8a00);
+}
+
+/* Textarea — shared .textarea global class applies base styles */
+.textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+/* Locked textarea */
+.lockedTextarea {
+  pointer-events: none;
+  cursor: not-allowed;
+  border-color: rgba(207, 138, 0, 0.4) !important;
+  background: color-mix(in srgb, var(--warning, #cf8a00) 5%, var(--surface-muted, var(--bg-page)) 95%) !important;
+}
