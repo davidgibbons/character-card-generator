@@ -61,11 +61,11 @@ Plans:
   3. User can cancel an in-progress generation and the stream stops cleanly
   4. User can edit generated character fields, lock individual fields, and see which fields changed after revision
   5. User can trigger evaluate and revise cycles, with content policy prefix toggle working
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 Plans:
 - [x] 03-01-PLAN.md — Foundation: parseSections utility, useGenerationStore, prompt normalization, react-mentions install
-- [ ] 03-02-PLAN.md — CreatePanel with MentionInput, generation handler wired to store
-- [ ] 03-03-PLAN.md — StreamView, CharacterEditor, FieldRow, EvalFeedback components
+- [x] 03-02-PLAN.md — CreatePanel with MentionInput, generation handler wired to store
+- [x] 03-03-PLAN.md — StreamView, CharacterEditor, FieldRow, EvalFeedback components
 - [ ] 03-04-PLAN.md — App.jsx + ActionBar wiring, full state machine, visual verification
 **UI hint**: yes
 
@@ -91,5 +91,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Build System + Service Layer | 3/3 | Complete | - |
 | 2. React App Shell | 3/3 | Complete | 2026-03-27 |
-| 3. Generation + Editing | 1/4 | In Progress|  |
+| 3. Generation + Editing | 3/4 | In Progress|  |
 | 4. Export, Library + Full Parity | 0/? | Not started | - |

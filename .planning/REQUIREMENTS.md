@@ -21,7 +21,7 @@
 - [ ] **REACT-02**: Tab navigation (Create, Edit, Settings) implemented as React components with conditional rendering
 - [ ] **REACT-03**: Split-pane resizable layout implemented as React component
 - [ ] **REACT-04**: Settings panel implemented as React form components with two-way binding to config store
-- [ ] **REACT-05**: Character create panel with concept input, POV selection, and generation controls
+- [x] **REACT-05**: Character create panel with concept input, POV selection, and generation controls
 - [ ] **REACT-06**: Character editor panel with editable fields, field locking, and evaluate/revise flow
 - [ ] **REACT-07**: Library drawer with card/prompt listing, search, and CRUD operations
 - [ ] **REACT-08**: Lorebook editor with entry CRUD, generation, and toggle controls
@@ -33,8 +33,8 @@
 ### State Management
 
 - [ ] **STATE-01**: Zustand store replaces window.config singleton for app configuration
-- [ ] **STATE-02**: Zustand store manages current character data, parsed fields, and edit state
-- [ ] **STATE-03**: Zustand store manages generation status, streaming state, and progress
+- [x] **STATE-02**: Zustand store manages current character data, parsed fields, and edit state
+- [x] **STATE-03**: Zustand store manages generation status, streaming state, and progress
 - [ ] **STATE-04**: Zustand store manages library browsing state (cards, prompts, selection)
 - [ ] **STATE-05**: API keys persist in sessionStorage (or localStorage with opt-in) as before
 
@@ -42,7 +42,7 @@
 
 - [ ] **STREAM-01**: LLM responses stream in real-time to the UI during character generation
 - [ ] **STREAM-02**: User can stop/cancel an in-progress generation
-- [ ] **STREAM-03**: Streaming state updates don't cause stale closure bugs or excessive re-renders
+- [x] **STREAM-03**: Streaming state updates don't cause stale closure bugs or excessive re-renders
 
 ### CSS
 
@@ -52,20 +52,20 @@
 
 ### Library Replacements
 
-- [ ] **LIB-01**: LLM response parsing uses standardized `## Section` format with clean parseSections() utility
-- [ ] **LIB-02**: @mention autocomplete uses react-mentions (or equivalent React library) instead of Tribute.js CDN
+- [x] **LIB-01**: LLM response parsing uses standardized `## Section` format with clean parseSections() utility
+- [x] **LIB-02**: @mention autocomplete uses react-mentions (or equivalent React library) instead of Tribute.js CDN
 - [x] **LIB-03**: diff and tributejs loaded from npm imports instead of jsDelivr CDN
 - [x] **LIB-04**: No CDN script dependencies remain — all JS dependencies managed via npm
 
 ### Feature Parity
 
-- [ ] **PARITY-01**: All existing character generation modes (1st person, 3rd person, scenario) work
+- [x] **PARITY-01**: All existing character generation modes (1st person, 3rd person, scenario) work
 - [ ] **PARITY-02**: Character evaluation and revision workflow works
 - [ ] **PARITY-03**: Image generation (OpenAI-compatible + SD API) works
 - [ ] **PARITY-04**: V2 character card PNG export with embedded metadata works
 - [ ] **PARITY-05**: Git-backed card/prompt library with CRUD, history, and diff works
 - [ ] **PARITY-06**: SillyTavern push/pull sync works
-- [ ] **PARITY-07**: Content policy prefix toggle works
+- [x] **PARITY-07**: Content policy prefix toggle works
 - [ ] **PARITY-08**: Configurable API settings with session/persistent key storage works
 - [ ] **PARITY-09**: Lorebook generation and CRUD works
 
@@ -122,18 +122,18 @@
 | CSS-01 | Phase 2 | Pending |
 | CSS-02 | Phase 2 | Pending |
 | CSS-03 | Phase 2 | Pending |
-| REACT-05 | Phase 3 | Pending |
+| REACT-05 | Phase 3 | Complete |
 | REACT-06 | Phase 3 | Pending |
-| STATE-02 | Phase 3 | Pending |
-| STATE-03 | Phase 3 | Pending |
+| STATE-02 | Phase 3 | Complete |
+| STATE-03 | Phase 3 | Complete |
 | STREAM-01 | Phase 3 | Pending |
 | STREAM-02 | Phase 3 | Pending |
-| STREAM-03 | Phase 3 | Pending |
-| LIB-01 | Phase 3 | Pending |
-| LIB-02 | Phase 3 | Pending |
-| PARITY-01 | Phase 3 | Pending |
+| STREAM-03 | Phase 3 | Complete |
+| LIB-01 | Phase 3 | Complete |
+| LIB-02 | Phase 3 | Complete |
+| PARITY-01 | Phase 3 | Complete |
 | PARITY-02 | Phase 3 | Pending |
-| PARITY-07 | Phase 3 | Pending |
+| PARITY-07 | Phase 3 | Complete |
 | REACT-07 | Phase 4 | Pending |
 | REACT-08 | Phase 4 | Pending |
 | REACT-09 | Phase 4 | Pending |
