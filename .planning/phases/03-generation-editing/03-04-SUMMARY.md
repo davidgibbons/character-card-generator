@@ -38,11 +38,13 @@ key-files:
     - src/components/layout/ActionBar.jsx
     - src/components/layout/ActionBar.module.css
     - src/components/create/CreatePanel.jsx
+    - src/components/create/MentionInput.jsx
 
 key-decisions:
   - "ActionBar dispatches gsd:generate custom event; CreatePanel listens via useEffect — avoids prop-drilling Generate handler through App"
   - "uiPhase derived from single function (isGenerating > evalFeedback > character > idle) — prevents button state inconsistencies"
   - "reviseCharacter is non-streaming: setGenerating(true), await JSON, merge non-locked fields only"
+  - "react-mentions Mention component requires explicit markup prop in React 19 (defaultProps dropped for function components)"
 
 patterns-established:
   - "Pattern: deriveUiPhase() single-source-of-truth for all ActionBar button visibility"
@@ -82,7 +84,8 @@ Each task was committed atomically:
 
 1. **Task 1: Update App.jsx with right-panel conditional rendering** - `d24b5d2` (feat)
 2. **Task 2: Rewrite ActionBar with full Generate/Stop/Evaluate/Revise state machine** - `7efb421` (feat)
-3. **Task 3: Checkpoint — visual verification** - (awaiting human approval)
+3. **Task 3: Checkpoint — visual verification** - approved (human-verified 2026-03-28)
+4. **Bug fix: react-mentions React 19 defaultProps compatibility** - `2fa96b2` (fix)
 
 ## Files Created/Modified
 
@@ -90,6 +93,7 @@ Each task was committed atomically:
 - `src/components/layout/ActionBar.jsx` - Full state machine rewrite: deriveUiPhase, Stop/Evaluate/Revise handlers, revision textarea
 - `src/components/layout/ActionBar.module.css` - Added mainRow, stopBtn (44px min-height), reviseRow, reviseTextarea, errorMsg
 - `src/components/create/CreatePanel.jsx` - Added useEffect listener for 'gsd:generate' custom event
+- `src/components/create/MentionInput.jsx` - Added explicit `markup="@[__display__](__id__)"` prop to Mention component (React 19 fix)
 
 ## Decisions Made
 
@@ -99,11 +103,24 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] Fixed react-mentions crash in React 19 (defaultProps dropped for function components)**
+- **Found during:** Task 3 (visual verification checkpoint)
+- **Issue:** react-mentions Mention component relied on `defaultProps` for the `markup` prop default value. React 19 dropped defaultProps support for function components, causing a runtime crash when typing "@" in the concept textarea.
+- **Fix:** Added explicit `markup="@[__display__](__id__)"` prop to the `<Mention>` component in MentionInput.jsx
+- **Files modified:** src/components/create/MentionInput.jsx
+- **Verification:** Typing "@" in concept textarea no longer crashes; empty suggestion dropdown renders correctly (confirmed via browser automation)
+- **Committed in:** `2fa96b2` (fix commit)
+
+---
+
+**Total deviations:** 1 auto-fixed (1 bug fix)
+**Impact on plan:** Required for correct operation in React 19. No scope creep.
 
 ## Issues Encountered
 
-None — build passed on first attempt with 0 compile errors.
+- react-mentions Mention component crashed on React 19 due to defaultProps removal for function components — resolved via deviation Rule 1 (bug fix). See Deviations section.
 
 ## Known Stubs
 
@@ -111,8 +128,8 @@ None — build passed on first attempt with 0 compile errors.
 
 ## Next Phase Readiness
 
-- Full Phase 3 generation flow is complete and buildable
-- Pending: visual verification checkpoint (Task 3) — human must confirm UI renders correctly and generation flow works end-to-end
+- Full Phase 3 generation flow is complete, verified, and buildable (98 modules, 0 errors)
+- Visual verification confirmed: CreatePanel renders correctly, validation works, POV toggle works, empty state shows, react-mentions no longer crashes
 - Phase 4 can add EditPanel for the left panel 'edit' tab
 - Phase 4 can add card library modal (libraryOpen state already wired in App.jsx)
 
