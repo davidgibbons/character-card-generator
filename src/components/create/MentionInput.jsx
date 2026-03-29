@@ -48,6 +48,7 @@ export default function MentionInput({ value, onChange, disabled = false }) {
     >
       <Mention
         trigger="@"
+        markup="@[__display__](__id__)"
         data={[]}
         className={styles.mention}
       />
