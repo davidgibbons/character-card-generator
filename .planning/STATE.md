@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Phase complete — ready for verification
-stopped_at: Completed 04-10-PLAN.md
-last_updated: "2026-03-30T20:20:00.367Z"
+stopped_at: Completed 04-09-PLAN.md
+last_updated: "2026-03-30T20:20:13.953Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 4
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P06 | 2min | 2 tasks | 4 files |
 | Phase 04 P08 | 5min | 1 tasks | 1 files |
 | Phase 04 P10 | 4min | 1 tasks | 1 files |
+| Phase 04 P09 | 5min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,7 @@ Recent decisions affecting current work:
 - [Phase 04]: SillyTavernSection reads draft.api.sillytavern.url/password for API calls (not configStore) -- draft values may be unsaved when user clicks List Characters
 - [Phase 04]: LorebookTab validates newEntries is non-empty array before merge to guard against silent no-op
 - [Phase 04]: Capture-phase addEventListener on textarea intercepts ArrowUp/ArrowDown before react-mentions, stopPropagation() only when aria-expanded \!== 'true'
+- [Phase 04]: Local useState stores raw string for timeout fields — enables clearing without immediate reset to default; onChange commits secs*1000 only when valid int
 
 ### Pending Todos
 
@@ -118,6 +120,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:19:51.403Z
-Stopped at: Completed 04-10-PLAN.md
+Last session: 2026-03-30T20:20:13.951Z
+Stopped at: Completed 04-09-PLAN.md
 Resume file: None
