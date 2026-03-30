@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import ApiSettings from './ApiSettings';
 import AppSettings from './AppSettings';
+import SillyTavernSection from './SillyTavernSection';
 import useConfigStore from '../../stores/configStore';
 import styles from './SettingsModal.module.css';
 
@@ -92,6 +93,10 @@ export default function SettingsModal({ isOpen, onClose }) {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>App Settings</div>
             <AppSettings draft={draft} updateDraft={updateDraft} />
+          </div>
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>SillyTavern</div>
+            <SillyTavernSection draft={draft} updateDraft={updateDraft} />
           </div>
           <div className={styles.footer}>
             <button className="btn-outline" onClick={handleCancel}>
