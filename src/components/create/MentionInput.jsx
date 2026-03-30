@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MentionsInput, Mention } from 'react-mentions';
 import { storageClient } from '../../services/storage';
 import styles from './MentionInput.module.css';
@@ -12,6 +12,7 @@ import styles from './MentionInput.module.css';
  */
 export default function MentionInput({ value, onChange, disabled = false }) {
   const [cardMentions, setCardMentions] = useState([]);
+  const wrapperRef = useRef(null);
 
   useEffect(() => {
     storageClient.listCards()
@@ -25,7 +26,30 @@ export default function MentionInput({ value, onChange, disabled = false }) {
       });
   }, []); // Load once on mount (D-19)
 
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    // react-mentions renders the real textarea as a child of the wrapper div
+    const textarea = wrapper.querySelector('textarea');
+    if (!textarea) return;
+
+    function handleArrowKey(e) {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      // aria-expanded="true" is set on the textarea when the suggestion dropdown is open
+      if (textarea.getAttribute('aria-expanded') !== 'true') {
+        // Dropdown is closed — stop react-mentions from consuming this event
+        // so the browser can handle native cursor movement
+        e.stopPropagation();
+      }
+    }
+
+    // Capture phase so we run before react-mentions' bubble-phase handler
+    textarea.addEventListener('keydown', handleArrowKey, true);
+    return () => textarea.removeEventListener('keydown', handleArrowKey, true);
+  }, []); // Run once after mount — wrapper and textarea are stable references
+
   return (
+    <div ref={wrapperRef}>
     <MentionsInput
       value={value}
       onChange={(e, newValue) => onChange(newValue)}
@@ -69,5 +93,6 @@ export default function MentionInput({ value, onChange, disabled = false }) {
         className={styles.mention}
       />
     </MentionsInput>
+    </div>
   );
 }
