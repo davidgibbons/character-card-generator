@@ -23,19 +23,19 @@
 - [ ] **REACT-04**: Settings panel implemented as React form components with two-way binding to config store
 - [x] **REACT-05**: Character create panel with concept input, POV selection, and generation controls
 - [x] **REACT-06**: Character editor panel with editable fields, field locking, and evaluate/revise flow
-- [ ] **REACT-07**: Library drawer with card/prompt listing, search, and CRUD operations
-- [ ] **REACT-08**: Lorebook editor with entry CRUD, generation, and toggle controls
+- [x] **REACT-07**: Library drawer with card/prompt listing, search, and CRUD operations
+- [x] **REACT-08**: Lorebook editor with entry CRUD, generation, and toggle controls
 - [ ] **REACT-09**: SillyTavern sync UI (push/pull/character list) implemented as React components
 - [ ] **REACT-10**: Dark/light theme switching preserved via CSS custom properties and React state
-- [ ] **REACT-11**: Card download (JSON + PNG with embedded metadata) working from React UI
-- [ ] **REACT-12**: Card diff/history view working from React UI
+- [x] **REACT-11**: Card download (JSON + PNG with embedded metadata) working from React UI
+- [x] **REACT-12**: Card diff/history view working from React UI
 
 ### State Management
 
 - [ ] **STATE-01**: Zustand store replaces window.config singleton for app configuration
 - [x] **STATE-02**: Zustand store manages current character data, parsed fields, and edit state
 - [x] **STATE-03**: Zustand store manages generation status, streaming state, and progress
-- [ ] **STATE-04**: Zustand store manages library browsing state (cards, prompts, selection)
+- [x] **STATE-04**: Zustand store manages library browsing state (cards, prompts, selection)
 - [ ] **STATE-05**: API keys persist in sessionStorage (or localStorage with opt-in) as before
 
 ### Streaming
@@ -61,12 +61,12 @@
 
 - [x] **PARITY-01**: All existing character generation modes (1st person, 3rd person, scenario) work
 - [x] **PARITY-02**: Character evaluation and revision workflow works
-- [ ] **PARITY-03**: Image generation (OpenAI-compatible + SD API) works
-- [ ] **PARITY-04**: V2 character card PNG export with embedded metadata works
-- [ ] **PARITY-05**: Git-backed card/prompt library with CRUD, history, and diff works
+- [x] **PARITY-03**: Image generation (OpenAI-compatible + SD API) works
+- [x] **PARITY-04**: V2 character card PNG export with embedded metadata works
+- [x] **PARITY-05**: Git-backed card/prompt library with CRUD, history, and diff works
 - [ ] **PARITY-06**: SillyTavern push/pull sync works
 - [x] **PARITY-07**: Content policy prefix toggle works
-- [ ] **PARITY-08**: Configurable API settings with session/persistent key storage works
+- [x] **PARITY-08**: Configurable API settings with session/persistent key storage works
 - [ ] **PARITY-09**: Lorebook generation and CRUD works
 
 ## v2 Requirements
@@ -134,17 +134,17 @@
 | PARITY-01 | Phase 3 | Complete |
 | PARITY-02 | Phase 3 | Complete |
 | PARITY-07 | Phase 3 | Complete |
-| REACT-07 | Phase 4 | Pending |
-| REACT-08 | Phase 4 | Pending |
+| REACT-07 | Phase 4 | Complete |
+| REACT-08 | Phase 4 | Complete |
 | REACT-09 | Phase 4 | Pending |
-| REACT-11 | Phase 4 | Pending |
-| REACT-12 | Phase 4 | Pending |
-| STATE-04 | Phase 4 | Pending |
-| PARITY-03 | Phase 4 | Pending |
-| PARITY-04 | Phase 4 | Pending |
-| PARITY-05 | Phase 4 | Pending |
+| REACT-11 | Phase 4 | Complete |
+| REACT-12 | Phase 4 | Complete |
+| STATE-04 | Phase 4 | Complete |
+| PARITY-03 | Phase 4 | Complete |
+| PARITY-04 | Phase 4 | Complete |
+| PARITY-05 | Phase 4 | Complete |
 | PARITY-06 | Phase 4 | Pending |
-| PARITY-08 | Phase 4 | Pending |
+| PARITY-08 | Phase 4 | Complete |
 | PARITY-09 | Phase 4 | Pending |
 
 **Coverage:**

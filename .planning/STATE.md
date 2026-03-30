@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 04
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-03-30T19:27:32.718Z"
-last_activity: 2026-03-30 -- Phase 04 execution started
+status: Ready to execute
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-30T19:39:23.499Z"
+last_activity: 2026-03-30
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 17
-  completed_plans: 10
+  completed_plans: 14
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 04 (export-library-full-parity) — EXECUTING
-Plan: 1 of 7
+Plan: 4 of 7
 Plans: 4 plans in 3 waves
-Last activity: 2026-03-30 -- Phase 04 execution started
+Last activity: 2026-03-30
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -60,6 +60,9 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P02 | 12min | 2 tasks | 5 files |
 | Phase 03 P03 | 2min | 2 tasks | 8 files |
 | Phase 03 P04 | 8min | 2 tasks | 4 files |
+| Phase 04 P02 | 7min | 2 tasks | 4 files |
+| Phase 04 P03 | 8 | 1 tasks | 2 files |
+| Phase 04 P04 | 15min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -87,6 +90,13 @@ Recent decisions affecting current work:
 - [Phase 03]: uiPhase derived from single deriveUiPhase() function — prevents button state inconsistencies in ActionBar
 - [Phase 03]: reviseCharacter is non-streaming: setGenerating(true), await JSON, merge non-locked fields only
 - [Phase 03]: react-mentions Mention component requires explicit markup prop in React 19 — defaultProps dropped for function components
+- [Phase 04]: ImageSlot is purely a display frame — upload/generate buttons rendered in CharacterEditor left column per UI-SPEC D-03/D-04
+- [Phase 04]: CharacterEditor async handlers use useGenerationStore.getState() directly to avoid stale Zustand state in closures
+- [Phase 04]: Export buttons use uiPhase \!== 'generating' hide guard (consistent with evaluate/revise), not just disabled
+- [Phase 04]: ActionBar export handlers use getState() snapshot pattern to avoid stale closure issues with imageBlob
+- [Phase 04]: storage.js listCards() exposes slug field alongside id — library components use card.slug, existing callers using card.id unaffected
+- [Phase 04]: LibraryDrawer uses globals.css drawer shell classes (.library-drawer + .open) for slide animation — consistent with design system
+- [Phase 04]: CardHistoryModal fetches /api/cards/:slug/history and diff endpoints directly via fetch() — no storageClient wrapper since these are history-specific endpoints
 
 ### Pending Todos
 
@@ -99,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T16:33:14.971Z
-Stopped at: Phase 4 UI-SPEC approved
-Resume file: .planning/phases/04-export-library-full-parity/04-UI-SPEC.md
+Last session: 2026-03-30T19:39:23.496Z
+Stopped at: Completed 04-04-PLAN.md
+Resume file: None
