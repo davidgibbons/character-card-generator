@@ -22,7 +22,7 @@
 - [ ] **REACT-03**: Split-pane resizable layout implemented as React component
 - [ ] **REACT-04**: Settings panel implemented as React form components with two-way binding to config store
 - [x] **REACT-05**: Character create panel with concept input, POV selection, and generation controls
-- [ ] **REACT-06**: Character editor panel with editable fields, field locking, and evaluate/revise flow
+- [x] **REACT-06**: Character editor panel with editable fields, field locking, and evaluate/revise flow
 - [ ] **REACT-07**: Library drawer with card/prompt listing, search, and CRUD operations
 - [ ] **REACT-08**: Lorebook editor with entry CRUD, generation, and toggle controls
 - [ ] **REACT-09**: SillyTavern sync UI (push/pull/character list) implemented as React components
@@ -40,8 +40,8 @@
 
 ### Streaming
 
-- [ ] **STREAM-01**: LLM responses stream in real-time to the UI during character generation
-- [ ] **STREAM-02**: User can stop/cancel an in-progress generation
+- [x] **STREAM-01**: LLM responses stream in real-time to the UI during character generation
+- [x] **STREAM-02**: User can stop/cancel an in-progress generation
 - [x] **STREAM-03**: Streaming state updates don't cause stale closure bugs or excessive re-renders
 
 ### CSS
@@ -60,7 +60,7 @@
 ### Feature Parity
 
 - [x] **PARITY-01**: All existing character generation modes (1st person, 3rd person, scenario) work
-- [ ] **PARITY-02**: Character evaluation and revision workflow works
+- [x] **PARITY-02**: Character evaluation and revision workflow works
 - [ ] **PARITY-03**: Image generation (OpenAI-compatible + SD API) works
 - [ ] **PARITY-04**: V2 character card PNG export with embedded metadata works
 - [ ] **PARITY-05**: Git-backed card/prompt library with CRUD, history, and diff works
@@ -123,16 +123,16 @@
 | CSS-02 | Phase 2 | Pending |
 | CSS-03 | Phase 2 | Pending |
 | REACT-05 | Phase 3 | Complete |
-| REACT-06 | Phase 3 | Pending |
+| REACT-06 | Phase 3 | Complete |
 | STATE-02 | Phase 3 | Complete |
 | STATE-03 | Phase 3 | Complete |
-| STREAM-01 | Phase 3 | Pending |
-| STREAM-02 | Phase 3 | Pending |
+| STREAM-01 | Phase 3 | Complete |
+| STREAM-02 | Phase 3 | Complete |
 | STREAM-03 | Phase 3 | Complete |
 | LIB-01 | Phase 3 | Complete |
 | LIB-02 | Phase 3 | Complete |
 | PARITY-01 | Phase 3 | Complete |
-| PARITY-02 | Phase 3 | Pending |
+| PARITY-02 | Phase 3 | Complete |
 | PARITY-07 | Phase 3 | Complete |
 | REACT-07 | Phase 4 | Pending |
 | REACT-08 | Phase 4 | Pending |
