@@ -1,0 +1,145 @@
+.row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-strong);
+}
+.row.locked {
+  border-color: var(--warning);
+}
+.row.disabled {
+  opacity: 0.6;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.92rem;
+  min-height: 44px;
+  transition: background var(--transition);
+}
+.header:hover {
+  background: var(--surface-muted);
+}
+.chevron {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.keySummary {
+  flex: 1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.toggleText {
+  font-size: 0.78rem;
+}
+.lockBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background var(--transition);
+}
+.lockBtn:hover {
+  background: var(--surface-muted);
+}
+.lockedBtn {
+  border-color: var(--warning);
+  background: rgba(207, 138, 0, 0.08);
+}
+.body {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.fieldLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.textInput {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+.numberInput {
+  width: 80px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+.textarea {
+  width: 100%;
+  resize: vertical;
+}
+.fieldRow2 {
+  display: flex;
+  gap: 1rem;
+}
+.deleteRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+.deleteBtn {
+  background: none;
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.75rem;
+  color: var(--error);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.deleteBtn:hover {
+  background: rgba(201, 61, 74, 0.08);
+}
+
+:global([data-theme="dark"]) .row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+:global([data-theme="dark"]) .row.locked {
+  border-color: var(--warning);
+}
+:global([data-theme="dark"]) .textInput,
+:global([data-theme="dark"]) .numberInput {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
