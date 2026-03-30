@@ -25,14 +25,10 @@ export default function ActionBar() {
   const character = useGenerationStore((s) => s.character);
   const evalFeedback = useGenerationStore((s) => s.evalFeedback);
   const reviseInstruction = useGenerationStore((s) => s.reviseInstruction);
-  const lockedFields = useGenerationStore((s) => s.lockedFields);
-
   const [evalError, setEvalError] = useState('');
   const [reviseError, setReviseError] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
   const [saveError, setSaveError] = useState('');
-
-  const imageBlob = useGenerationStore((s) => s.imageBlob);
 
   const uiPhase = deriveUiPhase(isGenerating, character, evalFeedback);
 
