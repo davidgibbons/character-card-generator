@@ -79,7 +79,7 @@ Plans:
   3. User can browse the card/prompt library, perform CRUD operations, and view card history with diffs
   4. User can push/pull characters to/from SillyTavern
   5. User can create, edit, delete, and auto-generate lorebook entries for a character
-**Plans:** 7/10 plans executed
+**Plans:** 9/10 plans executed
 Plans:
 - [x] 04-01-PLAN.md — Store layer: extend useGenerationStore, create useLorebookStore + useLibraryStore
 - [x] 04-02-PLAN.md — CharacterEditor RPG layout, ImageSlot component, Character/Lorebook subtab bar
@@ -89,8 +89,8 @@ Plans:
 - [x] 04-06-PLAN.md — SillyTavernSection in Settings, MentionInput wired to storageClient
 - [ ] 04-07-PLAN.md — Visual verification checkpoint (all Phase 4 features)
 - [x] 04-08-PLAN.md — GAP-01: Fix lorebook generation result not populating entries in UI
-- [ ] 04-09-PLAN.md — GAP-02: Fix settings timeout displayed in ms and field reset-on-clear
-- [ ] 04-10-PLAN.md — GAP-03: Fix up/down arrow keys broken in concept textarea
+- [x] 04-09-PLAN.md — GAP-02: Fix settings timeout displayed in ms and field reset-on-clear
+- [x] 04-10-PLAN.md — GAP-03: Fix up/down arrow keys broken in concept textarea
 **UI hint**: yes
 
 ## Progress
@@ -103,4 +103,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Build System + Service Layer | 3/3 | Complete | - |
 | 2. React App Shell | 3/3 | Complete | 2026-03-27 |
 | 3. Generation + Editing | 4/4 | Complete   | 2026-03-29 |
-| 4. Export, Library + Full Parity | 7/10 | In Progress|  |
+| 4. Export, Library + Full Parity | 9/10 | In Progress|  |
