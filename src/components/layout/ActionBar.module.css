@@ -58,3 +58,16 @@
   color: var(--error);
   margin-top: 0.25rem;
 }
+
+.exportGroup {
+  /* Visually separated from generate group */
+  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--border);
+}
+
+.saveSuccess {
+  background: var(--success) !important;
+  border-color: var(--success) !important;
+  color: #fff !important;
+}
