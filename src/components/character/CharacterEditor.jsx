@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import FieldRow from './FieldRow';
 import EvalFeedback from './EvalFeedback';
 import ImageSlot from './ImageSlot';
+import LorebookTab from '../lorebook/LorebookTab';
 import useGenerationStore from '../../stores/useGenerationStore';
 import { imageGenerator } from '../../services/imageGenerator';
 import styles from './CharacterEditor.module.css';
@@ -195,10 +196,7 @@ export default function CharacterEditor() {
 
       {/* ── Body: Lorebook tab ──────────────────────────── */}
       {subtab === 'lorebook' && (
-        <div className={styles.lorebookPlaceholder}>
-          {/* Plan 05 replaces this with <LorebookTab /> */}
-          <p>Lorebook editor coming in next plan.</p>
-        </div>
+        <LorebookTab />
       )}
     </div>
   );
