@@ -1,7 +1,17 @@
+import { useState } from 'react';
 import styles from './ApiSettings.module.css';
 
 export default function ApiSettings({ draft, updateDraft }) {
   if (!draft) return null;
+
+  // Local edit state for timeout fields — stores string to allow clearing during typing.
+  // Initialized from draft (ms) converted to seconds.
+  const [textTimeoutEdit, setTextTimeoutEdit] = useState(
+    draft.api.text.timeout != null ? String(draft.api.text.timeout / 1000) : ''
+  );
+  const [imageTimeoutEdit, setImageTimeoutEdit] = useState(
+    draft.api.image.timeout != null ? String(draft.api.image.timeout / 1000) : ''
+  );
 
   return (
     <div>
@@ -54,12 +64,26 @@ export default function ApiSettings({ draft, updateDraft }) {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Timeout (ms)</label>
+          <label className={styles.label}>Timeout (seconds)</label>
           <input
             type="number"
             className={styles.input}
-            value={draft.api.text.timeout}
-            onChange={(e) => updateDraft('api.text.timeout', parseInt(e.target.value) || 180000)}
+            value={textTimeoutEdit}
+            min={1}
+            onChange={(e) => {
+              setTextTimeoutEdit(e.target.value);
+              const secs = parseInt(e.target.value, 10);
+              if (!isNaN(secs) && secs > 0) {
+                updateDraft('api.text.timeout', secs * 1000);
+              }
+            }}
+            onBlur={() => {
+              const secs = parseInt(textTimeoutEdit, 10);
+              if (isNaN(secs) || secs <= 0) {
+                // Reset to current draft value on invalid input
+                setTextTimeoutEdit(String(draft.api.text.timeout / 1000));
+              }
+            }}
           />
         </div>
       </div>
@@ -113,12 +137,26 @@ export default function ApiSettings({ draft, updateDraft }) {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Timeout (ms)</label>
+          <label className={styles.label}>Timeout (seconds)</label>
           <input
             type="number"
             className={styles.input}
-            value={draft.api.image.timeout}
-            onChange={(e) => updateDraft('api.image.timeout', parseInt(e.target.value) || 180000)}
+            value={imageTimeoutEdit}
+            min={1}
+            onChange={(e) => {
+              setImageTimeoutEdit(e.target.value);
+              const secs = parseInt(e.target.value, 10);
+              if (!isNaN(secs) && secs > 0) {
+                updateDraft('api.image.timeout', secs * 1000);
+              }
+            }}
+            onBlur={() => {
+              const secs = parseInt(imageTimeoutEdit, 10);
+              if (isNaN(secs) || secs <= 0) {
+                // Reset to current draft value on invalid input
+                setImageTimeoutEdit(String(draft.api.image.timeout / 1000));
+              }
+            }}
           />
         </div>
       </div>
