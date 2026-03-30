@@ -20,6 +20,14 @@ const useGenerationStore = create((set, get) => ({
   // Plain object { fieldKey: boolean } — NOT a Set (Set is not JSON-serializable)
   lockedFields: {},
 
+  // ── Image ──────────────────────────────────────────
+  imageBlob: null,          // Blob — current character image; null if none
+  imageDisplayUrl: null,    // string — blob: URL for <img> display; null if none
+  isImageGenerating: false, // boolean — image generation in progress
+
+  // ── Dirty tracking ─────────────────────────────────
+  isDirty: false,           // true after generate/edit, false after successful save
+
   // ── Actions ────────────────────────────────────────
 
   /** Accumulate a streaming chunk. Use via getState().append(chunk) — never pass as React state setter. */
@@ -33,6 +41,10 @@ const useGenerationStore = create((set, get) => ({
     prevCharacter: null,
     evalFeedback: null,
     reviseInstruction: '',
+    imageBlob: null,
+    imageDisplayUrl: null,
+    isImageGenerating: false,
+    isDirty: false,
     // lockedFields intentionally NOT reset — user keeps locks between runs
   }),
 
@@ -43,11 +55,12 @@ const useGenerationStore = create((set, get) => ({
   }),
 
   /** Store parsed character; clear generating state. */
-  setCharacter: (char) => set({ character: char, isGenerating: false }),
+  setCharacter: (char) => set({ character: char, isGenerating: false, isDirty: true }),
 
   /** Update a single character field (user edit in CharacterEditor). */
   updateField: (fieldKey, value) => set((s) => ({
     character: s.character ? { ...s.character, [fieldKey]: value } : s.character,
+    isDirty: true,
   })),
 
   /** Store eval result. Pre-populate reviseInstruction from suggestions. */
@@ -76,6 +89,19 @@ const useGenerationStore = create((set, get) => ({
     if (abortController) abortController.abort();
     set({ isGenerating: false, abortController: null });
   },
+
+  /** Set image blob and display URL together. Old displayUrl is NOT revoked here —
+   *  caller must revoke via useEffect cleanup. */
+  setImage: (blob, displayUrl) => set({ imageBlob: blob, imageDisplayUrl: displayUrl }),
+
+  /** Clear image state (e.g. after new generation starts). */
+  clearImage: () => set({ imageBlob: null, imageDisplayUrl: null }),
+
+  /** Set image generation in-progress flag. */
+  setImageGenerating: (flag) => set({ isImageGenerating: flag }),
+
+  /** Mark character data as dirty (unsaved changes). */
+  setDirty: (flag) => set({ isDirty: flag }),
 }));
 
 export default useGenerationStore;
