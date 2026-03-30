@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { MentionsInput, Mention } from 'react-mentions';
+import { storageClient } from '../../services/storage';
 import styles from './MentionInput.module.css';
 
 /**
@@ -9,6 +11,20 @@ import styles from './MentionInput.module.css';
  * for textarea visual overrides, classNames for dropdown styling.
  */
 export default function MentionInput({ value, onChange, disabled = false }) {
+  const [cardMentions, setCardMentions] = useState([]);
+
+  useEffect(() => {
+    storageClient.listCards()
+      .then((cards) => {
+        if (Array.isArray(cards)) {
+          setCardMentions(cards.map((c) => ({ id: c.slug, display: c.characterName || c.slug })));
+        }
+      })
+      .catch(() => {
+        // Silently ignore — mention suggestions are a convenience feature
+      });
+  }, []); // Load once on mount (D-19)
+
   return (
     <MentionsInput
       value={value}
@@ -49,7 +65,7 @@ export default function MentionInput({ value, onChange, disabled = false }) {
       <Mention
         trigger="@"
         markup="@[__display__](__id__)"
-        data={[]}
+        data={cardMentions}
         className={styles.mention}
       />
     </MentionsInput>
