@@ -1,0 +1,17 @@
+.searchInput {
+  width: 100%; padding: 0.6rem 0.75rem; margin-bottom: 0.75rem;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-strong); color: var(--text-primary);
+  font-family: inherit; font-size: 0.92rem;
+}
+.searchInput:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cardList { display: flex; flex-direction: column; gap: 0.5rem; }
+.skeleton { display: flex; flex-direction: column; gap: 0.5rem; }
+.skeletonRow { height: 64px; border-radius: var(--radius-sm); background: var(--border); animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+.emptyState { padding: 2rem 1rem; text-align: center; }
+.emptyHeading { font-size: 0.96rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.emptyBody { font-size: 0.88rem; color: var(--text-soft); line-height: 1.5; }
+.dialogActions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+.deleteConfirm { background: var(--error) !important; border-color: var(--error) !important; }
+:global([data-theme="dark"]) .searchInput { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.12); }

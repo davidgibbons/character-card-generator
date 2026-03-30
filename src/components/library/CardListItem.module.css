@@ -1,0 +1,22 @@
+.cardRow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 0.5rem; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface-strong);
+  cursor: pointer; transition: background var(--transition);
+  min-height: 44px;
+}
+.cardRow:hover { background: var(--accent-soft); }
+.cardMain { flex: 1; min-width: 0; }
+.cardName { font-size: 0.96rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cardMeta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.2rem; }
+.cardDate { font-size: 0.82rem; color: var(--text-secondary); }
+.tagList { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.tag { font-size: 0.78rem; padding: 0.1rem 0.4rem; background: var(--accent-soft); color: var(--accent); border-radius: 999px; }
+.tagMore { font-size: 0.78rem; color: var(--text-soft); }
+.qualityBadge { font-size: 0.78rem; padding: 0.1rem 0.5rem; border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; font-weight: 600; }
+.cardActions { display: flex; gap: 0.25rem; flex-shrink: 0; margin-left: 0.5rem; }
+.actionBtn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.3rem 0.5rem; cursor: pointer; font-size: 0.85rem; color: var(--text-secondary); transition: background var(--transition); }
+.actionBtn:hover { background: var(--surface-muted); }
+.deleteBtn:hover { background: rgba(201, 61, 74, 0.08); border-color: var(--error); color: var(--error); }
+:global([data-theme="dark"]) .cardRow { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.09); }
+:global([data-theme="dark"]) .cardRow:hover { background: rgba(14, 122, 138, 0.15); }
