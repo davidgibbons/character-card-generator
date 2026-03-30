@@ -26,14 +26,25 @@ export default function LorebookTab() {
     store.setGenerating(true);
     try {
       const newEntries = await apiHandler.generateLorebook(character, currentEntries);
+      if (!Array.isArray(newEntries) || newEntries.length === 0) {
+        setGenError('Lorebook generation returned no entries. Check the API response in DevTools.');
+        return;
+      }
       // Merge: preserve locked entries at their original positions, replace unlocked
-      const merged = currentEntries.map((old, i) => locked[i] ? old : (newEntries[i] || null)).filter(Boolean);
-      // Append any extra new entries beyond existing count
-      const extras = newEntries.slice(currentEntries.length);
-      store.setEntries([...merged, ...extras]);
+      let merged;
+      if (currentEntries.length === 0) {
+        // No existing entries — use all generated entries directly
+        merged = newEntries;
+      } else {
+        // Preserve locked entries; replace unlocked slots; append extras
+        const base = currentEntries.map((old, i) => locked[i] ? old : (newEntries[i] ?? null)).filter(Boolean);
+        const extras = newEntries.slice(currentEntries.length);
+        merged = [...base, ...extras];
+      }
+      store.setEntries(merged);
     } catch (err) {
       console.error('Lorebook generation failed:', err);
-      setGenError('Lorebook generation failed. Check the server connection and try again.');
+      setGenError(`Lorebook generation failed: ${err.message}`);
     } finally {
       useLorebookStore.getState().setGenerating(false);
     }
