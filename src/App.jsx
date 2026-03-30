@@ -4,16 +4,17 @@ import TabBar from './components/layout/TabBar';
 import ActionBar from './components/layout/ActionBar';
 import SplitPane from './components/layout/SplitPane';
 import SettingsModal from './components/settings/SettingsModal';
+import LibraryDrawer from './components/library/LibraryDrawer';
 import CreatePanel from './components/create/CreatePanel';
 import StreamView from './components/character/StreamView';
 import CharacterEditor from './components/character/CharacterEditor';
 import useGenerationStore from './stores/useGenerationStore';
+import useLibraryStore from './stores/useLibraryStore';
 import { useTheme } from './hooks/useTheme';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('create');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
   const { toggleTheme, isDark } = useTheme();
 
   // Right panel switching — see UI-SPEC interaction states table
@@ -23,7 +24,7 @@ export default function App() {
 
   const leftPanel = activeTab === 'create'
     ? <CreatePanel />
-    : <div>Edit form placeholder</div>;  // Phase 4 will add EditPanel
+    : <div>Edit form placeholder</div>;
 
   // Right panel: exactly one view at a time (per UI-SPEC)
   // character !== null → CharacterEditor
@@ -41,12 +42,13 @@ export default function App() {
         onSettingsClick={() => setSettingsOpen(true)}
         onThemeToggle={toggleTheme}
         isDark={isDark}
-        onLibraryToggle={() => setLibraryOpen((prev) => !prev)}
+        onLibraryToggle={() => useLibraryStore.getState().toggleOpen()}
       />
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
       <ActionBar />
       <SplitPane leftContent={leftPanel} rightContent={rightPanel} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <LibraryDrawer />
     </div>
   );
 }

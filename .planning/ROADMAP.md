@@ -84,7 +84,7 @@ Plans:
 - [x] 04-01-PLAN.md — Store layer: extend useGenerationStore, create useLorebookStore + useLibraryStore
 - [x] 04-02-PLAN.md — CharacterEditor RPG layout, ImageSlot component, Character/Lorebook subtab bar
 - [x] 04-03-PLAN.md — ActionBar: Save Card, Download JSON, Download PNG buttons
-- [ ] 04-04-PLAN.md — LibraryDrawer, CardListItem, CardHistoryModal, DiffView + App.jsx wiring
+- [x] 04-04-PLAN.md — LibraryDrawer, CardListItem, CardHistoryModal, DiffView + App.jsx wiring
 - [ ] 04-05-PLAN.md — LorebookTab, LorebookEntryRow, wire into CharacterEditor
 - [ ] 04-06-PLAN.md — SillyTavernSection in Settings, MentionInput wired to storageClient
 - [ ] 04-07-PLAN.md — Visual verification checkpoint (all Phase 4 features)

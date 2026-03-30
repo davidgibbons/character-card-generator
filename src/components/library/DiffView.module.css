@@ -1,0 +1,20 @@
+.diffView { display: flex; flex-direction: column; gap: 1.25rem; }
+.noDiff { color: var(--text-soft); font-size: 0.92rem; text-align: center; padding: 1rem 0; }
+.fieldDiff {}
+.fieldLabel { font-size: 0.92rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem; }
+.diffColumns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.diffCol { display: flex; flex-direction: column; gap: 0.25rem; }
+.colLabel { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.before .colLabel { color: var(--error); }
+.after .colLabel { color: var(--success); }
+.diffText {
+  font-family: inherit; font-size: 0.88rem; line-height: 1.4;
+  white-space: pre-wrap; word-break: break-word; margin: 0;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+.before .diffText { background: rgba(201, 61, 74, 0.06); }
+.after .diffText { background: rgba(31, 157, 102, 0.06); }
+:global([data-theme="dark"]) .diffText { background: rgba(255, 255, 255, 0.04); }
+:global([data-theme="dark"]) .before .diffText { background: rgba(201, 61, 74, 0.12); }
+:global([data-theme="dark"]) .after .diffText { background: rgba(31, 157, 102, 0.12); }

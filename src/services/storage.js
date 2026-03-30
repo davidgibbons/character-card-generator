@@ -101,10 +101,12 @@ class ServerBackedStorage {
       const cards = await res.json();
       return cards.map((c) => ({
         id: c.slug,
+        slug: c.slug,
         characterName: c.name,
         updatedAt: c.updatedAt,
         commitCount: c.commitCount,
         qualityScore: c.qualityScore ?? null,
+        tags: Array.isArray(c.tags) ? c.tags : [],
       }));
     } catch (error) {
       console.error("listCards failed:", error);

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-30T19:36:00.666Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-30T19:39:23.499Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 17
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 04 (export-library-full-parity) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Plans: 4 plans in 3 waves
 Last activity: 2026-03-30
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P04 | 8min | 2 tasks | 4 files |
 | Phase 04 P02 | 7min | 2 tasks | 4 files |
 | Phase 04 P03 | 8 | 1 tasks | 2 files |
+| Phase 04 P04 | 15min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 04]: CharacterEditor async handlers use useGenerationStore.getState() directly to avoid stale Zustand state in closures
 - [Phase 04]: Export buttons use uiPhase \!== 'generating' hide guard (consistent with evaluate/revise), not just disabled
 - [Phase 04]: ActionBar export handlers use getState() snapshot pattern to avoid stale closure issues with imageBlob
+- [Phase 04]: storage.js listCards() exposes slug field alongside id — library components use card.slug, existing callers using card.id unaffected
+- [Phase 04]: LibraryDrawer uses globals.css drawer shell classes (.library-drawer + .open) for slide animation — consistent with design system
+- [Phase 04]: CardHistoryModal fetches /api/cards/:slug/history and diff endpoints directly via fetch() — no storageClient wrapper since these are history-specific endpoints
 
 ### Pending Todos
 
@@ -105,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T19:36:00.663Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-30T19:39:23.496Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
