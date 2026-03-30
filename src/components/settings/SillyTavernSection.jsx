@@ -13,7 +13,25 @@ import styles from './SillyTavernSection.module.css';
  * IMPORTANT: Use draft.api.sillytavern.url/password for API calls (not configStore)
  * because values may be unsaved at the time the user clicks List Characters.
  */
-export default function SillyTavernSection({ draft, updateDraft }) {
+/** Normalize ST V2 spec export → app internal camelCase format */
+function normalizeStCharacter(raw) {
+  // ST exports { spec: "chara_card_v2", data: { ... } } — unwrap data layer
+  const d = raw?.spec === 'chara_card_v2' ? raw.data : raw;
+  return {
+    name: d.name || '',
+    description: d.description || '',
+    personality: d.personality || '',
+    scenario: d.scenario || '',
+    firstMessage: d.first_mes || '',
+    mesExample: d.mes_example || '',
+    systemPrompt: d.system_prompt || '',
+    creatorNotes: d.creator_notes || '',
+    tags: Array.isArray(d.tags) ? d.tags : [],
+    characterBook: d.character_book || null,
+  };
+}
+
+export default function SillyTavernSection({ draft, updateDraft, onClose }) {
   const [stCharacters, setStCharacters] = useState([]);
   const [selectedChar, setSelectedChar] = useState(null);
   const [listLoading, setListLoading] = useState(false);
@@ -107,10 +125,10 @@ export default function SillyTavernSection({ draft, updateDraft }) {
         body: JSON.stringify({ avatar_url: selectedChar.avatar_url }),
       });
       if (!r.ok) throw new Error(await r.text());
-      const charData = await r.json();
-      useGenerationStore.getState().setCharacter(charData);
+      const raw = await r.json();
+      useGenerationStore.getState().setCharacter(normalizeStCharacter(raw));
       setPullStatus('done');
-      setTimeout(() => setPullStatus('idle'), 2000);
+      setTimeout(() => { setPullStatus('idle'); onClose?.(); }, 1500);
     } catch (err) {
       console.error('ST pull failed:', err);
       setError('Pull failed. Verify the SillyTavern URL and try again.');

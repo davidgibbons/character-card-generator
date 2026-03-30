@@ -96,7 +96,7 @@ export default function SettingsModal({ isOpen, onClose }) {
           </div>
           <div className={styles.section}>
             <div className={styles.sectionTitle}>SillyTavern</div>
-            <SillyTavernSection draft={draft} updateDraft={updateDraft} />
+            <SillyTavernSection draft={draft} updateDraft={updateDraft} onClose={onClose} />
           </div>
           <div className={styles.footer}>
             <button className="btn-outline" onClick={handleCancel}>
