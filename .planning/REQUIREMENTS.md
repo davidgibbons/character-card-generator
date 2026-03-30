@@ -67,7 +67,7 @@
 - [x] **PARITY-06**: SillyTavern push/pull sync works
 - [x] **PARITY-07**: Content policy prefix toggle works
 - [x] **PARITY-08**: Configurable API settings with session/persistent key storage works
-- [ ] **PARITY-09**: Lorebook generation and CRUD works
+- [x] **PARITY-09**: Lorebook generation and CRUD works
 
 ## v2 Requirements
 
@@ -145,7 +145,7 @@
 | PARITY-05 | Phase 4 | Complete |
 | PARITY-06 | Phase 4 | Complete |
 | PARITY-08 | Phase 4 | Complete |
-| PARITY-09 | Phase 4 | Pending |
+| PARITY-09 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 43 total
