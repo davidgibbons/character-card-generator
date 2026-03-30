@@ -52,7 +52,7 @@ export default function MentionInput({ value, onChange, disabled = false }) {
     <div ref={wrapperRef}>
     <MentionsInput
       value={value}
-      onChange={(e, newValue) => onChange(newValue)}
+      onChange={(_e, newValue) => onChange(newValue)}
       placeholder="Describe your character concept… (@ to mention a card from your library)"
       disabled={disabled}
       classNames={styles}
