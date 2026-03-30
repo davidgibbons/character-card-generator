@@ -2,7 +2,7 @@
 // Uses Zustand 5.x named import pattern (matches other stores)
 import { create } from 'zustand';
 
-const useLorebookStore = create((set, get) => ({
+const useLorebookStore = create((set) => ({
   // ── Entries ────────────────────────────────────────
   entries: [],         // LorebookEntry[] — SillyTavern V2 characterBook.entries shape
 

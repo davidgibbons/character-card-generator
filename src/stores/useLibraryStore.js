@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { storageClient } from '../services/storage';
 
-const useLibraryStore = create((set, get) => ({
+const useLibraryStore = create((set) => ({
   // ── Library Data ───────────────────────────────────
   cards: [],             // CardSummary[] from storageClient.listCards()
   isLoading: false,
