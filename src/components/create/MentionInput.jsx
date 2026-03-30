@@ -83,6 +83,7 @@ export default function MentionInput({ value, onChange, disabled = false }) {
           overflow: 'hidden',
           border: '1px solid transparent',
           borderRadius: 'var(--radius-sm)',
+          backgroundColor: 'transparent',
         },
       }}
     >

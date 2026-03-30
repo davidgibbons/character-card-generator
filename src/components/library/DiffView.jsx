@@ -1,3 +1,4 @@
+import { diffWords } from 'diff';
 import styles from './DiffView.module.css';
 
 const FIELD_LABELS = {
@@ -6,6 +7,25 @@ const FIELD_LABELS = {
   mes_example: 'Message Example', mesExample: 'Message Example',
   systemPrompt: 'System Prompt', creatorNotes: 'Creator Notes', tags: 'Tags',
 };
+
+/** Renders a single side of the diff with word-level highlights */
+function DiffSide({ before, after, side }) {
+  const parts = diffWords(String(before ?? ''), String(after ?? ''));
+  return (
+    <pre className={styles.diffText}>
+      {parts.map((part, i) => {
+        if (side === 'before') {
+          if (part.added) return null; // not present in before
+          if (part.removed) return <mark key={i} className={styles.removed}>{part.value}</mark>;
+        } else {
+          if (part.removed) return null; // not present in after
+          if (part.added) return <mark key={i} className={styles.added}>{part.value}</mark>;
+        }
+        return <span key={i}>{part.value}</span>;
+      })}
+    </pre>
+  );
+}
 
 /** Renders field-by-field before/after diff from /api/cards/:slug/diff response */
 export default function DiffView({ diff }) {
@@ -21,11 +41,11 @@ export default function DiffView({ diff }) {
           <div className={styles.diffColumns}>
             <div className={`${styles.diffCol} ${styles.before}`}>
               <span className={styles.colLabel}>Before</span>
-              <pre className={styles.diffText}>{String(before ?? '')}</pre>
+              <DiffSide before={before} after={after} side="before" />
             </div>
             <div className={`${styles.diffCol} ${styles.after}`}>
               <span className={styles.colLabel}>After</span>
-              <pre className={styles.diffText}>{String(after ?? '')}</pre>
+              <DiffSide before={before} after={after} side="after" />
             </div>
           </div>
         </div>

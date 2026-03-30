@@ -17,4 +17,16 @@
 .after .diffText { background: rgba(31, 157, 102, 0.06); }
 :global([data-theme="dark"]) .diffText { background: rgba(255, 255, 255, 0.04); }
 :global([data-theme="dark"]) .before .diffText { background: rgba(201, 61, 74, 0.12); }
-:global([data-theme="dark"]) .after .diffText { background: rgba(31, 157, 102, 0.12); }
+:global([data-theme="dark"]) .after .diffText { background: rgba(31, 157, 100, 0.12); }
+.removed {
+  background: rgba(201, 61, 74, 0.25);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.added {
+  background: rgba(31, 157, 102, 0.3);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+:global([data-theme="dark"]) .removed { background: rgba(201, 61, 74, 0.4); }
+:global([data-theme="dark"]) .added { background: rgba(31, 157, 102, 0.4); }

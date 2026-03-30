@@ -91,7 +91,7 @@ export default function CharacterEditor() {
     <div className={styles.editor}>
       {/* ── Header section: two-column ─────────────────── */}
       <div className={styles.header}>
-        {/* Left column: compact fields + image buttons */}
+        {/* Left column: compact fields */}
         <div className={styles.headerLeft}>
           {HEADER_FIELDS.map((fieldKey) => (
             <FieldRow
@@ -103,6 +103,10 @@ export default function CharacterEditor() {
               isProseField={!SINGLE_VALUE_FIELDS.has(fieldKey)}
             />
           ))}
+        </div>
+        {/* Right column: portrait slot + image buttons */}
+        <div className={styles.headerRight}>
+          <ImageSlot />
           <div className={styles.imgBtns}>
             {/* Hidden file input for upload */}
             <input
@@ -129,10 +133,6 @@ export default function CharacterEditor() {
               {imageDisplayUrl ? 'Regenerate Image' : 'Generate Image'}
             </button>
           </div>
-        </div>
-        {/* Right column: portrait slot */}
-        <div className={styles.headerRight}>
-          <ImageSlot />
         </div>
       </div>
 
