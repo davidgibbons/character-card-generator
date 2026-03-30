@@ -24,7 +24,7 @@
 - [x] **REACT-05**: Character create panel with concept input, POV selection, and generation controls
 - [x] **REACT-06**: Character editor panel with editable fields, field locking, and evaluate/revise flow
 - [ ] **REACT-07**: Library drawer with card/prompt listing, search, and CRUD operations
-- [ ] **REACT-08**: Lorebook editor with entry CRUD, generation, and toggle controls
+- [x] **REACT-08**: Lorebook editor with entry CRUD, generation, and toggle controls
 - [ ] **REACT-09**: SillyTavern sync UI (push/pull/character list) implemented as React components
 - [ ] **REACT-10**: Dark/light theme switching preserved via CSS custom properties and React state
 - [ ] **REACT-11**: Card download (JSON + PNG with embedded metadata) working from React UI
@@ -61,7 +61,7 @@
 
 - [x] **PARITY-01**: All existing character generation modes (1st person, 3rd person, scenario) work
 - [x] **PARITY-02**: Character evaluation and revision workflow works
-- [ ] **PARITY-03**: Image generation (OpenAI-compatible + SD API) works
+- [x] **PARITY-03**: Image generation (OpenAI-compatible + SD API) works
 - [ ] **PARITY-04**: V2 character card PNG export with embedded metadata works
 - [ ] **PARITY-05**: Git-backed card/prompt library with CRUD, history, and diff works
 - [ ] **PARITY-06**: SillyTavern push/pull sync works
@@ -135,12 +135,12 @@
 | PARITY-02 | Phase 3 | Complete |
 | PARITY-07 | Phase 3 | Complete |
 | REACT-07 | Phase 4 | Pending |
-| REACT-08 | Phase 4 | Pending |
+| REACT-08 | Phase 4 | Complete |
 | REACT-09 | Phase 4 | Pending |
 | REACT-11 | Phase 4 | Pending |
 | REACT-12 | Phase 4 | Pending |
 | STATE-04 | Phase 4 | Pending |
-| PARITY-03 | Phase 4 | Pending |
+| PARITY-03 | Phase 4 | Complete |
 | PARITY-04 | Phase 4 | Pending |
 | PARITY-05 | Phase 4 | Pending |
 | PARITY-06 | Phase 4 | Pending |
