@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-30T19:35:45.559Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-03-30T19:36:00.666Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 4
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P03 | 2min | 2 tasks | 8 files |
 | Phase 03 P04 | 8min | 2 tasks | 4 files |
 | Phase 04 P02 | 7min | 2 tasks | 4 files |
+| Phase 04 P03 | 8 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 03]: react-mentions Mention component requires explicit markup prop in React 19 — defaultProps dropped for function components
 - [Phase 04]: ImageSlot is purely a display frame — upload/generate buttons rendered in CharacterEditor left column per UI-SPEC D-03/D-04
 - [Phase 04]: CharacterEditor async handlers use useGenerationStore.getState() directly to avoid stale Zustand state in closures
+- [Phase 04]: Export buttons use uiPhase \!== 'generating' hide guard (consistent with evaluate/revise), not just disabled
+- [Phase 04]: ActionBar export handlers use getState() snapshot pattern to avoid stale closure issues with imageBlob
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T19:35:35.638Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-30T19:36:00.663Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
