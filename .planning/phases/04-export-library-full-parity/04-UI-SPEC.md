@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: export-library-full-parity
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-03-29
+reviewed_at: 2026-03-30
 ---
 
 # Phase 4 — UI Design Contract
@@ -55,20 +56,23 @@ Exceptions:
 
 Source: globals.css `:root`, FieldRow.module.css, CharacterEditor.module.css, ActionBar.module.css
 
+Phase 4 type contract: 4 sizes, 2 weights.
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 14.7px (0.92rem) | 400 (regular) | 1.5 |
+| Body / Subtab label | 14.7px (0.92rem) | 400 (regular) | 1.5 |
 | Label | 15.4px (0.96rem) | 600 (semibold) | 1.2 |
 | Heading | 16.8px (1.05rem) | 600 (semibold) | 1.2 |
-| Display | clamp(24.8px, 2.3vw, 40.8px) | 700 (bold) | 1.0 |
+| Display | clamp(24.8px, 2.3vw, 40.8px) | — (inherited) | 1.0 |
 
 Notes:
 - 0.92rem body = ~14.7px at 16px root; matches FieldRow textarea, CharacterEditor emptyBody, ActionBar errorMsg, globals .label
 - 0.96rem label = ~15.4px at 16px root; matches FieldRow .label
 - 1.05rem heading = ~16.8px at 16px root; matches library-drawer-header h2, Modal .title
 - Display is the app title (clamp in globals.css .title) — not used in Phase 4 new components
-- All new components in Phase 4 use the same 0.92rem/0.96rem/1.05rem scale — no new sizes introduced
-- Subtab labels (e.g. Character / Lorebook tab): 0.85rem at weight 600 (matches globals.css .subtab-btn)
+- All new Phase 4 components use the 0.92rem / 0.96rem / 1.05rem scale — no new sizes introduced
+- Subtab labels (e.g. Character / Lorebook tab): use 0.92rem body at weight 600 — the 0.85rem subtab size is not part of the Phase 4 type contract
+- Declared weights for Phase 4: 400 (regular) and 600 (semibold) only. Weight 700 (bold) is inherited by the app title via globals.css `.title` and is not introduced by any Phase 4 component.
 
 ---
 
@@ -91,7 +95,7 @@ Accent reserved for:
 
 Secondary semantic colors (not accent, not destructive):
 - `var(--warning)` = `#cf8a00` — locked field border and locked lorebook entry border (reuses FieldRow locked pattern)
-- `var(--success)` = `#1f9d66` — "Saved" confirmation feedback after Save card action
+- `var(--success)` = `#1f9d66` — "Saved" confirmation feedback after Save Card action
 - `var(--text-secondary)` = `#51667c` — Card list metadata (date, tags), empty state headings
 - `var(--text-soft)` = `#7d8ea1` — Empty state body copy, placeholder text
 
@@ -119,7 +123,7 @@ Modified components in Phase 4:
 | Component | Change |
 |-----------|--------|
 | `CharacterEditor.jsx` | Restructure to RPG sheet layout (D-01); add Lorebook subtab |
-| `ActionBar.jsx` | Add Save, Download JSON, Download PNG buttons |
+| `ActionBar.jsx` | Add Save Card, Download JSON, Download PNG buttons |
 | `MentionInput.jsx` | Wire storageClient.listCards() into suggestions |
 
 ---
@@ -128,6 +132,8 @@ Modified components in Phase 4:
 
 ### CharacterEditor RPG Sheet (D-01, D-02)
 
+Primary focal point: portrait image slot (top-right header column) — largest continuous visual mass on load.
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  HEADER SECTION (two-column)                         │
@@ -135,7 +141,7 @@ Modified components in Phase 4:
 │  │ Left ~70-75%             │  │ Right ~25-30%    │  │
 │  │ Name field               │  │ Portrait image   │  │
 │  │ Tags field               │  │ slot / avatar    │  │
-│  │ Creator Notes field      │  │                  │  │
+│  │ Creator Notes field      │  │ [focal point]    │  │
 │  │ [Upload] [Generate img]  │  │                  │  │
 │  └──────────────────────────┘  └──────────────────┘  │
 ├─────────────────────────────────────────────────────┤
@@ -175,7 +181,7 @@ Advanced Settings collapsible (D-02): System Prompt field lives here by default.
 ### ActionBar Export Buttons (D-06, D-07, D-08)
 
 Button group added after existing Generate/Evaluate/Revise buttons:
-- "Save" — primary-style, only active when `character != null && !isStreaming`
+- "Save Card" — primary-style, only active when `character != null && !isStreaming`
 - "JSON" — secondary-style, same active condition
 - "PNG" — secondary-style, same active condition
 
@@ -185,7 +191,7 @@ Button group added after existing Generate/Evaluate/Revise buttons:
 
 | Element | Copy |
 |---------|------|
-| Primary CTA — Save | "Save" |
+| Primary CTA — Save | "Save Card" |
 | Primary CTA — Export JSON | "Download JSON" |
 | Primary CTA — Export PNG | "Download PNG" |
 | Primary CTA — Image generate (idle) | "Generate Image" |
@@ -194,7 +200,7 @@ Button group added after existing Generate/Evaluate/Revise buttons:
 | Primary CTA — Lorebook generate (idle) | "Generate Lorebook" |
 | Primary CTA — Lorebook regenerate | "Regenerate Lorebook" |
 | Library empty state heading | "No saved characters yet" |
-| Library empty state body | "Generate a character and click Save to add it to your library." |
+| Library empty state body | "Generate a character and click Save Card to add it to your library." |
 | Lorebook empty state heading | "No lorebook entries" |
 | Lorebook empty state body | "Click Generate Lorebook to auto-create entries, or add one manually." |
 | Image slot placeholder | "No image" |
@@ -208,7 +214,9 @@ Button group added after existing Generate/Evaluate/Revise buttons:
 | Destructive — delete card | "Delete Character": "This will permanently remove the card from your library. This action cannot be undone." |
 | Destructive — load card (unsaved changes) | "Discard Changes": "You have unsaved changes. Load this character anyway?" |
 | Destructive — lorebook regenerate (entries exist) | "Replace Lorebook": "This will replace all unlocked entries. Locked entries will be preserved. Continue?" |
-| Confirmation CTA — cancel | "Cancel" |
+| Confirmation CTA — cancel (Delete Character dialog) | "Keep Character" |
+| Confirmation CTA — cancel (Discard Changes dialog) | "Keep Changes" |
+| Confirmation CTA — cancel (Replace Lorebook dialog) | "Keep Lorebook" |
 | Confirmation CTA — confirm destructive | "Delete" / "Discard" / "Replace" (matches action verb) |
 
 ---
@@ -223,7 +231,7 @@ Button group added after existing Generate/Evaluate/Revise buttons:
 | Stop | hidden | enabled | hidden |
 | Evaluate | enabled | disabled | disabled |
 | Revise | enabled | disabled | disabled |
-| Save | enabled | disabled | disabled |
+| Save Card | enabled | disabled | disabled |
 | Download JSON | enabled | disabled | disabled |
 | Download PNG | enabled | disabled | disabled |
 
