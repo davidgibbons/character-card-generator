@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styles from './ApiSettings.module.css';
+import apiHandler from '../../services/api';
 
 export default function ApiSettings({ draft, updateDraft }) {
   if (!draft) return null;
@@ -12,6 +13,17 @@ export default function ApiSettings({ draft, updateDraft }) {
   const [imageTimeoutEdit, setImageTimeoutEdit] = useState(
     draft.api.image.timeout != null ? String(draft.api.image.timeout / 1000) : ''
   );
+
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
+  async function handleTestConnection() {
+    setTesting(true);
+    setTestResult(null);
+    const result = await apiHandler.testConnection();
+    setTestResult(result);
+    setTesting(false);
+  }
 
   return (
     <div>
@@ -85,6 +97,26 @@ export default function ApiSettings({ draft, updateDraft }) {
               }
             }}
           />
+        </div>
+
+        <div className={styles.testRow}>
+          <button
+            type="button"
+            className={styles.testButton}
+            onClick={handleTestConnection}
+            disabled={testing}
+          >
+            {testing ? 'Testing…' : 'Test Connection'}
+          </button>
+          {testResult && (
+            <span className={testResult.success ? styles.testSuccess : styles.testError}>
+              {testResult.success
+                ? testResult.authMethod
+                  ? '✓ Connected (alternative auth)'
+                  : '✓ Connected'
+                : `✗ ${testResult.error}`}
+            </span>
+          )}
         </div>
       </div>
 

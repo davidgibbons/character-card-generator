@@ -8,6 +8,7 @@ import LibraryDrawer from './components/library/LibraryDrawer';
 import CreatePanel from './components/create/CreatePanel';
 import StreamView from './components/character/StreamView';
 import CharacterEditor from './components/character/CharacterEditor';
+import EvalFeedback from './components/character/EvalFeedback';
 import useGenerationStore from './stores/useGenerationStore';
 import useLibraryStore from './stores/useLibraryStore';
 import { useTheme } from './hooks/useTheme';
@@ -22,9 +23,25 @@ export default function App() {
   const isGenerating = useGenerationStore((s) => s.isGenerating);
   const streamText = useGenerationStore((s) => s.streamText);
 
-  const leftPanel = activeTab === 'create'
-    ? <CreatePanel />
-    : <div>Edit form placeholder</div>;
+  // Left panel switches per tab
+  let leftPanel;
+  switch (activeTab) {
+    case 'create':
+      leftPanel = <CreatePanel />;
+      break;
+    case 'edit':
+      leftPanel = (
+        <div style={{ padding: '2rem', color: 'var(--text-secondary)' }}>
+          Use the editor on the right to modify character fields.
+        </div>
+      );
+      break;
+    case 'evaluate':
+      leftPanel = <EvalFeedback />;
+      break;
+    default:
+      leftPanel = <CreatePanel />;
+  }
 
   // Right panel: exactly one view at a time (per UI-SPEC)
   // character !== null → CharacterEditor
@@ -45,7 +62,7 @@ export default function App() {
         onLibraryToggle={() => useLibraryStore.getState().toggleOpen()}
       />
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <ActionBar />
+      <ActionBar activeTab={activeTab} />
       <SplitPane leftContent={leftPanel} rightContent={rightPanel} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <LibraryDrawer />

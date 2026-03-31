@@ -10,13 +10,22 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [draft, setDraft] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    function initDraft() {
       const state = useConfigStore.getState();
       setDraft({
         api: JSON.parse(JSON.stringify(state.api)),
         app: { ...state.app },
         prompts: { ...state.prompts },
       });
+    }
+
+    if (useConfigStore.persist.hasHydrated()) {
+      initDraft();
+    } else {
+      const unsub = useConfigStore.persist.onFinishHydration(initDraft);
+      return unsub;
     }
   }, [isOpen]);
 

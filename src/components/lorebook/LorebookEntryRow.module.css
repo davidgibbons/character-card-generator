@@ -36,6 +36,43 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Primary key text in collapsed header */
+.primaryKey {
+  flex: 1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+/* Metadata chips container (priority / position / probability) */
+.metaChips {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+/* Individual chip — styled like .toggleText */
+.metaChip {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--surface-muted, rgba(0,0,0,0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.35rem;
+  white-space: nowrap;
+}
+/* Position <select> — matches .numberInput style */
+.selectInput {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
 .headerActions {
   display: flex;
   align-items: center;
@@ -139,7 +176,12 @@
   border-color: var(--warning);
 }
 :global([data-theme="dark"]) .textInput,
-:global([data-theme="dark"]) .numberInput {
+:global([data-theme="dark"]) .numberInput,
+:global([data-theme="dark"]) .selectInput {
   background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+:global([data-theme="dark"]) .metaChip {
+  background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
 }

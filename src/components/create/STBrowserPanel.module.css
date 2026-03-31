@@ -1,0 +1,93 @@
+/* STBrowserPanel.module.css */
+
+.wrapper {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted, #f9fcff);
+  overflow: hidden;
+}
+
+.toggleBtn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+}
+
+.toggleBtn:hover {
+  background: color-mix(in srgb, var(--accent, #5577cc) 6%, transparent 94%);
+}
+
+.chevron {
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(0deg);
+}
+
+.chevronClosed {
+  transform: rotate(-90deg);
+}
+
+.body {
+  padding: 0.65rem 0.85rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.listBtn {
+  align-self: flex-start;
+}
+
+.charList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.charItemSelected {
+  background: color-mix(in srgb, var(--accent, #5577cc) 12%, var(--surface) 88%);
+}
+
+.pullRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pullStatus {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.pullStatusDone {
+  color: #2a8c4a;
+  font-weight: 600;
+}
+
+.error {
+  font-size: 0.88rem;
+  color: var(--error, #c0392b);
+  padding: 0.3rem 0;
+}

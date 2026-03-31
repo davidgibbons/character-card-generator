@@ -10,6 +10,7 @@
 .cardName { font-size: 0.96rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cardMeta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.2rem; }
 .cardDate { font-size: 0.82rem; color: var(--text-secondary); }
+.revisionCount { font-size: 0.78rem; color: var(--text-secondary); }
 .tagList { display: flex; gap: 0.25rem; flex-wrap: wrap; }
 .tag { font-size: 0.78rem; padding: 0.1rem 0.4rem; background: var(--accent-soft); color: var(--accent); border-radius: 999px; }
 .tagMore { font-size: 0.78rem; color: var(--text-soft); }

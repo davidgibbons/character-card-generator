@@ -1,0 +1,67 @@
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 0.5rem;
+  background: var(--surface-muted);
+  min-height: 2.5rem;
+  cursor: text;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light, rgba(139, 92, 246, 0.12));
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: default;
+  outline: none;
+  user-select: none;
+}
+
+.chipFocused {
+  border-color: var(--accent, #8b5cf6);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.remove {
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  line-height: 1;
+  padding: 0 0.15rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+}
+
+.remove:hover {
+  opacity: 1;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 120px;
+  padding: 0.15rem 0;
+}
+
+.input::placeholder {
+  color: var(--text-soft, #9ca3af);
+}
+
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}

@@ -193,3 +193,13 @@ coverage/
 
 # Card storage (git-backed, managed by proxy/cards.js)
 proxy/cards/
+
+# ── GSD baseline (auto-generated) ──
+.gsd
+*.code-workspace
+.env.*
+!.env.example
+.next/
+*.pyc
+.venv/
+vendor/

@@ -85,6 +85,14 @@ export default function MentionInput({ value, onChange, disabled = false }) {
           borderRadius: 'var(--radius-sm)',
           backgroundColor: 'transparent',
         },
+        suggestions: {
+          backgroundColor: 'var(--surface-strong)',
+          color: 'var(--text-primary)',
+          zIndex: 100,
+        },
+        item: {
+          color: 'var(--text-primary)',
+        },
       }}
     >
       <Mention

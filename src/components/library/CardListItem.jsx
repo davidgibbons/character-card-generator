@@ -18,6 +18,7 @@ export default function CardListItem({ card, onLoad, onDelete, onHistory }) {
         <div className={styles.cardName}>{card.characterName || 'Unnamed'}</div>
         <div className={styles.cardMeta}>
           {updatedDate && <span className={styles.cardDate}>{updatedDate}</span>}
+          {card.commitCount > 0 && <span className={styles.revisionCount}>{card.commitCount} rev{card.commitCount !== 1 ? 's' : ''}</span>}
           {tags.length > 0 && (
             <span className={styles.tagList}>
               {visibleTags.map((t) => (

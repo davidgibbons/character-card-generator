@@ -15,6 +15,7 @@ const useGenerationStore = create((set, get) => ({
   // ── Eval / Revise ──────────────────────────────────
   evalFeedback: null,         // object from evaluateCard() — NOT a string
   reviseInstruction: '',      // user-editable, pre-populated from eval suggestions
+  excludedSuggestionIndices: {}, // plain object { index: bool } — tracks excluded suggestions
 
   // ── Field Locks ────────────────────────────────────
   // Plain object { fieldKey: boolean } — NOT a Set (Set is not JSON-serializable)
@@ -41,6 +42,7 @@ const useGenerationStore = create((set, get) => ({
     prevCharacter: null,
     evalFeedback: null,
     reviseInstruction: '',
+    excludedSuggestionIndices: {},
     imageBlob: null,
     imageDisplayUrl: null,
     isImageGenerating: false,
@@ -63,9 +65,10 @@ const useGenerationStore = create((set, get) => ({
     isDirty: true,
   })),
 
-  /** Store eval result. Pre-populate reviseInstruction from suggestions. */
+  /** Store eval result. Pre-populate reviseInstruction from suggestions. Reset exclusions. */
   setEvalFeedback: (feedback) => set({
     evalFeedback: feedback,
+    excludedSuggestionIndices: {},
     reviseInstruction: Array.isArray(feedback?.suggestions)
       ? feedback.suggestions.join('\n')
       : (feedback?.suggestions ?? ''),
@@ -73,6 +76,17 @@ const useGenerationStore = create((set, get) => ({
 
   /** Update revision instruction text (user edits). */
   setReviseInstruction: (text) => set({ reviseInstruction: text }),
+
+  /**
+   * Toggle a suggestion's excluded state by index.
+   * Recomputes reviseInstruction from all non-excluded suggestions.
+   */
+  toggleExcludeSuggestion: (i) => set((s) => {
+    const excluded = { ...s.excludedSuggestionIndices, [i]: !s.excludedSuggestionIndices[i] };
+    const suggestions = Array.isArray(s.evalFeedback?.suggestions) ? s.evalFeedback.suggestions : [];
+    const remaining = suggestions.filter((_, idx) => !excluded[idx]);
+    return { excludedSuggestionIndices: excluded, reviseInstruction: remaining.join('\n') };
+  }),
 
   /**
    * Toggle a field's locked state.

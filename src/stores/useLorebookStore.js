@@ -22,7 +22,7 @@ const useLorebookStore = create((set) => ({
   addEntry: () => set((s) => ({
     entries: [
       ...s.entries,
-      { keys: [], content: '', comment: '', priority: 10, enabled: true, name: '', constant: false },
+      { keys: [], content: '', comment: '', priority: 10, enabled: true, name: '', constant: false, position: 'before_char', probability: 100 },
     ],
   })),
 

@@ -2,10 +2,19 @@ import { useState } from 'react';
 import useLorebookStore from '../../stores/useLorebookStore';
 import styles from './LorebookEntryRow.module.css';
 
+/** Human-readable labels for the 5 ST-standard insertion positions (D001). */
+const POSITION_LABELS = {
+  before_char: 'Before Char',
+  after_char: 'After Char',
+  before_AN: 'Before AN',
+  after_AN: 'After AN',
+  at_depth: 'At Depth',
+};
+
 /**
  * Expandable lorebook entry row.
- * Collapsed: shows key summary + enabled state + lock button.
- * Expanded: shows all editable fields inline.
+ * Collapsed: shows primary key + metadata chips (priority, position, % chance) + enabled/lock.
+ * Expanded: shows all editable fields inline with Primary Key / Secondary Keys split.
  *
  * Props: index (number)
  */
@@ -19,9 +28,35 @@ export default function LorebookEntryRow({ index }) {
   if (!entry) return null;
 
   const isLocked = !!lockedEntries[index];
-  const keySummary = Array.isArray(entry.keys) && entry.keys.length > 0
-    ? entry.keys.join(', ')
+
+  // Collapsed header: primary key only (first key)
+  const primaryKeyDisplay = Array.isArray(entry.keys) && entry.keys.length > 0
+    ? entry.keys[0]
     : '(no keys)';
+
+  // Metadata chip values with fallback defaults
+  const chipPriority = entry.priority ?? 10;
+  const chipPosition = POSITION_LABELS[entry.position ?? 'before_char'] ?? (entry.position ?? 'before_char');
+  const chipProbability = entry.probability ?? 100;
+
+  // Expanded: primary key and secondary keys
+  const primaryKeyValue = Array.isArray(entry.keys) ? (entry.keys[0] || '') : '';
+  const secondaryKeysValue = Array.isArray(entry.keys) && entry.keys.length > 1
+    ? entry.keys.slice(1).join(', ')
+    : '';
+
+  function handlePrimaryKeyChange(e) {
+    const newVal = e.target.value;
+    updateEntry(index, 'keys', [newVal, ...(Array.isArray(entry.keys) ? entry.keys.slice(1) : [])]);
+  }
+
+  function handleSecondaryKeysChange(e) {
+    const parsed = e.target.value
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+    updateEntry(index, 'keys', [entry.keys[0] || '', ...parsed]);
+  }
 
   return (
     <div className={`${styles.row} ${isLocked ? styles.locked : ''} ${!entry.enabled ? styles.disabled : ''}`}>
@@ -34,7 +69,12 @@ export default function LorebookEntryRow({ index }) {
         onKeyDown={(e) => e.key === 'Enter' && setExpanded((x) => !x)}
       >
         <span className={styles.chevron}>{expanded ? '▼' : '▶'}</span>
-        <span className={styles.keySummary}>{keySummary}</span>
+        <span className={styles.primaryKey}>{primaryKeyDisplay}</span>
+        <span className={styles.metaChips}>
+          <span className={styles.metaChip} title="Priority">P:{chipPriority}</span>
+          <span className={styles.metaChip} title="Position">{chipPosition}</span>
+          <span className={styles.metaChip} title="Trigger probability">{chipProbability}%</span>
+        </span>
         <span className={styles.headerActions} onClick={(e) => e.stopPropagation()}>
           {/* Enabled toggle */}
           <label className={styles.toggleLabel} title={entry.enabled ? 'Disable entry' : 'Enable entry'}>
@@ -62,14 +102,27 @@ export default function LorebookEntryRow({ index }) {
       {/* Expanded body — inline editable fields */}
       {expanded && (
         <div className={styles.body}>
+          {/* Primary Key */}
           <div className={styles.field}>
-            <label className={styles.fieldLabel}>Keys</label>
+            <label className={styles.fieldLabel}>Primary Key</label>
             <input
               type="text"
               className={styles.textInput}
-              value={Array.isArray(entry.keys) ? entry.keys.join(', ') : ''}
-              onChange={(e) => updateEntry(index, 'keys', e.target.value.split(',').map((k) => k.trim()).filter(Boolean))}
-              placeholder="keyword1, keyword2"
+              value={primaryKeyValue}
+              onChange={handlePrimaryKeyChange}
+              placeholder="Primary trigger keyword"
+              disabled={isLocked}
+            />
+          </div>
+          {/* Secondary Keys */}
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Secondary Keys</label>
+            <input
+              type="text"
+              className={styles.textInput}
+              value={secondaryKeysValue}
+              onChange={handleSecondaryKeysChange}
+              placeholder="keyword2, keyword3, …"
               disabled={isLocked}
             />
           </div>
@@ -105,6 +158,31 @@ export default function LorebookEntryRow({ index }) {
                 onChange={(e) => updateEntry(index, 'priority', Number(e.target.value))}
                 disabled={isLocked}
                 min={0}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.fieldLabel}>Position</label>
+              <select
+                className={styles.selectInput}
+                value={entry.position ?? 'before_char'}
+                onChange={(e) => updateEntry(index, 'position', e.target.value)}
+                disabled={isLocked}
+              >
+                {Object.entries(POSITION_LABELS).map(([val, label]) => (
+                  <option key={val} value={val}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.fieldLabel}>Probability %</label>
+              <input
+                type="number"
+                className={styles.numberInput}
+                value={entry.probability ?? 100}
+                onChange={(e) => updateEntry(index, 'probability', Number(e.target.value))}
+                disabled={isLocked}
+                min={0}
+                max={100}
               />
             </div>
           </div>

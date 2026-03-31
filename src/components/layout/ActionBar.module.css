@@ -71,3 +71,9 @@
   border-color: var(--success) !important;
   color: #fff !important;
 }
+
+.pushSuccess {
+  background: var(--success) !important;
+  border-color: var(--success) !important;
+  color: #fff !important;
+}

@@ -3,6 +3,7 @@ import styles from './TabBar.module.css';
 const TABS = [
   { id: 'create', label: 'Create' },
   { id: 'edit', label: 'Edit' },
+  { id: 'evaluate', label: 'Evaluate' },
 ];
 
 export default function TabBar({ activeTab, onTabChange }) {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ProgressBar from '../common/ProgressBar';
 import useGenerationStore from '../../stores/useGenerationStore';
+import useConfigStore from '../../stores/configStore';
 import { apiHandler } from '../../services/api';
 import { storageClient } from '../../services/storage';
 import { pngEncoder } from '../../services/pngEncoder';
@@ -20,7 +21,7 @@ function deriveUiPhase(isGenerating, character, evalFeedback) {
   return 'idle';
 }
 
-export default function ActionBar() {
+export default function ActionBar({ activeTab = 'create' }) {
   const isGenerating = useGenerationStore((s) => s.isGenerating);
   const character = useGenerationStore((s) => s.character);
   const evalFeedback = useGenerationStore((s) => s.evalFeedback);
@@ -29,8 +30,18 @@ export default function ActionBar() {
   const [reviseError, setReviseError] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
   const [saveError, setSaveError] = useState('');
+  const [pushStatus, setPushStatus] = useState('idle'); // 'idle' | 'pushing' | 'done' | 'error'
+  const [pushError, setPushError] = useState('');
 
   const uiPhase = deriveUiPhase(isGenerating, character, evalFeedback);
+
+  async function blobToBase64(blob) {
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+    return btoa(binary);
+  }
 
   async function createBlankPng() {
     const canvas = document.createElement('canvas');
@@ -111,9 +122,13 @@ export default function ActionBar() {
     setSaveError('');
     setSaveStatus('saving');
     try {
+      const evalFeedbackState = useGenerationStore.getState().evalFeedback;
+      const charToSave = evalFeedbackState?.overallScore != null
+        ? { ...char, qualityScore: evalFeedbackState.overallScore }
+        : char;
       await storageClient.saveCard({
         characterName: char.name,
-        character: char,
+        character: charToSave,
         imageBlob: useGenerationStore.getState().imageBlob,
       });
       useGenerationStore.getState().setDirty(false);
@@ -156,6 +171,50 @@ export default function ActionBar() {
     }
   }
 
+  async function handlePush() {
+    const { character: char, imageBlob } = useGenerationStore.getState();
+    if (!char) return;
+
+    // Read ST URL and password from configStore (live, not from draft)
+    const stUrl = useConfigStore.getState().get('api.sillytavern.url');
+    const stPassword = useConfigStore.getState().get('api.sillytavern.password');
+
+    if (!stUrl) {
+      setPushError('SillyTavern URL not configured. Open Settings to set it.');
+      return;
+    }
+
+    setPushError('');
+    setPushStatus('pushing');
+    try {
+      const fileName = `${char.name || 'character'}.png`;
+      let body;
+      if (imageBlob) {
+        const pngBlob = await pngEncoder.createCharacterCard(imageBlob, char);
+        const imageBase64 = await blobToBase64(pngBlob);
+        body = { imageBase64, fileName };
+      } else {
+        body = { characterJson: char, fileName };
+      }
+      const r = await fetch('/api/st/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-ST-URL': stUrl,
+          'X-ST-Password': stPassword || '',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      setPushStatus('done');
+      setTimeout(() => setPushStatus('idle'), 2000);
+    } catch (err) {
+      console.error('ST push failed:', err);
+      setPushError('Push failed. Verify the SillyTavern URL in Settings and try again.');
+      setPushStatus('idle');
+    }
+  }
+
   const hasCharacter = character !== null;
   const firstGeneration = !hasCharacter;
 
@@ -163,17 +222,7 @@ export default function ActionBar() {
     <div className={styles.actionBar}>
       <div className={styles.mainRow}>
         <div className={styles.btnGroup}>
-          {/* Generate / Regenerate button — hidden during generating */}
-          {uiPhase !== 'generating' && (
-            <button
-              className={hasCharacter ? `btn-outline ${styles.btn}` : `btn-primary ${styles.btn}`}
-              onClick={() => window.dispatchEvent(new CustomEvent('gsd:generate'))}
-            >
-              {firstGeneration ? 'Generate Character' : 'Regenerate'}
-            </button>
-          )}
-
-          {/* Stop button — only during generating */}
+          {/* Stop button — only during generating (all tabs) */}
           {uiPhase === 'generating' && (
             <button
               className={`btn-stop ${styles.btn} ${styles.stopBtn}`}
@@ -183,8 +232,30 @@ export default function ActionBar() {
             </button>
           )}
 
-          {/* Evaluate button — hidden during generating */}
-          {uiPhase !== 'generating' && (
+          {/* Create tab: Generate Character (first gen) or Regenerate */}
+          {uiPhase !== 'generating' && activeTab === 'create' && (
+            <button
+              className={hasCharacter ? `btn-outline ${styles.btn}` : `btn-primary ${styles.btn}`}
+              onClick={() => window.dispatchEvent(new CustomEvent('gsd:generate'))}
+            >
+              {firstGeneration ? 'Generate Character' : 'Regenerate'}
+            </button>
+          )}
+
+          {/* Edit tab: Regenerate only */}
+          {uiPhase !== 'generating' && activeTab === 'edit' && (
+            <button
+              className={`btn-outline ${styles.btn}`}
+              onClick={() => window.dispatchEvent(new CustomEvent('gsd:generate'))}
+              disabled={!hasCharacter}
+              style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
+            >
+              Regenerate
+            </button>
+          )}
+
+          {/* Evaluate tab: Evaluate button */}
+          {uiPhase !== 'generating' && activeTab === 'evaluate' && (
             <button
               className={`btn-outline ${styles.btn}`}
               onClick={handleEvaluate}
@@ -195,8 +266,8 @@ export default function ActionBar() {
             </button>
           )}
 
-          {/* Revise button — hidden during generating */}
-          {uiPhase !== 'generating' && (
+          {/* Revise button — Edit and Evaluate tabs only */}
+          {uiPhase !== 'generating' && (activeTab === 'edit' || activeTab === 'evaluate') && (
             <button
               className={`btn-outline ${styles.btn}`}
               onClick={handleRevise}
@@ -208,32 +279,34 @@ export default function ActionBar() {
           )}
         </div>
 
-        {/* Export button group — only when not streaming */}
-        {uiPhase !== 'generating' && (
+        {/* Export button group — always visible when character exists (any tab) */}
+        {uiPhase !== 'generating' && hasCharacter && (
           <div className={`${styles.btnGroup} ${styles.exportGroup}`}>
             <button
               className={`btn-primary ${styles.btn} ${saveStatus === 'saved' ? styles.saveSuccess : ''}`}
               onClick={handleSave}
-              disabled={!hasCharacter}
-              style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
             >
               {saveStatus === 'saving' ? 'Saving\u2026' : saveStatus === 'saved' ? 'Saved' : 'Save Card'}
             </button>
             <button
               className={`btn-outline ${styles.btn}`}
               onClick={handleDownloadJson}
-              disabled={!hasCharacter}
-              style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
             >
               Download JSON
             </button>
             <button
               className={`btn-outline ${styles.btn}`}
               onClick={handleDownloadPng}
-              disabled={!hasCharacter}
-              style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
             >
               Download PNG
+            </button>
+            <button
+              className={`btn-outline ${styles.btn} ${pushStatus === 'done' ? styles.pushSuccess : ''}`}
+              onClick={handlePush}
+              disabled={pushStatus === 'pushing'}
+              style={{ cursor: pushStatus === 'pushing' ? 'not-allowed' : 'pointer' }}
+            >
+              {pushStatus === 'pushing' ? 'Pushing\u2026' : pushStatus === 'done' ? 'Pushed \u2713' : 'Push to ST'}
             </button>
           </div>
         )}
@@ -241,8 +314,8 @@ export default function ActionBar() {
         <ProgressBar active={isGenerating} />
       </div>
 
-      {/* Revision instruction textarea — visible after evaluate */}
-      {(uiPhase === 'has-eval') && (
+      {/* Revision instruction textarea — visible when has-eval phase, any tab */}
+      {uiPhase === 'has-eval' && (
         <div className={styles.reviseRow}>
           <label className={styles.reviseLabel}>Revision instruction</label>
           <textarea
@@ -255,8 +328,8 @@ export default function ActionBar() {
       )}
 
       {/* Error display */}
-      {(evalError || reviseError || saveError) && (
-        <div className={styles.errorMsg}>{evalError || reviseError || saveError}</div>
+      {(evalError || reviseError || saveError || pushError) && (
+        <div className={styles.errorMsg}>{evalError || reviseError || saveError || pushError}</div>
       )}
     </div>
   );

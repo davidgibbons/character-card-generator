@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import useGenerationStore from '../../stores/useGenerationStore';
 import styles from './FieldRow.module.css';
+import TagChipEditor from './TagChipEditor';
 
 /**
  * Single character field row: label + auto-height textarea + lock toggle.
@@ -32,6 +33,34 @@ export default function FieldRow({ fieldKey, label, value, onChange, isProseFiel
     } else {
       onChange(fieldKey, raw);
     }
+  }
+
+  // Tags field: render chip editor instead of textarea
+  if (fieldKey === 'tags') {
+    return (
+      <div className={styles.row}>
+        <div className={styles.header}>
+          <label className={styles.label} htmlFor={`field-${fieldKey}`}>
+            {label}
+          </label>
+          <button
+            type="button"
+            className={`${styles.lockBtn} ${isLocked ? styles.locked : ''}`}
+            onClick={() => toggleLock(fieldKey)}
+            title={isLocked ? 'Unlock field (will be revised)' : 'Lock field (preserve during revise)'}
+            aria-label={isLocked ? `Unlock ${label}` : `Lock ${label}`}
+            aria-pressed={isLocked}
+          >
+            🔒
+          </button>
+        </div>
+        <TagChipEditor
+          value={Array.isArray(value) ? value : []}
+          onChange={(tags) => onChange(fieldKey, tags)}
+          disabled={isLocked}
+        />
+      </div>
+    );
   }
 
   return (

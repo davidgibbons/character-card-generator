@@ -4,6 +4,7 @@ import useGenerationStore from '../../stores/useGenerationStore';
 import { apiHandler } from '../../services/api';
 import { configStore } from '../../stores/configStore';
 import { parseSections, sectionsToCharacter } from '../../utils/parseSections';
+import STBrowserPanel from './STBrowserPanel';
 import styles from './CreatePanel.module.css';
 
 const POV_OPTIONS = [
@@ -145,6 +146,11 @@ export default function CreatePanel() {
           />
           <span>NSFW prefix</span>
         </label>
+      </div>
+
+      {/* ST Browser — pull a character from SillyTavern */}
+      <div className={styles.formGroup}>
+        <STBrowserPanel />
       </div>
 
       {/* Generation error */}
