@@ -189,5 +189,7 @@ coverage/
 *.sln
 *.sw?
 
+.bg-shell/
+
 # Card storage (git-backed, managed by proxy/cards.js)
 proxy/cards/
