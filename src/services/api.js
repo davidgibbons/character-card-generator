@@ -790,16 +790,19 @@ Shortened prompt (one paragraph):`,
     }
   }
 
-  async testConnection() {
+  async testConnection(overrides = {}) {
     try {
-      const apiKey = configStore.get("api.text.apiKey");
+      const apiKey = overrides.apiKey || configStore.get("api.text.apiKey");
       if (!apiKey) {
         return { success: false, error: "No API key configured" };
       }
 
+      const baseUrl = overrides.baseUrl || configStore.get("api.text.baseUrl");
+      const model = overrides.model || configStore.get("api.text.model");
+
       // Test with exact same format as working curl command
       const data = {
-        model: configStore.get("api.text.model"),
+        model,
         messages: [
           {
             role: "user",
@@ -809,15 +812,32 @@ Shortened prompt (one paragraph):`,
         max_tokens: 100,
       };
 
-      // Try with default auth first, then alternatives
+      // Build request manually with overrides (bypass resolveRequestConfig)
+      const url = "/api/text/chat/completions";
+      const headers = {
+        "Content-Type": "application/json",
+        "X-API-Key": apiKey,
+        "X-API-URL": baseUrl,
+      };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       try {
-        await this.makeRequest("/chat/completions", data);
+        const resp = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(data),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`${resp.status}: ${errText.slice(0, 200)}`);
+        }
         return { success: true };
       } catch (error) {
-        if (error.message.includes("401")) {
-          await this.tryAlternativeAuth("/chat/completions", data);
-          return { success: true, authMethod: "alternative" };
-        }
+        clearTimeout(timeoutId);
         throw error;
       }
     } catch (error) {

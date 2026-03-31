@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProgressBar from '../common/ProgressBar';
 import useGenerationStore from '../../stores/useGenerationStore';
 import useConfigStore from '../../stores/configStore';
@@ -34,6 +34,23 @@ export default function ActionBar({ activeTab = 'create' }) {
   const [pushError, setPushError] = useState('');
 
   const uiPhase = deriveUiPhase(isGenerating, character, evalFeedback);
+
+  // Auto-save after generation (when tab switches to edit with a new character)
+  const prevCharRef = useRef(null);
+  useEffect(() => {
+    if (character && character !== prevCharRef.current && character.name) {
+      // Character just changed (generation or pull) — auto-save after short delay
+      const timer = setTimeout(() => {
+        const store = useGenerationStore.getState();
+        if (store.isDirty && store.character) {
+          handleSave();
+        }
+      }, 500);
+      prevCharRef.current = character;
+      return () => clearTimeout(timer);
+    }
+    prevCharRef.current = character;
+  }, [character]);
 
   async function blobToBase64(blob) {
     const buffer = await blob.arrayBuffer();
@@ -105,7 +122,8 @@ export default function ActionBar({ activeTab = 'create' }) {
         }
       });
       store.setCharacter(merged);
-    } catch (err) {
+      // Auto-save after revision
+      await handleSave();    } catch (err) {
       console.error('Revision failed:', err);
       setReviseError('Generation failed. Check your API settings and try again.');
       store.setGenerating(false, null);
@@ -242,32 +260,8 @@ export default function ActionBar({ activeTab = 'create' }) {
             </button>
           )}
 
-          {/* Edit tab: Regenerate only */}
+          {/* Edit tab: Revise only */}
           {uiPhase !== 'generating' && activeTab === 'edit' && (
-            <button
-              className={`btn-outline ${styles.btn}`}
-              onClick={() => window.dispatchEvent(new CustomEvent('gsd:generate'))}
-              disabled={!hasCharacter}
-              style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
-            >
-              Regenerate
-            </button>
-          )}
-
-          {/* Evaluate tab: Evaluate button */}
-          {uiPhase !== 'generating' && activeTab === 'evaluate' && (
-            <button
-              className={`btn-outline ${styles.btn}`}
-              onClick={handleEvaluate}
-              disabled={!hasCharacter}
-              style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
-            >
-              Evaluate
-            </button>
-          )}
-
-          {/* Revise button — Edit and Evaluate tabs only */}
-          {uiPhase !== 'generating' && (activeTab === 'edit' || activeTab === 'evaluate') && (
             <button
               className={`btn-outline ${styles.btn}`}
               onClick={handleRevise}
@@ -276,6 +270,29 @@ export default function ActionBar({ activeTab = 'create' }) {
             >
               Revise
             </button>
+          )}
+
+          {/* Evaluate tab: Evaluate + Refine */}
+          {uiPhase !== 'generating' && activeTab === 'evaluate' && (
+            <>
+              <button
+                className={`btn-outline ${styles.btn}`}
+                onClick={handleEvaluate}
+                disabled={!hasCharacter}
+                style={{ opacity: !hasCharacter ? 0.64 : 1, cursor: !hasCharacter ? 'not-allowed' : 'pointer' }}
+              >
+                Evaluate
+              </button>
+              {evalFeedback && (
+                <button
+                  className={`btn-primary ${styles.btn}`}
+                  onClick={handleRevise}
+                  disabled={!hasCharacter}
+                >
+                  Refine
+                </button>
+              )}
+            </>
           )}
         </div>
 
@@ -314,15 +331,19 @@ export default function ActionBar({ activeTab = 'create' }) {
         <ProgressBar active={isGenerating} />
       </div>
 
-      {/* Revision instruction textarea — visible when has-eval phase, any tab */}
-      {uiPhase === 'has-eval' && (
+      {/* Revision instruction textarea — Edit tab (always when character exists) or Evaluate tab (when eval exists) */}
+      {((activeTab === 'edit' && hasCharacter) || (activeTab === 'evaluate' && uiPhase === 'has-eval')) && (
         <div className={styles.reviseRow}>
-          <label className={styles.reviseLabel}>Revision instruction</label>
+          <label className={styles.reviseLabel}>
+            {activeTab === 'evaluate' ? 'Refinement instructions (from evaluation)' : 'Revision instructions'}
+          </label>
           <textarea
             className={`textarea ${styles.reviseTextarea}`}
             value={reviseInstruction}
             onChange={handleReviseInstructionChange}
-            placeholder="Describe what to change… (pre-filled from evaluation)"
+            placeholder={activeTab === 'evaluate'
+              ? 'Click suggestions above to exclude them, then click Refine'
+              : 'Describe what to change…'}
           />
         </div>
       )}

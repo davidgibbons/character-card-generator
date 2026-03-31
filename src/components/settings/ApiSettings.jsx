@@ -20,7 +20,11 @@ export default function ApiSettings({ draft, updateDraft }) {
   async function handleTestConnection() {
     setTesting(true);
     setTestResult(null);
-    const result = await apiHandler.testConnection();
+    const result = await apiHandler.testConnection({
+      baseUrl: draft.api.text.baseUrl,
+      apiKey: draft.api.text.apiKey,
+      model: draft.api.text.model,
+    });
     setTestResult(result);
     setTesting(false);
   }
@@ -189,32 +193,6 @@ export default function ApiSettings({ draft, updateDraft }) {
                 setImageTimeoutEdit(String(draft.api.image.timeout / 1000));
               }
             }}
-          />
-        </div>
-      </div>
-
-      {/* SillyTavern Section */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeading}>SillyTavern</div>
-
-        <div className={styles.field}>
-          <label className={styles.label}>URL</label>
-          <input
-            type="text"
-            className={styles.input}
-            value={draft.api.sillytavern.url}
-            onChange={(e) => updateDraft('api.sillytavern.url', e.target.value)}
-            placeholder="http://localhost:8000"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Password</label>
-          <input
-            type="password"
-            className={styles.input}
-            value={draft.api.sillytavern.password}
-            onChange={(e) => updateDraft('api.sillytavern.password', e.target.value)}
           />
         </div>
       </div>

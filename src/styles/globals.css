@@ -68,6 +68,12 @@ body {
     gap: 1.1rem;
 }
 
+.main-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .header {
     padding: 1.4rem 1.6rem;
     border-radius: var(--radius-lg);

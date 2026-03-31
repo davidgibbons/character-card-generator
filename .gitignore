@@ -203,3 +203,5 @@ proxy/cards/
 *.pyc
 .venv/
 vendor/
+.claude/
+.planning/

@@ -459,7 +459,20 @@ app.get("/api/proxy-image", async (req, res) => {
 
     console.log("Proxying image request for:", imageUrl);
 
-    const response = await fetch(imageUrl);
+    // If ST auth headers are provided, forward them for SillyTavern-hosted images
+    const fetchHeaders = {};
+    const stUrl = req.headers["x-st-url"];
+    const stPassword = req.headers["x-st-password"];
+    if (stUrl && imageUrl.startsWith(stUrl)) {
+      try {
+        const { token, cookies } = await getSTCsrfToken(stUrl, stPassword || "");
+        Object.assign(fetchHeaders, stHeaders(token, cookies, stPassword || ""));
+      } catch (authErr) {
+        console.warn("proxy-image: ST auth failed, trying without:", authErr.message);
+      }
+    }
+
+    const response = await fetch(imageUrl, { headers: fetchHeaders });
 
     if (!response.ok) {
       console.error(

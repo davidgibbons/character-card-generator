@@ -19,9 +19,12 @@ const FIELD_ORDER = [
 ];
 
 export default function CreatePanel() {
-  const [concept, setConcept] = useState('');
-  const [characterName, setCharacterName] = useState('');
-  const [pov, setPov] = useState('first');
+  const concept = useGenerationStore((s) => s.concept);
+  const setConcept = useGenerationStore((s) => s.setConcept);
+  const characterName = useGenerationStore((s) => s.characterName);
+  const setCharacterName = useGenerationStore((s) => s.setCharacterName);
+  const pov = useGenerationStore((s) => s.pov);
+  const setPov = useGenerationStore((s) => s.setPov);
   const [conceptError, setConceptError] = useState('');
   const [genError, setGenError] = useState('');
 
@@ -43,10 +46,11 @@ export default function CreatePanel() {
     const onGenerate = () => handleGenerate();
     window.addEventListener('gsd:generate', onGenerate);
     return () => window.removeEventListener('gsd:generate', onGenerate);
-  }, [concept, characterName, pov]);  // re-register when these change
+  }, []);  // stable — handleGenerate reads store state via getState()
 
   async function handleGenerate() {
-    if (!concept.trim()) {
+    const { concept: currentConcept, characterName: currentName, pov: currentPov } = useGenerationStore.getState();
+    if (!currentConcept.trim()) {
       setConceptError('Enter a character concept before generating.');
       return;
     }
@@ -61,10 +65,10 @@ export default function CreatePanel() {
     try {
       // CORRECT: pass getState().append as callback — never a React state setter
       await apiHandler.generateCharacter(
-        concept,
-        characterName,
+        currentConcept,
+        currentName,
         (chunk) => { useGenerationStore.getState().append(chunk); },
-        pov,
+        currentPov,
         null  // lorebook: Phase 4
       );
 
@@ -73,6 +77,9 @@ export default function CreatePanel() {
       const sections = parseSections(rawText);
       const character = sectionsToCharacter(sections, rawText);
       useGenerationStore.getState().setCharacter(character);
+
+      // Auto-switch to Edit tab after successful generation
+      window.dispatchEvent(new CustomEvent('gsd:switch-tab', { detail: 'edit' }));
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error('Generation failed:', err);
@@ -137,7 +144,7 @@ export default function CreatePanel() {
 
       {/* NSFW Prefix Toggle */}
       <div className={`${styles.formGroup} ${styles.checkboxRow}`}>
-        <label className={styles.checkboxLabel}>
+        <label className={styles.checkboxLabel} title="Prepends a content policy bypass prefix to the generation prompt, allowing uncensored character generation on models that support it.">
           <input
             type="checkbox"
             checked={nsfwPrefix}

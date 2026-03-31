@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useConfigStore from '../../stores/configStore';
 import useGenerationStore from '../../stores/useGenerationStore';
 import styles from './STBrowserPanel.module.css';
 
 /** Normalize ST V2 spec export → app internal camelCase format */
 function normalizeStCharacter(raw) {
-  // ST exports { spec: "chara_card_v2", data: { ... } } — unwrap data layer
   const d = raw?.spec === 'chara_card_v2' ? raw.data : raw;
   return {
     name: d.name || '',
@@ -21,33 +20,58 @@ function normalizeStCharacter(raw) {
   };
 }
 
-/** Render up to 4 tag bubbles for a character; show +N badge for overflow */
-function TagBubbles({ tags }) {
+/** Compact tag summary: sorted by shortest, truncated to ~16 chars total */
+function TagSummary({ tags }) {
   if (!Array.isArray(tags) || tags.length === 0) return null;
-  const visible = tags.slice(0, 4);
-  const overflow = tags.length - visible.length;
+  const sorted = [...tags].sort((a, b) => a.length - b.length);
+  let chars = 0;
+  const visible = [];
+  for (const tag of sorted) {
+    if (chars + tag.length > 16 && visible.length > 0) break;
+    visible.push(tag);
+    chars += tag.length;
+  }
   return (
-    <span className="st-char-tags">
-      {visible.map((tag, i) => (
-        <span key={i} className="tag">{tag}</span>
+    <span className={styles.tagSummary}>
+      {visible.map((t, i) => (
+        <span key={i} className={styles.tagChip}>{t}</span>
       ))}
-      {overflow > 0 && (
-        <span className="st-tag-more">+{overflow}</span>
-      )}
+      <span className={styles.tagCount} title={tags.join(', ')}>{tags.length}</span>
     </span>
   );
 }
 
 export default function STBrowserPanel() {
-  const [expanded, setExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [characters, setCharacters] = useState([]);
-  const [selectedChar, setSelectedChar] = useState(null);
-  const [listLoading, setListLoading] = useState(false);
-  const [pullStatus, setPullStatus] = useState('idle'); // 'idle' | 'pulling' | 'done'
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [pulling, setPulling] = useState(null); // avatar of char being pulled
   const [error, setError] = useState('');
+  const overlayRef = useRef(null);
+  const searchRef = useRef(null);
 
-  async function handleListCharacters() {
-    // Read live from configStore — same pattern as ActionBar handlePush (D003)
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setIsOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen]);
+
+  // Focus search on open
+  useEffect(() => {
+    if (isOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Close on click outside
+  function handleBackdropClick(e) {
+    if (e.target === e.currentTarget) setIsOpen(false);
+  }
+
+  async function openAndList() {
     const stUrl = useConfigStore.getState().get('api.sillytavern.url');
     const stPassword = useConfigStore.getState().get('api.sillytavern.password');
     if (!stUrl) {
@@ -55,9 +79,10 @@ export default function STBrowserPanel() {
       return;
     }
     setError('');
-    setListLoading(true);
+    setIsOpen(true);
+    setLoading(true);
     setCharacters([]);
-    setSelectedChar(null);
+    setSearch('');
     try {
       const r = await fetch('/api/st/characters', {
         method: 'POST',
@@ -73,24 +98,21 @@ export default function STBrowserPanel() {
       setCharacters(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('STBrowserPanel: list characters failed:', err);
-      setError('Failed to list characters. Verify the SillyTavern URL in Settings.');
+      setError('Failed to list characters. Check the ST URL in Settings.');
     } finally {
-      setListLoading(false);
+      setLoading(false);
     }
   }
 
-  async function handlePull() {
-    if (!selectedChar) return;
+  async function handlePull(char) {
     const stUrl = useConfigStore.getState().get('api.sillytavern.url');
     const stPassword = useConfigStore.getState().get('api.sillytavern.password');
-    if (!stUrl) {
-      setError('Enter the SillyTavern URL in Settings first.');
-      return;
-    }
+    if (!stUrl) return;
+
     setError('');
-    setPullStatus('pulling');
+    setPulling(char.avatar);
     try {
-      // 1. Pull character data from ST
+      // 1. Pull character data
       const r = await fetch('/api/st/pull', {
         method: 'POST',
         headers: {
@@ -98,117 +120,123 @@ export default function STBrowserPanel() {
           'X-ST-URL': stUrl,
           'X-ST-Password': stPassword || '',
         },
-        body: JSON.stringify({ avatar_url: selectedChar.avatar }),
+        body: JSON.stringify({ avatar_url: char.avatar }),
       });
       if (!r.ok) throw new Error(await r.text());
       const raw = await r.json();
-
-      // 2. Normalize and push to generation store
       useGenerationStore.getState().setCharacter(normalizeStCharacter(raw));
 
-      // 3. Import avatar via proxy-image endpoint
-      if (selectedChar.avatar) {
+      // 2. Import avatar via proxy-image with ST auth
+      if (char.avatar) {
         try {
-          const avatarUrl = `${stUrl}/characters/${selectedChar.avatar}`;
+          const avatarUrl = `${stUrl}/characters/${char.avatar}`;
           const imgResp = await fetch(
-            `/api/proxy-image?url=${encodeURIComponent(avatarUrl)}`
+            `/api/proxy-image?url=${encodeURIComponent(avatarUrl)}`,
+            {
+              headers: {
+                'X-ST-URL': stUrl,
+                'X-ST-Password': stPassword || '',
+              },
+            }
           );
           if (imgResp.ok) {
             const blob = await imgResp.blob();
             const displayUrl = URL.createObjectURL(blob);
             useGenerationStore.getState().setImage(blob, displayUrl);
           } else {
-            console.warn('STBrowserPanel: avatar fetch failed, skipping:', imgResp.status);
+            console.warn('STBrowserPanel: avatar fetch failed:', imgResp.status);
           }
         } catch (avatarErr) {
-          // Non-fatal: character data was already imported
           console.warn('STBrowserPanel: avatar import failed:', avatarErr);
         }
       }
 
-      setPullStatus('done');
-      setTimeout(() => setPullStatus('idle'), 2000);
+      // 3. Close overlay and switch to Edit tab
+      setIsOpen(false);
+      window.dispatchEvent(new CustomEvent('gsd:switch-tab', { detail: 'edit' }));
     } catch (err) {
       console.error('STBrowserPanel: pull failed:', err);
-      setError('Pull failed. Verify the SillyTavern URL and try again.');
-      setPullStatus('idle');
+      setError(`Pull failed: ${err.message}`);
+    } finally {
+      setPulling(null);
     }
   }
 
+  // Filter characters by search (name or tag)
+  const lower = search.toLowerCase();
+  const filtered = characters.filter((c) => {
+    const name = (c.name || c.avatar || '').toLowerCase();
+    const tags = c.tags || [];
+    return name.includes(lower) || tags.some((t) => t.toLowerCase().includes(lower));
+  });
+
   return (
-    <div className={styles.wrapper}>
-      {/* Collapsible toggle */}
+    <>
       <button
         type="button"
-        className={styles.toggleBtn}
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
+        className={`btn-outline ${styles.openBtn}`}
+        onClick={openAndList}
       >
-        <span
-          className={`${styles.chevron} ${expanded ? styles.chevronOpen : styles.chevronClosed}`}
-        >
-          ▾
-        </span>
         Pull from SillyTavern
       </button>
 
-      {expanded && (
-        <div className={styles.body}>
-          {/* List characters button */}
-          <button
-            type="button"
-            className={`btn-outline ${styles.listBtn}`}
-            onClick={handleListCharacters}
-            disabled={listLoading}
-          >
-            {listLoading ? 'Loading…' : 'List Characters'}
-          </button>
+      {error && !isOpen && <p className={styles.inlineError}>{error}</p>}
 
-          {/* Character list */}
-          {characters.length > 0 && (
-            <div className={styles.charList}>
-              {characters.map((c) => (
-                <div
-                  key={c.avatar}
-                  className={`st-char-item ${selectedChar?.avatar === c.avatar ? styles.charItemSelected : ''}`}
-                  onClick={() => setSelectedChar(c)}
-                  role="option"
-                  aria-selected={selectedChar?.avatar === c.avatar}
-                >
-                  <span className="st-char-name">{c.name || c.avatar}</span>
-                  <TagBubbles tags={c.tags} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Pull action row */}
-          {characters.length > 0 && (
-            <div className={styles.pullRow}>
+      {isOpen && (
+        <div className={styles.backdrop} onClick={handleBackdropClick}>
+          <div className={styles.overlay} ref={overlayRef}>
+            <div className={styles.overlayHeader}>
+              <h3 className={styles.overlayTitle}>SillyTavern Characters</h3>
               <button
                 type="button"
-                className="btn-outline"
-                onClick={handlePull}
-                disabled={!selectedChar || pullStatus === 'pulling'}
+                className={styles.closeBtn}
+                onClick={() => setIsOpen(false)}
+                aria-label="Close"
               >
-                {pullStatus === 'pulling'
-                  ? 'Pulling…'
-                  : pullStatus === 'done'
-                  ? 'Pulled ✓'
-                  : 'Pull Character'}
+                ✕
               </button>
-              {pullStatus === 'done' && (
-                <span className={`${styles.pullStatus} ${styles.pullStatusDone}`}>
-                  Character imported!
-                </span>
-              )}
             </div>
-          )}
 
-          {/* Error display */}
-          {error && <p className={styles.error}>{error}</p>}
+            <input
+              ref={searchRef}
+              type="text"
+              className={styles.searchInput}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or tag…"
+            />
+
+            <div className={styles.charList}>
+              {loading && <p className={styles.loadingText}>Loading…</p>}
+
+              {!loading && filtered.length === 0 && characters.length > 0 && (
+                <p className={styles.emptyText}>No characters match "{search}"</p>
+              )}
+
+              {!loading && characters.length === 0 && !error && (
+                <p className={styles.emptyText}>No characters found.</p>
+              )}
+
+              {!loading && filtered.map((c) => (
+                <button
+                  key={c.avatar}
+                  type="button"
+                  className={styles.charRow}
+                  onClick={() => handlePull(c)}
+                  disabled={pulling !== null}
+                >
+                  <span className={styles.charName}>
+                    {pulling === c.avatar ? 'Pulling…' : (c.name || c.avatar)}
+                  </span>
+                  <TagSummary tags={c.tags} />
+                </button>
+              ))}
+            </div>
+
+            {error && <p className={styles.overlayError}>{error}</p>}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

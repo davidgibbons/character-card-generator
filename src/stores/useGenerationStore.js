@@ -29,6 +29,11 @@ const useGenerationStore = create((set, get) => ({
   // ── Dirty tracking ─────────────────────────────────
   isDirty: false,           // true after generate/edit, false after successful save
 
+  // ── Create form state (persists across tab switches) ──
+  concept: '',
+  characterName: '',
+  pov: 'first',
+
   // ── Actions ────────────────────────────────────────
 
   /** Accumulate a streaming chunk. Use via getState().append(chunk) — never pass as React state setter. */
@@ -116,6 +121,15 @@ const useGenerationStore = create((set, get) => ({
 
   /** Mark character data as dirty (unsaved changes). */
   setDirty: (flag) => set({ isDirty: flag }),
+
+  /** Update create-form concept text. */
+  setConcept: (text) => set({ concept: text }),
+
+  /** Update create-form character name. */
+  setCharacterName: (name) => set({ characterName: name }),
+
+  /** Update create-form POV mode. */
+  setPov: (mode) => set({ pov: mode }),
 }));
 
 export default useGenerationStore;

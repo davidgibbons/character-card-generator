@@ -81,7 +81,7 @@ export default function CharacterEditor() {
       <div className={styles.emptyState}>
         <h3 className={styles.emptyHeading}>No character yet</h3>
         <p className={styles.emptyBody}>
-          Enter a concept on the left and click Generate Character to create your first character.
+          Switch to the Create tab and enter a concept to generate a character, or pull one from SillyTavern.
         </p>
       </div>
     );

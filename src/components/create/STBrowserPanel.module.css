@@ -1,93 +1,195 @@
-/* STBrowserPanel.module.css */
+/* STBrowserPanel — floating overlay browser */
 
-.wrapper {
+.openBtn {
+  /* Inherits btn-outline styles; keep compact */
+}
+
+.inlineError {
+  font-size: 0.85rem;
+  color: var(--error, #c0392b);
+  margin-top: 0.3rem;
+}
+
+/* ── Backdrop + overlay ──────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.overlay {
+  background: var(--surface, #fff);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-muted, #f9fcff);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  width: min(520px, 90vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.toggleBtn {
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
+.overlayHeader {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  user-select: none;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.toggleBtn:hover {
-  background: color-mix(in srgb, var(--accent, #5577cc) 6%, transparent 94%);
+.overlayTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
 }
 
-.chevron {
-  font-style: normal;
-  font-size: 0.8rem;
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
   color: var(--text-secondary);
-  transition: transform 0.15s ease;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm, 4px);
 }
 
-.chevronOpen {
-  transform: rotate(0deg);
+.closeBtn:hover {
+  background: var(--surface-muted, #f0f0f0);
+  color: var(--text-primary);
 }
 
-.chevronClosed {
-  transform: rotate(-90deg);
+/* ── Search ──────────────────────────────────── */
+
+.searchInput {
+  margin: 0.6rem 1rem 0;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--surface-muted, #f9fcff);
+  color: var(--text-primary);
+  outline: none;
 }
 
-.body {
-  padding: 0.65rem 0.85rem 0.85rem;
+.searchInput:focus {
+  border-color: var(--accent, #5577cc);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #5577cc) 20%, transparent 80%);
+}
+
+/* ── Character list ──────────────────────────── */
+
+.charList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.4rem 0;
+  min-height: 120px;
+}
+
+.loadingText,
+.emptyText {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding: 1.5rem 1rem;
+}
+
+.charRow {
   display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  text-align: left;
+  gap: 0.5rem;
+  transition: background 0.1s;
+}
+
+.charRow:hover {
+  background: color-mix(in srgb, var(--accent, #5577cc) 8%, transparent 92%);
+}
+
+.charRow:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.charName {
+  font-weight: 500;
+  flex-shrink: 0;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tag summary ─────────────────────────────── */
+
+.tagSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tagChip {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent, #5577cc) 12%, transparent 88%);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.tagCount {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  flex-shrink: 0;
+  cursor: help;
+}
+
+/* ── Error in overlay ────────────────────────── */
+
+.overlayError {
+  font-size: 0.85rem;
+  color: var(--error, #c0392b);
+  padding: 0.5rem 1rem 0.75rem;
   border-top: 1px solid var(--border);
 }
 
-.listBtn {
-  align-self: flex-start;
+/* ── Dark mode ───────────────────────────────── */
+
+:global([data-theme="dark"]) .overlay {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
-.charList {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  max-height: 240px;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+:global([data-theme="dark"]) .closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.charItemSelected {
-  background: color-mix(in srgb, var(--accent, #5577cc) 12%, var(--surface) 88%);
-}
-
-.pullRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.pullStatus {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-}
-
-.pullStatusDone {
-  color: #2a8c4a;
-  font-weight: 600;
-}
-
-.error {
-  font-size: 0.88rem;
-  color: var(--error, #c0392b);
-  padding: 0.3rem 0;
+:global([data-theme="dark"]) .charRow:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
