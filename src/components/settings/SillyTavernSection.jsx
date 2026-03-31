@@ -122,7 +122,7 @@ export default function SillyTavernSection({ draft, updateDraft, onClose }) {
           'X-ST-URL': stUrl,
           'X-ST-Password': stPassword,
         },
-        body: JSON.stringify({ avatar_url: selectedChar.avatar_url }),
+        body: JSON.stringify({ avatar_url: selectedChar.avatar }),
       });
       if (!r.ok) throw new Error(await r.text());
       const raw = await r.json();
@@ -179,15 +179,15 @@ export default function SillyTavernSection({ draft, updateDraft, onClose }) {
           <label className={styles.label}>Pull from SillyTavern</label>
           <select
             className={styles.select}
-            value={selectedChar?.avatar_url || ''}
+            value={selectedChar?.avatar || ''}
             onChange={(e) => {
-              const c = stCharacters.find((x) => x.avatar_url === e.target.value);
+              const c = stCharacters.find((x) => x.avatar === e.target.value);
               setSelectedChar(c || null);
             }}
           >
             <option value="">Select a character\u2026</option>
             {stCharacters.map((c) => (
-              <option key={c.avatar_url} value={c.avatar_url}>{c.name || c.avatar_url}</option>
+              <option key={c.avatar} value={c.avatar}>{c.name || c.avatar}</option>
             ))}
           </select>
           <button
