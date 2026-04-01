@@ -2,24 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import useConfigStore from '../../stores/configStore';
 import useGenerationStore from '../../stores/useGenerationStore';
 import useLorebookStore from '../../stores/useLorebookStore';
+import { CharacterCard, fromCard } from '../../services/charCard';
 import styles from './STBrowserPanel.module.css';
-
-/** Normalize ST V2 spec export → app internal camelCase format */
-function normalizeStCharacter(raw) {
-  const d = raw?.spec === 'chara_card_v2' ? raw.data : raw;
-  return {
-    name: d.name || '',
-    description: d.description || '',
-    personality: d.personality || '',
-    scenario: d.scenario || '',
-    firstMessage: d.first_mes || '',
-    mesExample: d.mes_example || '',
-    systemPrompt: d.system_prompt || '',
-    creatorNotes: d.creator_notes || '',
-    tags: Array.isArray(d.tags) ? d.tags : [],
-    characterBook: d.character_book || null,
-  };
-}
 
 /** Compact tag summary: sorted by shortest, truncated to ~16 chars total */
 function TagSummary({ tags }) {
@@ -125,14 +109,16 @@ export default function STBrowserPanel() {
       });
       if (!r.ok) throw new Error(await r.text());
       const raw = await r.json();
-      const normalized = normalizeStCharacter(raw);
+      const card = CharacterCard.from_json(raw);
+      const normalized = fromCard(card);
       useGenerationStore.getState().setCharacter(normalized);
 
-      // 2b. Import lorebook entries if present
-      if (normalized.characterBook?.entries) {
-        const entries = Array.isArray(normalized.characterBook.entries)
-          ? normalized.characterBook.entries
-          : Object.values(normalized.characterBook.entries);
+      // Import lorebook entries if present
+      const book = card.character_book;
+      if (book?.entries) {
+        const entries = Array.isArray(book.entries)
+          ? book.entries
+          : Object.values(book.entries);
         if (entries.length > 0) {
           useLorebookStore.getState().setEntries(entries);
         }

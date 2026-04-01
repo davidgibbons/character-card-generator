@@ -463,12 +463,20 @@ app.get("/api/proxy-image", async (req, res) => {
     const fetchHeaders = {};
     const stUrl = req.headers["x-st-url"];
     const stPassword = req.headers["x-st-password"];
-    if (stUrl && imageUrl.startsWith(stUrl)) {
+    // Normalize trailing slashes before comparing — ST URLs may or may not have them
+    const stUrlBase = stUrl ? stUrl.replace(/\/+$/, '') : null;
+    const isSameHost = stUrlBase && (
+      imageUrl.startsWith(stUrlBase + '/') ||
+      imageUrl.startsWith(stUrlBase + '?') ||
+      imageUrl === stUrlBase
+    );
+    if (isSameHost) {
       try {
         const { token, cookies } = await getSTCsrfToken(stUrl, stPassword || "");
         Object.assign(fetchHeaders, stHeaders(token, cookies, stPassword || ""));
       } catch (authErr) {
         console.warn("proxy-image: ST auth failed, trying without:", authErr.message);
+        // Fall through — try without auth (some ST instances don't require it for images)
       }
     }
 

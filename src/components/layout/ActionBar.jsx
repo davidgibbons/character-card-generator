@@ -4,7 +4,7 @@ import useGenerationStore from '../../stores/useGenerationStore';
 import useConfigStore from '../../stores/configStore';
 import { apiHandler } from '../../services/api';
 import { storageClient } from '../../services/storage';
-import { pngEncoder } from '../../services/pngEncoder';
+import { createPng, download, toV3Spec } from '../../services/charCard';
 import styles from './ActionBar.module.css';
 
 /**
@@ -183,8 +183,8 @@ export default function ActionBar({ activeTab = 'create' }) {
       if (!blob) {
         blob = await createBlankPng();
       }
-      const pngBlob = await pngEncoder.createCharacterCard(blob, char);
-      pngEncoder.downloadCharacterCard(pngBlob, char.name || 'character');
+      const pngBlob = await createPng(blob, char);
+      download(pngBlob, char.name || 'character');
     } catch (err) {
       console.error('PNG download failed:', err);
     }
@@ -209,11 +209,12 @@ export default function ActionBar({ activeTab = 'create' }) {
       const fileName = `${char.name || 'character'}.png`;
       let body;
       if (imageBlob) {
-        const pngBlob = await pngEncoder.createCharacterCard(imageBlob, char);
+        const pngBlob = await createPng(imageBlob, char);
         const imageBase64 = await blobToBase64(pngBlob);
         body = { imageBase64, fileName };
       } else {
-        body = { characterJson: char, fileName };
+        // No image — send V3 spec JSON directly
+        body = { characterJson: toV3Spec(char), fileName };
       }
       const r = await fetch('/api/st/push', {
         method: 'POST',

@@ -81,7 +81,7 @@ export default function CharacterEditor() {
         URL.revokeObjectURL(store.imageDisplayUrl);
       }
       const displayUrl = URL.createObjectURL(file);
-      store.setImage(file, displayUrl); // File is Blob subtype — works with pngEncoder
+      store.setImage(file, displayUrl);
     } catch (err) {
       console.error('Upload validation failed:', err);
     }
