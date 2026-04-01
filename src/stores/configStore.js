@@ -317,14 +317,15 @@ const useConfigStore = create(
 
 // Standalone function for persisting sensitive values
 function persistSensitiveValues(state) {
+  // Guard: never overwrite stored keys with empty values (protects against hydration race)
   if (state.app.persistApiKeys) {
-    persistLocalStorageValue(SESSION_STORAGE_KEYS.textApiKey, state.api.text.apiKey);
-    persistLocalStorageValue(SESSION_STORAGE_KEYS.imageApiKey, state.api.image.apiKey);
-    persistLocalStorageValue(SESSION_STORAGE_KEYS.stPassword, state.api.sillytavern.password);
+    if (state.api.text.apiKey) persistLocalStorageValue(SESSION_STORAGE_KEYS.textApiKey, state.api.text.apiKey);
+    if (state.api.image.apiKey) persistLocalStorageValue(SESSION_STORAGE_KEYS.imageApiKey, state.api.image.apiKey);
+    if (state.api.sillytavern.password) persistLocalStorageValue(SESSION_STORAGE_KEYS.stPassword, state.api.sillytavern.password);
   } else {
-    persistSessionValue(SESSION_STORAGE_KEYS.textApiKey, state.api.text.apiKey);
-    persistSessionValue(SESSION_STORAGE_KEYS.imageApiKey, state.api.image.apiKey);
-    persistSessionValue(SESSION_STORAGE_KEYS.stPassword, state.api.sillytavern.password);
+    if (state.api.text.apiKey) persistSessionValue(SESSION_STORAGE_KEYS.textApiKey, state.api.text.apiKey);
+    if (state.api.image.apiKey) persistSessionValue(SESSION_STORAGE_KEYS.imageApiKey, state.api.image.apiKey);
+    if (state.api.sillytavern.password) persistSessionValue(SESSION_STORAGE_KEYS.stPassword, state.api.sillytavern.password);
   }
 }
 

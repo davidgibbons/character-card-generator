@@ -26,6 +26,7 @@ export default function ActionBar({ activeTab = 'create' }) {
   const character = useGenerationStore((s) => s.character);
   const evalFeedback = useGenerationStore((s) => s.evalFeedback);
   const reviseInstruction = useGenerationStore((s) => s.reviseInstruction);
+  const isDirty = useGenerationStore((s) => s.isDirty);
   const [evalError, setEvalError] = useState('');
   const [reviseError, setReviseError] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
@@ -300,10 +301,10 @@ export default function ActionBar({ activeTab = 'create' }) {
         {uiPhase !== 'generating' && hasCharacter && (
           <div className={`${styles.btnGroup} ${styles.exportGroup}`}>
             <button
-              className={`btn-primary ${styles.btn} ${saveStatus === 'saved' ? styles.saveSuccess : ''}`}
+              className={`btn-primary ${styles.btn} ${(!isDirty && character) ? styles.saveSuccess : ''}`}
               onClick={handleSave}
             >
-              {saveStatus === 'saving' ? 'Saving\u2026' : saveStatus === 'saved' ? 'Saved' : 'Save Card'}
+              {saveStatus === 'saving' ? 'Saving\u2026' : (!isDirty && character) ? 'Saved' : 'Save Card'}
             </button>
             <button
               className={`btn-outline ${styles.btn}`}

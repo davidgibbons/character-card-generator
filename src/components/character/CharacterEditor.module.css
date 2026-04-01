@@ -25,6 +25,8 @@
 
 .headerRight {
   /* portrait slot fills right column */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .imgBtns {
@@ -32,6 +34,7 @@
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-top: 0.25rem;
+  justify-content: center;
 }
 
 /* ── Subtab bar ────────────────────────────────────── */

@@ -58,6 +58,6 @@ export function sectionsToCharacter(sections, rawText = '') {
     tags,
     mesExample: sections['message example'] || sections['example messages'] || sections['mes example'] || '',
     systemPrompt: sections['system prompt'] || sections['systemprompt'] || '',
-    creatorNotes: sections['creator notes'] || sections['creatornotes'] || '',
+    creatorNotes: '',  // Manual-only — never populated from LLM output
   };
 }

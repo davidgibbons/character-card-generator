@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import useConfigStore from '../../stores/configStore';
 import useGenerationStore from '../../stores/useGenerationStore';
+import useLorebookStore from '../../stores/useLorebookStore';
 import styles from './STBrowserPanel.module.css';
 
 /** Normalize ST V2 spec export → app internal camelCase format */
@@ -124,27 +125,44 @@ export default function STBrowserPanel() {
       });
       if (!r.ok) throw new Error(await r.text());
       const raw = await r.json();
-      useGenerationStore.getState().setCharacter(normalizeStCharacter(raw));
+      const normalized = normalizeStCharacter(raw);
+      useGenerationStore.getState().setCharacter(normalized);
 
-      // 2. Import avatar via proxy-image with ST auth
+      // 2b. Import lorebook entries if present
+      if (normalized.characterBook?.entries) {
+        const entries = Array.isArray(normalized.characterBook.entries)
+          ? normalized.characterBook.entries
+          : Object.values(normalized.characterBook.entries);
+        if (entries.length > 0) {
+          useLorebookStore.getState().setEntries(entries);
+        }
+      }
+
+      // 2. Import avatar via proxy-image with ST auth (try /characters/ then /thumbnail)
       if (char.avatar) {
         try {
           const avatarUrl = `${stUrl}/characters/${char.avatar}`;
-          const imgResp = await fetch(
+          console.log('STBrowserPanel: fetching avatar:', avatarUrl);
+          const authHeaders = { 'X-ST-URL': stUrl, 'X-ST-Password': stPassword || '' };
+          let imgResp = await fetch(
             `/api/proxy-image?url=${encodeURIComponent(avatarUrl)}`,
-            {
-              headers: {
-                'X-ST-URL': stUrl,
-                'X-ST-Password': stPassword || '',
-              },
-            }
+            { headers: authHeaders }
           );
-          if (imgResp.ok) {
+          // If /characters/ fails or returns non-image, try /thumbnail endpoint
+          if (!imgResp.ok || !(imgResp.headers.get('content-type') || '').startsWith('image/')) {
+            const thumbUrl = `${stUrl}/thumbnail?type=avatar&file=${encodeURIComponent(char.avatar)}`;
+            console.log('STBrowserPanel: trying thumbnail:', thumbUrl);
+            imgResp = await fetch(
+              `/api/proxy-image?url=${encodeURIComponent(thumbUrl)}`,
+              { headers: authHeaders }
+            );
+          }
+          if (imgResp.ok && (imgResp.headers.get('content-type') || '').startsWith('image/')) {
             const blob = await imgResp.blob();
             const displayUrl = URL.createObjectURL(blob);
             useGenerationStore.getState().setImage(blob, displayUrl);
           } else {
-            console.warn('STBrowserPanel: avatar fetch failed:', imgResp.status);
+            console.warn('STBrowserPanel: avatar not available (status:', imgResp.status, ')');
           }
         } catch (avatarErr) {
           console.warn('STBrowserPanel: avatar import failed:', avatarErr);

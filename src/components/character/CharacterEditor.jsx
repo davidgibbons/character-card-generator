@@ -3,6 +3,7 @@ import FieldRow from './FieldRow';
 import ImageSlot from './ImageSlot';
 import LorebookTab from '../lorebook/LorebookTab';
 import useGenerationStore from '../../stores/useGenerationStore';
+import { configStore } from '../../stores/configStore';
 import { imageGenerator } from '../../services/imageGenerator';
 import styles from './CharacterEditor.module.css';
 
@@ -34,11 +35,22 @@ export default function CharacterEditor() {
   const imageDisplayUrl = useGenerationStore((s) => s.imageDisplayUrl);
   const isImageGenerating = useGenerationStore((s) => s.isImageGenerating);
   const [subtab, setSubtab] = useState('character');
+  const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
 
   async function handleGenerateImage() {
     const char = useGenerationStore.getState().character;
     if (!char) return;
+
+    // Check image API configuration
+    const imageApiKey = configStore.get('api.image.apiKey');
+    const imageBaseUrl = configStore.get('api.image.baseUrl');
+    if (!imageApiKey || !imageBaseUrl) {
+      setImageError('Image API not configured. Open Settings to enter your Image API key and base URL.');
+      return;
+    }
+    setImageError('');
+
     const store = useGenerationStore.getState();
     store.setImageGenerating(true);
     // Revoke old display URL before generating new one
@@ -53,6 +65,7 @@ export default function CharacterEditor() {
       store.setImage(blob, displayUrl);
     } catch (err) {
       console.error('Image generation failed:', err);
+      setImageError(`Image generation failed: ${err.message}`);
     } finally {
       useGenerationStore.getState().setImageGenerating(false);
     }
@@ -131,6 +144,7 @@ export default function CharacterEditor() {
               {imageDisplayUrl ? 'Regenerate Image' : 'Generate Image'}
             </button>
           </div>
+          {imageError && <p style={{ color: 'var(--error, #c0392b)', fontSize: '0.85rem', marginTop: '0.3rem' }}>{imageError}</p>}
         </div>
       </div>
 
