@@ -331,19 +331,15 @@ export default function ActionBar({ activeTab = 'create' }) {
         <ProgressBar active={isGenerating} />
       </div>
 
-      {/* Revision instruction textarea — Edit tab (always when character exists) or Evaluate tab (when eval exists) */}
-      {((activeTab === 'edit' && hasCharacter) || (activeTab === 'evaluate' && uiPhase === 'has-eval')) && (
+      {/* Revision instruction textarea — Edit tab only when character exists */}
+      {activeTab === 'edit' && hasCharacter && (
         <div className={styles.reviseRow}>
-          <label className={styles.reviseLabel}>
-            {activeTab === 'evaluate' ? 'Refinement instructions (from evaluation)' : 'Revision instructions'}
-          </label>
+          <label className={styles.reviseLabel}>Revision instructions</label>
           <textarea
             className={`textarea ${styles.reviseTextarea}`}
             value={reviseInstruction}
             onChange={handleReviseInstructionChange}
-            placeholder={activeTab === 'evaluate'
-              ? 'Click suggestions above to exclude them, then click Refine'
-              : 'Describe what to change…'}
+            placeholder="Describe what to change…"
           />
         </div>
       )}

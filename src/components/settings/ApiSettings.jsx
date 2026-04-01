@@ -50,6 +50,7 @@ export default function ApiSettings({ draft, updateDraft }) {
           <label className={styles.label}>API Key</label>
           <input
             type="password"
+            autoComplete="off"
             className={styles.input}
             value={draft.api.text.apiKey}
             onChange={(e) => updateDraft('api.text.apiKey', e.target.value)}
@@ -143,6 +144,7 @@ export default function ApiSettings({ draft, updateDraft }) {
           <label className={styles.label}>API Key</label>
           <input
             type="password"
+            autoComplete="off"
             className={styles.input}
             value={draft.api.image.apiKey}
             onChange={(e) => updateDraft('api.image.apiKey', e.target.value)}

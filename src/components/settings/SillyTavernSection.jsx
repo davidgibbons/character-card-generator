@@ -37,6 +37,7 @@ export default function SillyTavernSection({ draft, updateDraft }) {
         <label className={styles.label}>Password</label>
         <input
           type="password"
+          autoComplete="off"
           className={styles.input}
           value={stPassword}
           onChange={(e) => updateDraft('api.sillytavern.password', e.target.value)}

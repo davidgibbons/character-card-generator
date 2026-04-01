@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import FieldRow from './FieldRow';
-import EvalFeedback from './EvalFeedback';
 import ImageSlot from './ImageSlot';
 import LorebookTab from '../lorebook/LorebookTab';
 import useGenerationStore from '../../stores/useGenerationStore';
@@ -32,7 +31,6 @@ const ADVANCED_FIELDS = ['systemPrompt'];
 export default function CharacterEditor() {
   const character = useGenerationStore((s) => s.character);
   const updateField = useGenerationStore((s) => s.updateField);
-  const evalFeedback = useGenerationStore((s) => s.evalFeedback);
   const imageDisplayUrl = useGenerationStore((s) => s.imageDisplayUrl);
   const isImageGenerating = useGenerationStore((s) => s.isImageGenerating);
   const [subtab, setSubtab] = useState('character');
@@ -184,13 +182,6 @@ export default function CharacterEditor() {
               ))}
             </div>
           </details>
-
-          {/* EvalFeedback below advanced settings */}
-          {evalFeedback && (
-            <div className={styles.evalSeparator}>
-              <EvalFeedback />
-            </div>
-          )}
         </>
       )}
 

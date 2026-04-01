@@ -30,17 +30,6 @@ export default function CreatePanel() {
 
   const isGenerating = useGenerationStore((s) => s.isGenerating);
 
-  // Content policy prefix state — read from configStore
-  const [nsfwPrefix, setNsfwPrefix] = useState(
-    () => !!configStore.get('prompts.contentPolicyPrefix')
-  );
-
-  function handleNsfwToggle(e) {
-    const checked = e.target.checked;
-    setNsfwPrefix(checked);
-    configStore.set('prompts.contentPolicyPrefix', checked);
-  }
-
   // Listen for 'gsd:generate' dispatched by ActionBar Generate/Regenerate button
   useEffect(() => {
     const onGenerate = () => handleGenerate();
@@ -54,6 +43,15 @@ export default function CreatePanel() {
       setConceptError('Enter a character concept before generating.');
       return;
     }
+
+    // Check API configuration before starting generation
+    const apiKey = configStore.get('api.text.apiKey');
+    const baseUrl = configStore.get('api.text.baseUrl');
+    if (!apiKey || !baseUrl) {
+      setGenError('API not configured. Open Settings to enter your API key and base URL.');
+      return;
+    }
+
     setConceptError('');
     setGenError('');
 
@@ -140,19 +138,6 @@ export default function CreatePanel() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* NSFW Prefix Toggle */}
-      <div className={`${styles.formGroup} ${styles.checkboxRow}`}>
-        <label className={styles.checkboxLabel} title="Prepends a content policy bypass prefix to the generation prompt, allowing uncensored character generation on models that support it.">
-          <input
-            type="checkbox"
-            checked={nsfwPrefix}
-            onChange={handleNsfwToggle}
-            disabled={isGenerating}
-          />
-          <span>NSFW prefix</span>
-        </label>
       </div>
 
       {/* ST Browser — pull a character from SillyTavern */}

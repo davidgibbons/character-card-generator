@@ -7,6 +7,7 @@ import LibraryDrawer from './components/library/LibraryDrawer';
 import CreatePanel from './components/create/CreatePanel';
 import StreamView from './components/character/StreamView';
 import CharacterEditor from './components/character/CharacterEditor';
+import EvaluatePanel from './components/evaluate/EvaluatePanel';
 import useGenerationStore from './stores/useGenerationStore';
 import useLibraryStore from './stores/useLibraryStore';
 import { useTheme } from './hooks/useTheme';
@@ -44,7 +45,7 @@ export default function App() {
         content = <CharacterEditor />;
         break;
       case 'evaluate':
-        content = <CharacterEditor />;
+        content = <EvaluatePanel />;
         break;
       default:
         content = <CreatePanel />;

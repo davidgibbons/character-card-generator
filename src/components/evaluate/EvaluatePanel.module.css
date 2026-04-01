@@ -1,0 +1,42 @@
+/* EvaluatePanel styles */
+
+.panel {
+  padding: 1rem 0;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+}
+
+.emptyState h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.instructionsSection {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.instructionsLabel {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.instructionsTextarea {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+}

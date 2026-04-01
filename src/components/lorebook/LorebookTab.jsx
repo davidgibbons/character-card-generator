@@ -3,6 +3,7 @@ import useLorebookStore from '../../stores/useLorebookStore';
 import useGenerationStore from '../../stores/useGenerationStore';
 import { apiHandler } from '../../services/api';
 import Modal from '../common/Modal';
+import ProgressBar from '../common/ProgressBar';
 import LorebookEntryRow from './LorebookEntryRow';
 import styles from './LorebookTab.module.css';
 
@@ -81,6 +82,8 @@ export default function LorebookTab() {
           + Add Entry
         </button>
       </div>
+
+      <ProgressBar active={isGenerating} />
 
       {genError && <p className={styles.error}>{genError}</p>}
 
