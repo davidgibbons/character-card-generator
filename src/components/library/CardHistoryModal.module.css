@@ -1,13 +1,225 @@
-.instruction { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
-.loading, .empty, .error { font-size: 0.92rem; color: var(--text-soft); padding: 0.5rem 0; }
-.error { color: var(--error); }
-.historyList { display: flex; flex-direction: column; gap: 0.35rem; max-height: 240px; overflow-y: auto; margin-bottom: 0.75rem; }
-.commitRow { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: background var(--transition); font-size: 0.88rem; }
+/* ── Wide modal override ── */
+.wideModal {
+  width: min(960px, 100%);
+}
+
+/* CardHistoryModal — two-column layout: commit list left, preview/diff right */
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: 420px;
+  max-height: 68vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar (commit list) ── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.sidebarTitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.modeToggle {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.modeToggle:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.modeActive { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+.diffHint {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  padding: 0.4rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.commitList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.4rem 0;
+}
+
+.commitRow {
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background var(--transition), border-color var(--transition);
+}
+
 .commitRow:hover { background: var(--accent-soft); }
-.selectedA { border-color: var(--accent); background: rgba(14, 122, 138, 0.08); }
-.selectedB { border-color: var(--success); background: rgba(31, 157, 102, 0.08); }
-.commitMsg { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
-.commitDate { font-size: 0.78rem; color: var(--text-secondary); flex-shrink: 0; }
-.commitHash { font-size: 0.78rem; color: var(--text-soft); font-family: monospace; flex-shrink: 0; }
-.diffActions { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-.hint { font-size: 0.82rem; color: var(--text-soft); }
+
+.selectedA {
+  border-left-color: var(--accent);
+  background: rgba(14, 122, 138, 0.07);
+}
+
+.selectedB {
+  border-left-color: var(--success);
+  background: rgba(31, 157, 102, 0.07);
+}
+
+.commitTop {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.commitMsg {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.latestBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  flex-shrink: 0;
+}
+
+.commitMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.commitDate {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.commitHash {
+  font-size: 0.74rem;
+  color: var(--text-soft);
+  font-family: monospace;
+}
+
+/* ── Main panel (preview / diff) ── */
+.main {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.previewPanel, .diffPanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.previewEmpty {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+/* ── Version preview fields ── */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.previewField {}
+
+.previewLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.2rem;
+}
+
+.previewValue {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+}
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.latestNote {
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+/* ── Misc ── */
+.error { color: var(--error); font-size: 0.9rem; padding: 0.25rem 0; }
+.actionError { color: var(--error); font-size: 0.85rem; }
+.empty { color: var(--text-soft); font-size: 0.88rem; padding: 0.5rem 0.85rem; }
+
+/* ── Dark mode ── */
+:global([data-theme="dark"]) .previewValue {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Responsive: stack on narrow screens ── */
+@media (max-width: 600px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    max-height: none;
+  }
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 220px;
+  }
+}

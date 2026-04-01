@@ -139,6 +139,42 @@ class ServerBackedStorage {
       console.error("deleteCard failed:", error);
     }
   }
+
+  async getCardVersion(slug, hash) {
+    try {
+      const res = await fetch(`/api/cards/${slug}/version/${hash}`);
+      if (!res.ok) return null;
+      const { card } = await res.json();
+      return card;
+    } catch (error) {
+      console.error("getCardVersion failed:", error);
+      return null;
+    }
+  }
+
+  async getCardHistory(slug) {
+    try {
+      const res = await fetch(`/api/cards/${slug}/history`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("getCardHistory failed:", error);
+      return [];
+    }
+  }
+
+  async getCardDiff(slug, hashA, hashB) {
+    try {
+      const res = await fetch(`/api/cards/${slug}/diff/${hashA}/${hashB}`);
+      if (!res.ok) return {};
+      const data = await res.json();
+      return data.diff || {};
+    } catch (error) {
+      console.error("getCardDiff failed:", error);
+      return {};
+    }
+  }
 }
 
 // -- Utilities -------------------------------------------------------------------

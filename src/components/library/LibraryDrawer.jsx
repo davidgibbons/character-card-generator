@@ -165,6 +165,13 @@ export default function LibraryDrawer() {
           slug={historySlug}
           isOpen={historySlug !== null}
           onClose={() => setHistorySlug(null)}
+          onLoad={(character) => {
+            const store = useGenerationStore.getState();
+            store.setCharacter(character);
+            store.setDirty(true);
+            setHistorySlug(null);
+            setIsOpen(false);
+          }}
         />
       )}
     </>

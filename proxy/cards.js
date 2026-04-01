@@ -272,6 +272,31 @@ router.get("/:slug/history", async (req, res) => {
 
 // ── GET /api/cards/:slug/diff/:commitA/:commitB ────────────────────────────
 
+// Canonical field list — covers camelCase (current) and snake_case (legacy saves)
+const DIFF_FIELDS = [
+  ["name",        "name"],
+  ["description", "description"],
+  ["personality", "personality"],
+  ["scenario",    "scenario"],
+  ["firstMessage","first_mes"],     // camelCase current / snake_case legacy
+  ["mesExample",  "mes_example"],   // camelCase current / snake_case legacy
+  ["systemPrompt","system_prompt"],
+  ["creatorNotes","creator_notes"],
+  ["tags",        "tags"],
+];
+
+/** Read a field from a card object, trying camelCase then snake_case key. */
+function readField(card, camel, snake) {
+  return camel in card ? card[camel] : (snake in card ? card[snake] : undefined);
+}
+
+/** Normalise a field value to a comparable string for diff. */
+function normalise(val) {
+  if (val === undefined || val === null) return '';
+  if (Array.isArray(val)) return val.join(', ');
+  return String(val);
+}
+
 router.get("/:slug/diff/:commitA/:commitB", async (req, res) => {
   const { slug, commitA, commitB } = req.params;
   const relPath = path.join(slug, "card.json");
@@ -286,16 +311,11 @@ router.get("/:slug/diff/:commitA/:commitB", async (req, res) => {
     const cardB = JSON.parse(rawB);
 
     const diff = {};
-    for (const f of [
-      "name",
-      "description",
-      "personality",
-      "scenario",
-      "firstMessage",
-      "mes_example",
-    ]) {
-      if (cardA[f] !== cardB[f]) {
-        diff[f] = { before: cardA[f], after: cardB[f] };
+    for (const [camel, snake] of DIFF_FIELDS) {
+      const a = normalise(readField(cardA, camel, snake));
+      const b = normalise(readField(cardB, camel, snake));
+      if (a !== b) {
+        diff[camel] = { before: a, after: b };
       }
     }
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import styles from './Modal.module.css';
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({ isOpen, onClose, title, children, className }) {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -25,7 +25,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
   return (
     <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div className={`${styles.modal}${className ? ` ${className}` : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2 className={styles.title}>{title}</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
