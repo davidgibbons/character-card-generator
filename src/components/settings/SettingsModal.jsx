@@ -45,7 +45,6 @@ export default function SettingsModal({ isOpen, onClose }) {
   }
 
   function handleSave() {
-    const originalPersistApiKeys = useConfigStore.getState().app.persistApiKeys;
     const storeSet = useConfigStore.getState().set;
 
     // Text API fields
@@ -76,13 +75,8 @@ export default function SettingsModal({ isOpen, onClose }) {
     // Prompts fields
     storeSet('prompts.contentPolicyPrefix', draft.prompts.contentPolicyPrefix);
 
-    // Persist all changes
+    // Persist all changes (persist middleware writes automatically on set)
     useConfigStore.getState().saveConfig();
-
-    // If persistApiKeys changed, migrate keys between storage types
-    if (draft.app.persistApiKeys !== originalPersistApiKeys) {
-      useConfigStore.getState().updateStorageMethod();
-    }
 
     onClose();
   }
