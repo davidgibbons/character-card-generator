@@ -10,11 +10,12 @@ const debugLog = (...args) => {
 
 class APIHandler {
   constructor() {
-    this.lastGeneratedImagePrompt = null; // Store the last generated prompt for display
-    this.currentAbortController = null; // Store current abort controller for stopping generation
-    this.currentReader = null; // Store current stream reader for cancellation
+    this.lastGeneratedImagePrompt = null;
+    this.currentAbortController = null;
+    this.currentReader = null;
     this.userStopRequested = false;
-    this.lastRawResponse = null; // Store last raw API response for debug modal
+    this.lastRawResponse = null;
+    this.lastDebugEntry = null; // { timestamp, endpoint, requestData, responseData, error }
   }
 
   /**
@@ -108,6 +109,18 @@ class APIHandler {
       dataKeys: Object.keys(data),
     });
 
+    // Redact API key from debug entry
+    const debugHeaders = { ...headers };
+    if (debugHeaders['X-API-Key']) debugHeaders['X-API-Key'] = '[REDACTED]';
+    if (debugHeaders['Authorization']) debugHeaders['Authorization'] = '[REDACTED]';
+    const debugEntry = {
+      timestamp: new Date().toISOString(),
+      endpoint: url,
+      requestData: { ...data, _headers: debugHeaders },
+      responseData: null,
+      error: null,
+    };
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -139,6 +152,9 @@ class APIHandler {
           errorData.error ||
           response.statusText;
 
+        debugEntry.error = { status: response.status, message: errorMessage, body: errorData };
+        this.lastDebugEntry = debugEntry;
+
         // Special handling for 401 errors
         if (response.status === 401) {
           throw new Error(`Authorization Error: ${errorMessage}
@@ -154,13 +170,18 @@ class APIHandler {
       }
 
       if (stream || isImageRequest) {
+        this.lastDebugEntry = debugEntry; // response captured later for streaming
         return response;
       } else {
         const result = await response.json();
         debugLog("API Response:", result);
+        debugEntry.responseData = result;
+        this.lastDebugEntry = debugEntry;
         return result;
       }
     } catch (error) {
+      if (!debugEntry.error) debugEntry.error = { message: error.message };
+      this.lastDebugEntry = debugEntry;
       clearTimeout(timeoutId);
 
       if (error.name === "AbortError") {
@@ -852,6 +873,7 @@ Shortened prompt (one paragraph):`,
 
     let cleaned = output.trim();
 
+    // Strip markdown code fences if present
     if (cleaned.startsWith("```")) {
       cleaned = cleaned
         .replace(/^```(?:json)?/i, "")
@@ -859,9 +881,17 @@ Shortened prompt (one paragraph):`,
         .trim();
     }
 
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleaned = jsonMatch[0];
+    // Try array first, then object — order matters for suggest which returns []
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+
+    if (arrayMatch && objectMatch) {
+      // Both present — pick whichever starts first in the string
+      cleaned = arrayMatch.index < objectMatch.index ? arrayMatch[0] : objectMatch[0];
+    } else if (arrayMatch) {
+      cleaned = arrayMatch[0];
+    } else if (objectMatch) {
+      cleaned = objectMatch[0];
     }
 
     return JSON.parse(cleaned);

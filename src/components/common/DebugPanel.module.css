@@ -1,0 +1,123 @@
+.panel {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  width: 480px;
+  max-width: calc(100vw - 2rem);
+  max-height: 420px;
+  background: #1a2030;
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.collapsed {
+  max-height: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #a5f3fc;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: #64748b;
+  flex: 1;
+}
+
+.collapseBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.3rem;
+  line-height: 1;
+}
+
+.collapseBtn:hover { color: #e2e8f0; }
+
+.empty {
+  padding: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-family: monospace;
+  border-bottom: 2px solid transparent;
+  transition: color 120ms, border-color 120ms;
+}
+
+.tab:hover { color: #e2e8f0; }
+.activeTab { color: #a5f3fc; border-bottom-color: #a5f3fc; }
+.errorTab { color: #fca5a5; }
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.76rem;
+}
+
+.metaLabel {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.metaValue {
+  color: #7dd3fc;
+  word-break: break-all;
+}
+
+.code {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: monospace;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.errorCode {
+  color: #fca5a5;
+}
