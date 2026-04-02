@@ -218,6 +218,27 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
             >
               {diffMode ? '← Preview' : 'Compare'}
             </button>
+            {!diffMode && previewHash && previewCard && (
+              <>
+                <button
+                  className={`btn-small ${styles.modeToggle}`}
+                  onClick={handleLoad}
+                  title="Load this version into the editor"
+                >
+                  Load
+                </button>
+                {!isLatest && (
+                  <button
+                    className={`btn-small ${styles.modeToggle}`}
+                    onClick={handleRestore}
+                    disabled={restoring}
+                    title="Save this version as a new revision"
+                  >
+                    {restoring ? '…' : 'Restore'}
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {diffMode && (
@@ -275,31 +296,6 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
               {loadingPreview && <div className={styles.previewEmpty}>Loading…</div>}
               {actionError && <p className={styles.actionError}>{actionError}</p>}
               {!loadingPreview && <VersionPreview card={previewCard} />}
-
-              {previewCard && (
-                <div className={styles.actions}>
-                  <button
-                    className="btn-outline"
-                    onClick={handleLoad}
-                    title="Load into editor without saving — marks as unsaved"
-                  >
-                    Load into Editor
-                  </button>
-                  {!isLatest && (
-                    <button
-                      className="btn-primary"
-                      onClick={handleRestore}
-                      disabled={restoring}
-                      title="Save this version as a new revision"
-                    >
-                      {restoring ? 'Restoring…' : 'Restore this Revision'}
-                    </button>
-                  )}
-                  {isLatest && (
-                    <span className={styles.latestNote}>This is the current version</span>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </div>
