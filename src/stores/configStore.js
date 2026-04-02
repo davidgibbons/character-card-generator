@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { encryptConfig, decryptConfig } from '../services/crypto';
 
 const LOCAL_STORAGE_KEY = 'charGeneratorConfig';
 
@@ -32,6 +33,41 @@ function setNestedValue(obj, path, value) {
   }, obj);
   target[lastKey] = value;
 }
+
+// ── Encrypted storage adapter ──────────────────────────────────────────────
+// Wraps localStorage with AES-GCM encryption for sensitive fields.
+// Encryption is only applied when persistApiKeys=true (keys are present).
+// The store always holds plaintext in memory; only the persisted blob is encrypted.
+
+const encryptedStorage = createJSONStorage(() => ({
+  getItem: async (name) => {
+    const raw = localStorage.getItem(name);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      // Decrypt sensitive fields in the stored state if present
+      if (parsed?.state?.api) {
+        parsed.state.api = await decryptConfig(parsed.state.api);
+      }
+      return JSON.stringify(parsed);
+    } catch {
+      return raw; // malformed — let Zustand handle it
+    }
+  },
+  setItem: async (name, value) => {
+    try {
+      const parsed = JSON.parse(value);
+      // Encrypt sensitive fields before writing if persistApiKeys is true
+      if (parsed?.state?.api && parsed?.state?.app?.persistApiKeys) {
+        parsed.state.api = await encryptConfig(parsed.state.api);
+      }
+      localStorage.setItem(name, JSON.stringify(parsed));
+    } catch {
+      localStorage.setItem(name, value); // fallback: write as-is
+    }
+  },
+  removeItem: (name) => localStorage.removeItem(name),
+}));
 
 // ── Zustand store ──────────────────────────────────────────────────────────
 
@@ -121,6 +157,7 @@ const useConfigStore = create(
     }),
     {
       name: LOCAL_STORAGE_KEY,
+      storage: encryptedStorage,
       partialize: (state) => {
         const { api, app, prompts } = state;
         const sanitizedApi = JSON.parse(JSON.stringify(api));

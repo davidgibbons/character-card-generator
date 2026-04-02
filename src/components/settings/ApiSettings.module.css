@@ -88,3 +88,30 @@
   font-size: 0.85rem;
   color: var(--error, #dc2626);
 }
+
+/* ENV passthrough styles */
+.envField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inputLocked {
+  flex: 1;
+  opacity: 0.6;
+  cursor: not-allowed;
+  letter-spacing: 0.1em;
+}
+
+.envBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}

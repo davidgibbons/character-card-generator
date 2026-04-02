@@ -107,13 +107,26 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// ── ENV-based config endpoint ──────────────────────────────────────────────
+// Reports which values are provided via environment variables so the UI
+// can show them as locked/read-only. Never exposes the actual values.
+app.get("/api/env-config", (req, res) => {
+  res.json({
+    textApiKey:   !!process.env.TEXT_API_KEY,
+    textApiUrl:   !!process.env.TEXT_API_URL,
+    imageApiKey:  !!process.env.IMAGE_API_KEY,
+    imageApiUrl:  !!process.env.IMAGE_API_URL,
+  });
+});
+
 // Proxy endpoint for text API
 app.post("/api/text/chat/completions", async (req, res) => {
   try {
     const { model, messages, max_tokens, temperature, stream } = req.body;
 
-    const apiKey = req.headers["x-api-key"];
-    const apiUrl = req.headers["x-api-url"];
+    // ENV vars take priority over browser-supplied headers
+    const apiKey = process.env.TEXT_API_KEY || req.headers["x-api-key"];
+    const apiUrl = process.env.TEXT_API_URL || req.headers["x-api-url"];
 
     if (!apiKey) {
       console.error("Missing API key in request headers");
@@ -239,8 +252,9 @@ app.post("/api/image/generations", async (req, res) => {
   try {
     const { model, prompt, size } = req.body;
 
-    const apiKey = req.headers["x-api-key"];
-    const apiUrl = req.headers["x-api-url"];
+    // ENV vars take priority over browser-supplied headers
+    const apiKey = process.env.IMAGE_API_KEY || req.headers["x-api-key"];
+    const apiUrl = process.env.IMAGE_API_URL || req.headers["x-api-url"];
 
     if (!apiUrl) {
       console.error("Missing API URL in request headers");

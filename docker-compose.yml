@@ -13,6 +13,12 @@ services:
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-Character Generator}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-cards@character-generator.local}
       - DATA_DIR=${DATA_DIR:-/data}
+      # Optional: set API keys via environment to avoid storing them in the browser.
+      # When set, the proxy uses these and the Settings fields show as read-only.
+      - TEXT_API_KEY=${TEXT_API_KEY:-}
+      - TEXT_API_URL=${TEXT_API_URL:-}
+      - IMAGE_API_KEY=${IMAGE_API_KEY:-}
+      - IMAGE_API_URL=${IMAGE_API_URL:-}
     volumes:
       # Persistent storage for cards, prompts, and git history
       - cards-data:/data
