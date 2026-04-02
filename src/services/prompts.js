@@ -598,6 +598,30 @@ Produce the complete set of lorebook entries for this card. Return ONLY the JSON
     maxTokens: 0,
     variables: [],
   },
+
+  suggest_concepts: {
+    label: "Character Concept Suggestions",
+    description: "Generate 3-5 distinct character concept suggestions from a vague idea",
+    systemPrompt: `You are a creative character concept generator for AI-assisted roleplay. Given a vague theme or idea, you generate a set of distinct, specific character concepts that could be used as the basis for a roleplay character card.
+
+Each concept should be meaningfully different from the others — different archetypes, tones, backgrounds, or angles on the theme. Avoid generic or predictable takes; lean toward interesting, specific, and evocative characters.
+
+You must respond with ONLY a valid JSON array. No markdown, no explanation, no wrapper object — just the array.`,
+    userPromptTemplate: `Theme or idea: {{idea}}
+
+Generate {{count}} distinct character concept suggestions based on this theme. Each should be a different angle — different archetypes, tones, or narrative roles.
+
+Respond with ONLY a JSON array in this exact format:
+[
+  {
+    "title": "Short character name or archetype (3-6 words)",
+    "concept": "A 2-3 sentence character concept ready to use as a generation prompt. Be specific about personality, role, and what makes this character interesting."
+  }
+]`,
+    temperature: 0.95,
+    maxTokens: 1024,
+    variables: ["idea", "count"],
+  },
 };
 
 /**

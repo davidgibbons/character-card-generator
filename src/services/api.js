@@ -925,6 +925,41 @@ Shortened prompt (one paragraph):`,
     return result;
   }
 
+  async suggestConcepts(idea, count = 4) {
+    if (!idea || !idea.trim()) {
+      throw new Error('An idea or theme is required for suggestions.');
+    }
+
+    const model = configStore.get('api.text.model');
+    const prompt = getPrompt('suggest_concepts');
+
+    const userPrompt = renderTemplate(prompt.userPromptTemplate, {
+      idea: idea.trim(),
+      count,
+    });
+
+    const data = {
+      model,
+      messages: [
+        { role: 'system', content: prompt.systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: prompt.temperature ?? 0.95,
+      max_tokens: prompt.maxTokens ?? 1024,
+      stream: false,
+    };
+
+    const response = await this.makeRequest('/chat/completions', data, false, false);
+    const output = this.processNormalResponse(response);
+    const suggestions = this.parseJsonFromModelOutput(output);
+
+    if (!Array.isArray(suggestions)) {
+      throw new Error('Unexpected response format from suggestions API.');
+    }
+
+    return suggestions.filter((s) => s && typeof s.title === 'string' && typeof s.concept === 'string');
+  }
+
   async evaluateCard(character) {
     if (!character) {
       throw new Error("Character is required for evaluation");

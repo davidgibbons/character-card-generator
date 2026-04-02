@@ -70,3 +70,83 @@
   font-size: 0.88rem;
   color: var(--error);
 }
+
+/* ── Suggest button ── */
+.conceptActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.suggestBtn {
+  font-size: 0.82rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.suggestBtn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.suggestBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Suggestion cards ── */
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.suggestionsLabel {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.suggestionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: left;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  width: 100%;
+}
+
+.suggestionCard:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.suggestionTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.suggestionConcept {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+:global([data-theme="dark"]) .suggestionCard {
+  background: rgba(255,255,255,0.04);
+}
+
+:global([data-theme="dark"]) .suggestionCard:hover {
+  background: rgba(14, 122, 138, 0.15);
+}

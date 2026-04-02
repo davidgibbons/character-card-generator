@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MentionInput from './MentionInput';
 import useGenerationStore from '../../stores/useGenerationStore';
 import { apiHandler } from '../../services/api';
@@ -27,6 +27,10 @@ export default function CreatePanel() {
   const setPov = useGenerationStore((s) => s.setPov);
   const [conceptError, setConceptError] = useState('');
   const [genError, setGenError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);   // [{ title, concept }]
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState('');
+  const conceptRef = useRef(null);
 
   const isGenerating = useGenerationStore((s) => s.isGenerating);
 
@@ -36,6 +40,43 @@ export default function CreatePanel() {
     window.addEventListener('gsd:generate', onGenerate);
     return () => window.removeEventListener('gsd:generate', onGenerate);
   }, []);  // stable — handleGenerate reads store state via getState()
+
+  async function handleSuggest() {
+    const { concept: currentConcept } = useGenerationStore.getState();
+    if (!currentConcept.trim()) {
+      setConceptError('Enter a theme or idea first, then click Suggest.');
+      return;
+    }
+    const apiKey = configStore.get('api.text.apiKey');
+    const baseUrl = configStore.get('api.text.baseUrl');
+    if (!apiKey || !baseUrl) {
+      setSuggestError('API not configured. Open Settings to enter your API key and base URL.');
+      return;
+    }
+    setConceptError('');
+    setSuggestError('');
+    setSuggestions([]);
+    setSuggesting(true);
+    try {
+      const results = await apiHandler.suggestConcepts(currentConcept.trim());
+      setSuggestions(results);
+    } catch (err) {
+      console.error('Suggest failed:', err);
+      setSuggestError('Suggestions failed. Check your API settings and try again.');
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  function handlePickSuggestion(concept) {
+    useGenerationStore.getState().setConcept(concept);
+    setSuggestions([]);
+    // Focus the concept textarea so the user can edit before generating
+    setTimeout(() => {
+      const textarea = document.querySelector('textarea[aria-label="Character Concept"], .mentions textarea, #concept-input');
+      if (textarea) textarea.focus();
+    }, 50);
+  }
 
   async function handleGenerate() {
     const { concept: currentConcept, characterName: currentName, pov: currentPov } = useGenerationStore.getState();
@@ -98,8 +139,37 @@ export default function CreatePanel() {
           onChange={setConcept}
           disabled={isGenerating}
         />
+        <div className={styles.conceptActions}>
+          <button
+            type="button"
+            className={`btn-small ${styles.suggestBtn}`}
+            onClick={handleSuggest}
+            disabled={isGenerating || suggesting}
+          >
+            {suggesting ? 'Thinking…' : '✦ Suggest'}
+          </button>
+        </div>
         {conceptError && (
           <span className={styles.inlineError}>{conceptError}</span>
+        )}
+        {suggestError && (
+          <span className={styles.inlineError}>{suggestError}</span>
+        )}
+        {suggestions.length > 0 && (
+          <div className={styles.suggestions}>
+            <div className={styles.suggestionsLabel}>Pick a concept — it'll fill in the box above for you to edit</div>
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                className={styles.suggestionCard}
+                onClick={() => handlePickSuggestion(s.concept)}
+              >
+                <span className={styles.suggestionTitle}>{s.title}</span>
+                <span className={styles.suggestionConcept}>{s.concept}</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
