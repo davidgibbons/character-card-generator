@@ -4,16 +4,46 @@ import { apiHandler } from '../../services/api';
 import styles from './DebugPanel.module.css';
 
 /**
- * Floating debug panel — visible when debug mode is on.
- * Shows the last API request and response captured by apiHandler.lastDebugEntry.
+ * Tiny JSON syntax highlighter — no dependencies.
+ * Returns an HTML string with <span> tokens.
  */
+function highlight(obj) {
+  if (!obj) return '<span class="jNull">—</span>';
+  let json;
+  try { json = JSON.stringify(obj, null, 2); } catch { return String(obj); }
+
+  return json.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match) => {
+      let cls = 'jNum';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'jKey' : 'jStr';
+      } else if (/true|false/.test(match)) {
+        cls = 'jBool';
+      } else if (/null/.test(match)) {
+        cls = 'jNull';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
+  );
+}
+
+function JsonBlock({ obj, error }) {
+  const html = highlight(obj);
+  return (
+    <pre
+      className={`${styles.code} ${error ? styles.errorCode : ''}`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
 export default function DebugPanel() {
   const debugMode = useConfigStore((s) => s.app.debugMode);
   const [entry, setEntry] = useState(null);
-  const [tab, setTab] = useState('request'); // 'request' | 'response' | 'error'
+  const [tab, setTab] = useState('request');
   const [collapsed, setCollapsed] = useState(false);
 
-  // Poll for new debug entries while debug mode is on
   useEffect(() => {
     if (!debugMode) return;
     const interval = setInterval(() => {
@@ -25,20 +55,13 @@ export default function DebugPanel() {
 
   if (!debugMode) return null;
 
-  function fmt(obj) {
-    if (!obj) return '—';
-    try { return JSON.stringify(obj, null, 2); } catch { return String(obj); }
-  }
-
   const hasError = !!entry?.error;
 
   return (
     <div className={`${styles.panel} ${collapsed ? styles.collapsed : ''}`}>
       <div className={styles.header}>
         <span className={styles.title}>🐛 Debug</span>
-        {entry && (
-          <span className={styles.timestamp}>{entry.timestamp?.slice(11, 19)}</span>
-        )}
+        {entry && <span className={styles.timestamp}>{entry.timestamp?.slice(11, 19)}</span>}
         <button className={styles.collapseBtn} onClick={() => setCollapsed((c) => !c)}>
           {collapsed ? '▲' : '▼'}
         </button>
@@ -46,9 +69,7 @@ export default function DebugPanel() {
 
       {!collapsed && (
         <>
-          {!entry && (
-            <div className={styles.empty}>No API calls yet this session.</div>
-          )}
+          {!entry && <div className={styles.empty}>No API calls yet this session.</div>}
           {entry && (
             <>
               <div className={styles.tabs}>
@@ -68,16 +89,14 @@ export default function DebugPanel() {
                       <span className={styles.metaLabel}>Endpoint</span>
                       <span className={styles.metaValue}>{entry.endpoint}</span>
                     </div>
-                    <pre className={styles.code}>{fmt(entry.requestData)}</pre>
+                    <JsonBlock obj={entry.requestData} />
                   </>
                 )}
-                {tab === 'response' && (
-                  <pre className={styles.code}>{fmt(entry.responseData)}</pre>
-                )}
+                {tab === 'response' && <JsonBlock obj={entry.responseData} />}
                 {tab === 'error' && (
-                  <pre className={`${styles.code} ${hasError ? styles.errorCode : ''}`}>
-                    {hasError ? fmt(entry.error) : 'No error on last request.'}
-                  </pre>
+                  hasError
+                    ? <JsonBlock obj={entry.error} error />
+                    : <div className={styles.empty}>No error on last request.</div>
                 )}
               </div>
             </>

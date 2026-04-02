@@ -42,7 +42,7 @@ export default function CreatePanel() {
   }, []);  // stable — handleGenerate reads store state via getState()
 
   async function handleSuggest() {
-    const { concept: currentConcept } = useGenerationStore.getState();
+    const { concept: currentConcept, pov: currentPov } = useGenerationStore.getState();
     if (!currentConcept.trim()) {
       setConceptError('Enter a theme or idea first, then click Suggest.');
       return;
@@ -58,7 +58,7 @@ export default function CreatePanel() {
     setSuggestions([]);
     setSuggesting(true);
     try {
-      const results = await apiHandler.suggestConcepts(currentConcept.trim());
+      const results = await apiHandler.suggestConcepts(currentConcept.trim(), 4, currentPov);
       setSuggestions(results);
     } catch (err) {
       console.error('Suggest failed:', err);

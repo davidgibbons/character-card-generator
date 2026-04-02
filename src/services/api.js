@@ -955,7 +955,7 @@ Shortened prompt (one paragraph):`,
     return result;
   }
 
-  async suggestConcepts(idea, count = 4) {
+  async suggestConcepts(idea, count = 4, pov = 'first') {
     if (!idea || !idea.trim()) {
       throw new Error('An idea or theme is required for suggestions.');
     }
@@ -963,9 +963,13 @@ Shortened prompt (one paragraph):`,
     const model = configStore.get('api.text.model');
     const prompt = getPrompt('suggest_concepts');
 
+    const povLabels = { first: 'first-person', third: 'third-person', scenario: 'scenario/setting' };
+    const povNote = povLabels[pov] || pov;
+
     const userPrompt = renderTemplate(prompt.userPromptTemplate, {
       idea: idea.trim(),
       count,
+      povNote,
     });
 
     const data = {

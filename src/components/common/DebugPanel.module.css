@@ -121,3 +121,10 @@
 .errorCode {
   color: #fca5a5;
 }
+
+/* JSON syntax highlighting token colors */
+:global(.jKey)  { color: #7dd3fc; } /* blue  — object keys */
+:global(.jStr)  { color: #86efac; } /* green — string values */
+:global(.jNum)  { color: #fcd34d; } /* amber — numbers */
+:global(.jBool) { color: #f9a8d4; } /* pink  — true/false */
+:global(.jNull) { color: #94a3b8; } /* grey  — null */

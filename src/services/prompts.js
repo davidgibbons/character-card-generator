@@ -608,8 +608,9 @@ Each concept should be meaningfully different from the others — different arch
 
 You must respond with ONLY a valid JSON array. No markdown, no explanation, no wrapper object — just the array.`,
     userPromptTemplate: `Theme or idea: {{idea}}
+POV mode: {{povNote}}
 
-Generate {{count}} distinct character concept suggestions based on this theme. Each should be a different angle — different archetypes, tones, or narrative roles.
+Generate {{count}} distinct character concept suggestions based on this theme. Each should be a different angle — different archetypes, tones, or narrative roles. Write each concept in a style suited to {{povNote}} roleplay.
 
 Respond with ONLY a JSON array in this exact format:
 [
@@ -620,7 +621,7 @@ Respond with ONLY a JSON array in this exact format:
 ]`,
     temperature: 0.95,
     maxTokens: 1024,
-    variables: ["idea", "count"],
+    variables: ["idea", "count", "povNote"],
   },
 };
 
