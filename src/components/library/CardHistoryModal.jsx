@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from '../common/Modal';
 import DiffView from './DiffView';
 import { storageClient } from '../../services/storage';
@@ -91,7 +91,6 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
   const [loadingDiff, setLoadingDiff] = useState(false);
 
   // Action state
-  const [restoring, setRestoring] = useState(false);
   const [actionError, setActionError] = useState('');
 
   // Load history when modal opens
@@ -166,25 +165,6 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
     onClose();
   }
 
-  async function handleRestore() {
-    if (!previewCard || !slug) return;
-    setRestoring(true);
-    setActionError('');
-    try {
-      await storageClient.saveCard({
-        characterName: previewCard.name || slug,
-        character: previewCard,
-        steeringInput: `Restored from revision ${previewHash?.slice(0, 7)}`,
-      });
-      onLoad(previewCard);
-      onClose();
-    } catch (err) {
-      setActionError('Restore failed. Check the server connection.');
-    } finally {
-      setRestoring(false);
-    }
-  }
-
   function commitClass(hash) {
     const classes = [styles.commitRow];
     if (diffMode) {
@@ -197,8 +177,6 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
   }
 
   const canDiff = diffMode && diffA && diffB && diffA !== diffB;
-  const latestHash = history[0]?.hash;
-  const isLatest = previewHash === latestHash;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Revision History" className={styles.wideModal}>
@@ -208,9 +186,6 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
         {/* ── Left: commit list ── */}
         <div className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
-            <span className={styles.sidebarTitle}>
-              {loadingHistory ? 'Loading…' : `${history.length} revision${history.length !== 1 ? 's' : ''}`}
-            </span>
             <button
               className={`btn-small ${styles.modeToggle} ${diffMode ? styles.modeActive : ''}`}
               onClick={toggleDiffMode}
@@ -219,25 +194,13 @@ export default function CardHistoryModal({ slug, isOpen, onClose, onLoad }) {
               {diffMode ? '← Preview' : 'Compare'}
             </button>
             {!diffMode && previewHash && previewCard && (
-              <>
-                <button
-                  className={`btn-small ${styles.modeToggle}`}
-                  onClick={handleLoad}
-                  title="Load this version into the editor"
-                >
-                  Load
-                </button>
-                {!isLatest && (
-                  <button
-                    className={`btn-small ${styles.modeToggle}`}
-                    onClick={handleRestore}
-                    disabled={restoring}
-                    title="Save this version as a new revision"
-                  >
-                    {restoring ? '…' : 'Restore'}
-                  </button>
-                )}
-              </>
+              <button
+                className={`btn-small ${styles.modeToggle}`}
+                onClick={handleLoad}
+                title="Load this version into the editor as unsaved"
+              >
+                Clone
+              </button>
             )}
           </div>
 
