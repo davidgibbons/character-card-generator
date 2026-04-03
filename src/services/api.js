@@ -206,6 +206,12 @@ class APIHandler {
     const decoder = new TextDecoder();
     let buffer = "";
     let fullContent = "";
+    // Track <think>...</think> blocks for reasoning models (e.g. GLM-5, DeepSeek-R1).
+    // These arrive in the stream as literal <think> tags. We accumulate them in
+    // fullContent but suppress them from the onStream callback so they don't appear
+    // in the progress display or get passed to parseSections.
+    let thinkDepth = 0;
+    let thinkBuffer = ""; // partial tag accumulator (handles chunk boundaries)
 
     try {
       while (true) {
@@ -230,7 +236,58 @@ class APIHandler {
 
               if (content) {
                 fullContent += content;
-                onStream(content, fullContent);
+                // Feed through think-tag filter before calling onStream
+                thinkBuffer += content;
+                let visible = "";
+                // Process thinkBuffer looking for <think> / </think> tags.
+                // We loop so multiple transitions in one chunk are handled.
+                let safety = 0;
+                while (thinkBuffer.length > 0 && safety++ < 1000) {
+                  if (thinkDepth === 0) {
+                    // Outside a think block — look for opening tag
+                    const openIdx = thinkBuffer.indexOf("<think>");
+                    if (openIdx === -1) {
+                      // No tag — check if buffer ends with a partial opening tag
+                      const partialMatch = thinkBuffer.match(/<(?:t(?:h(?:i(?:n(?:k)?)?)?)?)?$/);
+                      if (partialMatch) {
+                        // Emit everything before the potential partial tag
+                        visible += thinkBuffer.slice(0, partialMatch.index);
+                        thinkBuffer = thinkBuffer.slice(partialMatch.index);
+                        break; // wait for more chunks
+                      } else {
+                        visible += thinkBuffer;
+                        thinkBuffer = "";
+                        break;
+                      }
+                    } else {
+                      // Emit text before the tag, then enter think mode
+                      visible += thinkBuffer.slice(0, openIdx);
+                      thinkBuffer = thinkBuffer.slice(openIdx + 7); // skip "<think>"
+                      thinkDepth++;
+                    }
+                  } else {
+                    // Inside a think block — look for closing tag
+                    const closeIdx = thinkBuffer.indexOf("</think>");
+                    if (closeIdx === -1) {
+                      // Check for partial closing tag at end
+                      const partialMatch = thinkBuffer.match(/<(?:\/(?:t(?:h(?:i(?:n(?:k(?:>)?)?)?)?)?)?)?)?$/);
+                      if (partialMatch) {
+                        thinkBuffer = thinkBuffer.slice(partialMatch.index);
+                        break; // wait for more chunks
+                      } else {
+                        thinkBuffer = ""; // discard think content
+                        break;
+                      }
+                    } else {
+                      // Skip past closing tag
+                      thinkBuffer = thinkBuffer.slice(closeIdx + 8); // skip "</think>"
+                      thinkDepth = Math.max(0, thinkDepth - 1);
+                    }
+                  }
+                }
+                if (visible) {
+                  onStream(visible, fullContent);
+                }
               }
             } catch (e) {
               console.warn("Failed to parse streaming data:", data);
@@ -239,8 +296,11 @@ class APIHandler {
         }
       }
 
-      this.lastRawResponse = fullContent;
-      return fullContent;
+      // Strip any <think>...</think> blocks from fullContent before returning.
+      // This handles the case where the think block wasn't fully closed.
+      const stripped = fullContent.replace(/<think>[\s\S]*?<\/think>/g, "").trimStart();
+      this.lastRawResponse = stripped;
+      return stripped;
     } catch (error) {
       console.error("Stream processing error:", error);
       throw error;
@@ -872,7 +932,8 @@ Shortened prompt (one paragraph):`,
       throw new Error("Model output is empty");
     }
 
-    let cleaned = output.trim();
+    // Strip <think>...</think> blocks emitted by reasoning models (GLM-5, DeepSeek-R1, etc.)
+    let cleaned = output.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
     // Strip markdown code fences if present
     if (cleaned.startsWith("```")) {
