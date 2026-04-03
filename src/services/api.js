@@ -785,15 +785,16 @@ Shortened prompt (one paragraph):`,
 
   processNormalResponse(response) {
     this.lastRawResponse = response;
-    // Handle different response formats
     if (
       response.choices &&
       response.choices[0] &&
       response.choices[0].message
     ) {
       const message = response.choices[0].message;
-      // Some models (like GLM) use reasoning_content instead of content
-      return message.content || message.reasoning_content || "";
+      // Prefer content; fall back to reasoning_content only if content is null/undefined
+      // (not empty string — some reasoning models return content="" legitimately)
+      const text = message.content != null ? message.content : (message.reasoning_content ?? "");
+      return text;
     } else if (
       response.data &&
       response.data.choices &&

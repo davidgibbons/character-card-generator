@@ -620,7 +620,7 @@ Respond with ONLY a JSON array in this exact format:
   }
 ]`,
     temperature: 0.95,
-    maxTokens: 1024,
+    maxTokens: 2048,
     variables: ["idea", "count", "povNote"],
   },
 };
