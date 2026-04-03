@@ -1019,6 +1019,8 @@ Shortened prompt (one paragraph):`,
       scenario: character.scenario || "(empty)",
       firstMessage: character.firstMessage || "(empty)",
       mesExample: character.mesExample || "(empty)",
+      systemPrompt: character.systemPrompt || "(empty)",
+      postHistoryInstructions: character.postHistoryInstructions || "(empty)",
       lorebookSummary,
     });
 
